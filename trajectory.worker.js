@@ -84,7 +84,7 @@ function computeTorque(omega, radius, rho_air, mu) {
   if (ReOmega < 1) {
     return 8 * Math.PI * mu * (radius ** 3) * omega;
   } else {
-    let CtVal = 6.45 / Math.sqrt(ReOmega) + 35 / ReOmega;
+    let CtVal = 6.45 / Math.sqrt(ReOmega) + 32.1 / ReOmega;
     return 0.5 * CtVal * rho_air * (radius ** 5) * omega * Math.abs(omega);
   }
 }
