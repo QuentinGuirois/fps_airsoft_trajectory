@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="./src/img/favicon.png">
+    <!-- Output non bloquant-->
+    <link rel="stylesheet" href="./src/output.css">
+    <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          "name": "FPS Airsoft Trajectory Calculator",
+          "url": "https://fps-airsoft-trajectory.com",
+          "description": "Calculateur de trajectoire pour billes Airsoft prenant en compte la vitesse initiale (FPS), le poids de la bille, l'angle de tir et la résistance de l'air.",
+          "applicationCategory": "SportsApplication",
+          "operatingSystem": "All",
+          "browserRequirements": "JavaScript",
+          "inLanguage": "fr-FR",
+          "softwareVersion": "2.0.8",
+          "datePublished": "2025-03-15",
+          "author": {
+            "@type": "Person",
+            "name": "Quentin Guirois (Keep)",
+            "url": "https://www.linkedin.com/in/quentin-guirois-386636163/"
+          },
+          "publisher": {
+            "@type": "Organization",
+            "name": "Fps Airsoft Trajectory",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://fps-airsoft-trajectory.com/src/img/favicon.png"
+            }
+          },
+          "screenshot": "https://fps-airsoft-trajectory.com/src/img/social-media-share.png",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "EUR",
+            "url": "https://fps-airsoft-trajectory.com"
+          },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://fps-airsoft-trajectory.com/?q={search_term}",
+            "query-input": "required name=search_term"
+          }
+        }
+        </script>
+        
+    <title>Convertisseur Joules FPS & Simulateur de trajectoire Airsoft | F.A.T</title>
+    <meta name="description"
+        content="Convertisseur Joules en FPS et FPS en Joules pour l'airsoft. Simulez précisément la trajectoire de vos billes avec F.A.T (FPS Airsoft Trajectory).">
+    <meta property="og:title" content="Convertisseur Joules FPS & Simulateur de trajectoire Airsoft | F.A.T">
+    <meta property="og:description"
+        content="Simulez précisément la trajectoire de vos billes d'airsoft et convertissez facilement (Joules en FPS / FPS en joules) avec F.A.T">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://fps-airsoft-trajectory.com/src/img/social-media-share.png">
+    <meta property="og:url" content="https://fps-airsoft-trajectory.com/">
+    <!-- Pré‑connexion au CDN Plotly -->
+    <link rel="preconnect" href="https://cdn.plot.ly" crossorigin>
+    <!-- Pré‑chargement font awesome -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style"
+        crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+            crossorigin="anonymous">
+    </noscript>
+
+    <style>
+        /* ==== Critical CSS, aucun @apply (≈ 1 kio) ==== */
+
+        /* Couleurs, reset élémentaire */
+        :root {
+            --grad-start: #60a5fa;
+            /* blue‑400 */
+            --grad-end: #a78bfa;
+            /* purple‑500 */
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            margin: 0
+        }
+
+        body {
+            background: #111827;
+            /* gray‑900 */
+            color: #f1f5f9;
+            /* slate‑100 */
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p {
+            margin: 0
+        }
+
+        .container {
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 2rem 1rem;
+            /* py‑8 px‑4 */
+        }
+
+
+        /* Header LCP */
+        header.hero {
+            min-height: 96px;
+            /* réserve l’espace -> pas de shift */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: .5rem;
+            padding: 1rem;
+            text-align: center
+        }
+
+        header.hero img {
+            width: 42px;
+            height: 42px
+        }
+
+        header.hero h1 {
+            font-size: clamp(1.6rem, 6vw, 2rem);
+            font-weight: 700;
+            line-height: 1.25;
+            background: linear-gradient(90deg, var(--grad-start), var(--grad-end));
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        /* Réserve la hauteur des graphiques avant Plotly */
+        .chart-container {
+            min-height: 400px
+        }
+
+        /* Libellé hop‑up : largeur fixe -> aucune re‑flow */
+        #hopupDisplay {
+            display: inline-block;
+            min-width: 4ch;
+            text-align: right
+        }
+
+        /* Conteneur des 2 toggles : évite push quand JS les insère */
+        .toggle-container {
+            min-height: 48px
+        }
+
+        /* Petits ajustements contraste / focus */
+        .text-grey-200 {
+            color: #e5e7eb
+        }
+
+        /* remplace gray‑400 non‑AA */
+        .btn-primary:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px
+        }
+    </style>
+
+
+</head>
+
+<body class="gradient-bg min-h-screen text-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8 text-center" style="min-height: 110px;">
+            <div class="w-full flex text-center justify-center items-center space-x-2">
+                <img src="./src/img/favicon.webp" class="mr-2" style="max-width: 45px;" alt="logo FAT">
+                <h1
+                    class="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 leading-tight">
+                    F.A.T : Convertisseur joules fps & simulateur de trajectoire airsoft
+                </h1>
+            </div>
+            <p class="text-gray-300 mx-auto text-center">
+                Simulez précisément la trajectoire de vos billes d'airsoft grâce au convertisseur FPS en Joules intégré,
+                ajustable selon divers paramètres de jeu.
+            </p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Input Section -->
+            <div class="glass-card rounded-xl p-6 col-span-1">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    <i class="fas fa-sliders-h mr-2" aria-hidden="true"></i> Paramètres de tir
+                </h2>
+
+                <div class="space-y-4">
+                    <!-- Poids de la bille -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1" for="bbWeight">Poids de la bille (g)</label>
+                        <input type="number" id="bbWeight" step="0.01" min="0.12" max="0.88"
+                            class="input-field w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <p class="text-xs text-grey-200 mt-1">Valeur entre 0.12g et 0.88g</p>
+                    </div>
+
+                    <!-- Vitesse ou énergie -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1" for="bbVelocity">Vitesse (FPS)</label>
+                            <input type="number" id="bbVelocity" step="1" min="0"
+                                class="input-field w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1" for="bbEnergy">Énergie (J)</label>
+                            <input type="number" id="bbEnergy" step="0.01" min="0"
+                                class="input-field w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Hauteur de tir et offset lunette -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1" for="shootingHeight">Hauteur de tir
+                                (m)</label>
+                            <input type="number" id="shootingHeight" step="0.01" min="0" value="1.5"
+                                class="input-field w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1" for="scopeOffset">Offset lunette (cm)</label>
+                            <input type="number" id="scopeOffset" step="0.1" min="0" value="5"
+                                class="input-field w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Angle de tir et angle lunette -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Angle de tir</label>
+                            <div class="flex items-center space-x-2">
+                                <button id="angleMinus" aria-label="diminuer l’angle de tir"
+                                    class="btn-primary px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md">
+                                    <i class="fas fa-minus" aria-hidden="true"></i>
+                                </button>
+                                <span id="angleDisplay" class="flex-1 text-center">0.0°</span>
+                                <button id="anglePlus" aria-label="Augmenter l’angle de tir"
+                                    class="btn-primary px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md">
+                                    <i class="fas fa-plus" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Angle lunette</label>
+                            <div class="flex items-center space-x-2">
+                                <button id="scopeAngleMinus" aria-label="Diminuer l’angle de la lunette"
+                                    class="btn-primary px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md">
+                                    <i class="fas fa-minus" aria-hidden="true"></i>
+                                </button>
+                                <span id="scopeAngleDisplay" class="flex-1 text-center">0.0°</span>
+                                <button id="scopeAnglePlus" aria-label="Augmenter l’angle de la lunette"
+                                    class="btn-primary px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md">
+                                    <i class="fas fa-plus" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hop-up -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Réglage Hop-up</label>
+                        <div class="flex items-center space-x-2">
+                            <button id="hopupMinus" aria-label="Diminuer l’effet hop up"
+                                class="btn-primary px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md">
+                                <i class="fas fa-minus" aria-hidden="true"></i>
+                            </button>
+                            <div class="flex-1">
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span>0%</span>
+                                    <span>50%</span>
+                                    <span>100%</span>
+                                </div>
+                                <div class="relative">
+                                    <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
+                                        <div id="hopupBar" class="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+                                            style="width: 44%"></div>
+                                    </div>
+                                    <span id="hopupDisplay" class="absolute top-0 right-0 text-xs">44%</span>
+                                </div>
+                            </div>
+                            <button id="hopupPlus" aria-label="Augmenter l’effet hop up"
+                                class="btn-primary px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md">
+                                <i class="fas fa-plus" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Conditions environnementales -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Pression (hPa)</label>
+                            <div class="flex items-center space-x-2">
+                                <button id="pressureMinus" aria-label="Diminuer la pression atmosphérique"
+                                    class="btn-primary px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md">
+                                    <i class="fas fa-minus" aria-hidden="true"></i>
+                                </button>
+                                <span id="pressureDisplay" class="flex-1 text-center">1020 hPa</span>
+                                <button id="pressurePlus" aria-label="Augmenter la pression atmosphérique"
+                                    class="btn-primary px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md">
+                                    <i class="fas fa-plus" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Température (°C)</label>
+                            <div class="flex items-center space-x-2">
+                                <button id="temperatureMinus" aria-label="Diminuer la température"
+                                    class="btn-primary px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md">
+                                    <i class="fas fa-minus" aria-hidden="true"></i>
+                                </button>
+                                <span id="temperatureDisplay" class="flex-1 text-center">20 °C</span>
+                                <button id="temperaturePlus" aria-label="Augmenter la température"
+                                    class="btn-primary px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md">
+                                    <i class="fas fa-plus" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Options d'affichage -->
+                    <div class="pt-2 border-t border-gray-700 toggle-container">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="showCanonLine">
+                                <span class="toggle-slider" aria-hidden="true"></span>
+                            </div>
+                            <span class="text-sm">Afficher l'axe du canon</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer mt-2">
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="showScopeLine">
+                                <span class="toggle-slider" aria-hidden="true"></span>
+                            </div>
+                            <span class="text-sm">Afficher l'axe de visée</span>
+                        </label>
+                    </div>
+
+                    <!-- Boutons d'action -->
+                    <div class="grid grid-cols-2 gap-3 pt-4">
+                        <button id="saveCurve" aria-label="Sauvegarder et comparer la courbe"
+                            class="btn-primary py-2 bg-blue-600 hover:bg-blue-700 rounded-md flex items-center justify-center">
+                            <i class="fas fa-save mr-2" aria-hidden="true"></i> Enregistrer & Comparer
+                        </button>
+                        <button id="resetCurves" aria-label="Réinitialiser la courbe"
+                            class="btn-primary py-2 bg-purple-600 hover:bg-purple-700 rounded-md flex items-center justify-center">
+                            <i class="fas fa-trash-alt mr-2" aria-hidden="true"></i> Réinitialiser
+                        </button>
+                    </div>
+                    <button id="shareButton" aria-label="Partager les résultats"
+                        class="btn-primary w-full py-2 bg-purple-600 hover:bg-purple-700 rounded-md flex items-center justify-center">
+                        <i class="fas fa-share-alt mr-2" aria-hidden="true"></i> Partager
+                    </button>
+                    <div id="shareLinkContainer" class="hidden mt-2 p-3 bg-gray-800 rounded-md text-sm"></div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="glass-card rounded-xl p-6 col-span-1 lg:col-span-2">
+                <div class="flex space-x-4 border-b border-gray-700 mb-4">
+                    <button id="trajectoryTab" aria-label="Tableau des trajectoires"
+                        class="tab-active pb-2 px-1 font-medium">
+                        <i class="fas fa-project-diagram mr-1" aria-hidden="true"></i> Trajectoire
+                    </button>
+                    <button id="timeTab" aria-label="Temps de vol"
+                        class="pb-2 px-1 font-medium text-grey-200 hover:text-white">
+                        <i class="fas fa-stopwatch mr-1" aria-hidden="true"></i> Temps de vol
+                    </button>
+                    <button id="energyTab" aria-label="Energie résiduelle"
+                        class="pb-2 px-1 font-medium text-grey-200 hover:text-white">
+                        <i class="fas fa-bolt mr-1" aria-hidden="true"></i> Énergie
+                    </button>
+                    <button id="spinTab" aria-label="Décroissance du spin"
+                        class="pb-2 px-1 font-medium text-grey-200 hover:text-white">
+                        <i class="fas fa-spinner mr-1" aria-hidden="true"></i> Spin
+                    </button>
+                </div>
+
+                <!-- Trajectoire TAB -->
+                <div id="trajectoryChartContainer" class="chart-container">
+                    <div id="trajectory2D" class="w-full" style="height: 400px;"></div>
+                    <!-- Resultats trajectoire -->
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-800 p-4 rounded-lg">
+                            <h3 class="font-semibold text-lg mb-2 flex items-center">
+                                <i class="fas fa-info-circle mr-2 text-blue-400" aria-hidden="true"></i> Informations de
+                                trajectoire
+                            </h3>
+                            <div id="resultInfo" class="text-sm space-y-2">
+                                <p>Entrez les paramètres pour calculer la trajectoire.</p>
+                            </div>
+                        </div>
+                        <div class="bg-gray-800 p-4 rounded-lg">
+                            <h3 class="font-semibold text-lg mb-2 flex items-center">
+                                <i class="fas fa-bullseye mr-2 text-green-400" aria-hidden="true"></i> Portée utile
+                            </h3>
+                            <div id="engagementInfo" class="text-sm">
+                                <p>Distance d'engagement: -</p>
+                                <p class="mt-2">Distance de ressenti (audible sur gilet): -</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Time to Hit TAB -->
+                <div id="timeChartContainer" class="chart-container hidden">
+                    <div id="timeChart" class="w-full" style="height: 400px;"></div>
+                    <!-- Time Comparison Table -->
+                    <div class="mt-6 bg-gray-800 p-4 rounded-lg">
+                        <h3 class="font-semibold text-lg mb-2 flex items-center">
+                            <i class="fas fa-clock mr-2 text-purple-400" aria-hidden="true"></i> Comparaison des temps
+                        </h3>
+                        <div id="timeComparisonTableContainer" class="overflow-x-auto">
+                            <!-- Will be filled by JS -->
+                        </div>
+                    </div>
+                </div>
+                <div id="impactChartContainer" class="chart-container hidden">
+                    <div id="impactChart" class="w-full" style="height: 400px;"></div>
+                    <!-- Energy résiduelle Table -->
+                    <div class="mt-6 bg-gray-800 p-4 rounded-lg">
+                        <h3 class="font-semibold text-lg mb-2 flex items-center">
+                            <i class="fas fa-bullseye mr-2" aria-hidden="true"></i> Comparaison des énergies
+                        </h3>
+                        <div id="energyComparisonTableContainer" class="overflow-x-auto">
+                            <!-- Will be filled by JS -->
+                        </div>
+                    </div>
+                </div>
+                <div id="spinChartContainer" class="chart-container hidden">
+                    <div id="spinChart" class="w-full" style="height: 400px;"></div>
+                </div>
+
+
+
+                <!-- Holdover Table -->
+                <div class="mt-6 bg-gray-800 p-4 rounded-lg">
+                    <h3 class="font-semibold text-lg mb-2 flex items-center">
+                        <i class="fas fa-ruler-combined mr-2 text-yellow-400" aria-hidden="true"></i> Contre-visée (bille actuelle)
+                    </h3>
+                    <div id="holdoverTableContainer" class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-2">Distance&nbsp;(m)</th>
+                                    <th class="px-4 py-2">Différence&nbsp;(cm)</th>
+                                    <th class="px-4 py-2">Énergie</th>
+                                    <th class="px-4 py-2">Spin</th>
+                                </tr>
+                            </thead>
+                            <tbody id="holdoverTableBody" class="text-center divide-y divide-gray-700">
+                                <!-- Will be filled by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+
+            </div>
+
+        </div>
+
+        <footer
+            class="glass-card rounded-xl mx-auto max-w-7xl mb-8 flex-col responsive-footer items-start justify-between gap-6 p-6">
+
+
+            <div class="flex sm:flex-col items-start gap-4">
+                <div class="rounded-full from-blue-500 to-purple-500 flex items-center justify-center">
+                    <img src="./src/img/quentin_guirois.webp" class="rounded-full avatar w-80" alt="Quentin Guirois">
+                </div>
+                <div class="rounded-full from-blue-500 to-purple-500 items-center justify-center">
+                    <p class="font-medium">KEEP, un développeur passionné d'airsoft, et amateur de physique.</p>
+                    <p class="text-sm text-grey-200">
+                        Merci à :
+                        <a href="https://mackila.com/airsoft/ATP/" target="_blank" class="font-bold">mackila.com</a>,
+                        <a href="https://www.youtube.com/@5.95airsoft" target="_blank" class="font-bold">El Bridos</a>,
+                        <a href="https://www.youtube.com/@KantumCat" target="_blank" class="font-bold">Kantum Cat</a>,
+                        <a href="https://www.youtube.com/channel/UCkBA0vGZSaJZ_MFIynppWIw" target="_blank"
+                            class="font-bold">Airsoft Tailor</a>,
+                        et
+                        <a href="https://www.youtube.com/c/ChefPanPan" target="_blank" class="font-bold">Chef Pan
+                            Pan</a>,
+                        pour avoir contribué directement, et indirectement à ce projet. Mention spéciale à mackila.com,
+                        un passionné resté longtemps dans l'ombre mais qui a révolutionné notre univers. Merci à lui, au
+                        nom de tous.tes.
+                    </p>
+                    <p class="text-sm text-grey-200 mt">
+                        Propulsé initialement par
+                        <a href="https://colt37-airsoft-touraine.fr" target="_blank" class="font-bold">colt37</a>.
+                    </p>
+                </div>
+            </div>
+
+
+            <a href="https://www.linkedin.com/in/quentin-guirois-386636163/" target="_blank" rel="noopener noreferrer"
+                class="btn-primary w-full p-4 mt-6 bg-blue-600 rounded-md flex items-center justify-center">
+                <i class="fab fa-linkedin mr-2" aria-hidden="true"></i> LinkedIn
+            </a>
+        </footer>
+
+    </div>
+
+    <!-- Bootloader non‑bloquant -->
+    <script type="module" defer>
+        const ric = window.requestIdleCallback || (cb => setTimeout(cb, 200));
+        ric(() => {
+            const s = document.createElement('script');
+            s.src = 'https://cdn.plot.ly/plotly-gl2d-2.30.0.min.js';
+            s.crossOrigin = 'anonymous';
+            s.onload = () => import('./script.js');
+            document.head.appendChild(s);
+        });
+    </script>
+</body>
+
+</html>

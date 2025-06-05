@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset 
+      xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+      xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- Page principale de l'outil -->
+  <url>
+    <loc>https://fps-airsoft-trajectory.com/</loc>
+    <lastmod>2025-04-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Ancienne page toujours active avec lien vers le nouveau site -->
+  <url>
+    <loc>https://colt37-airsoft-touraine.fr/joules-fps-portee-outil-billes-airsoft/</loc>
+    <lastmod>2025-04-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+</urlset>

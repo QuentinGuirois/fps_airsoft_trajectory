@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+@font-face {
+    font-family: "Inter";
+    src: url("fonts/inter-var-latin.woff2") format("woff2");
+    font-weight: 100 900;
+    font-display: optional;
+    font-size-adjust: 0.52;
+}
+
+@layer utilities {
+    .focus-ring {
+        @apply focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2;
+    }
+}
+
+body {
+    font-family: "Inter-var-latin", ui-sans-serif, system-ui, sans-serif;
+}
+
+
+.gradient-bg {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+}
+
+.glass-card {
+    background: rgba(45, 55, 72, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    content-visibility: auto;
+}
+
+.input-field {
+    transition: all 0.3s ease;
+}
+
+.input-field:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+
+.btn-primary {
+    transition: all 0.3s ease;
+
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+
+
+
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+}
+
+.tab-active {
+    color: white;
+    border-bottom: 2px solid #3b82f6;
+}
+
+.chart-container {
+    transition: opacity 0.3s ease;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #4a5568;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+.avatar {
+    max-width: 80px !important;
+}
+
+input:checked+.toggle-slider {
+    background-color: #3b82f6;
+}
+
+input:checked+.toggle-slider:before {
+    transform: translateX(26px);
+}
+
+.chart-container {
+    min-height: 400px
+}
+
+/* au cas où inline serait oublié */
+#hopupDisplay {
+    display: inline-block;
+    min-width: 4ch;
+    text-align: right
+}
+
+.toggle-container {
+    min-height: 48px
+}
+
+
+@media (max-width: 1000px) {
+    .responsive-footer {
+        flex-direction: column !important;
+    }
+}
