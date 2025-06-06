@@ -1253,6 +1253,13 @@ function FAT_init(){
     });
   
     // Hop-up drag on bar
+    function getClientX(e) {
+      if (e.touches && e.touches[0]) {
+        return e.touches[0].clientX;
+      }
+      return e.clientX;
+    }
+
     function setHopFromClientX(clientX) {
       const rect = hopupContainer.getBoundingClientRect();
       let percent = ((clientX - rect.left) / rect.width) * 100;
@@ -1266,19 +1273,23 @@ function FAT_init(){
     let draggingHopup = false;
     const startHopupDrag = e => {
       draggingHopup = true;
-      setHopFromClientX(e.clientX);
+      setHopFromClientX(getClientX(e));
       e.preventDefault();
     };
     const moveHopupDrag = e => {
       if (!draggingHopup) return;
-      setHopFromClientX(e.clientX);
+      setHopFromClientX(getClientX(e));
       e.preventDefault();
     };
     const endHopupDrag = () => { draggingHopup = false; };
     hopupContainer.addEventListener('pointerdown', startHopupDrag, {passive:false});
+    hopupContainer.addEventListener('touchstart', startHopupDrag, {passive:false});
     document.addEventListener('pointermove', moveHopupDrag, {passive:false});
+    document.addEventListener('touchmove', moveHopupDrag, {passive:false});
     document.addEventListener('pointerup', endHopupDrag);
+    document.addEventListener('touchend', endHopupDrag);
     document.addEventListener('pointercancel', endHopupDrag);
+    document.addEventListener('touchcancel', endHopupDrag);
   
     // Angle de tir
     anglePlusButton.addEventListener('click', () => {
