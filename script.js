@@ -1266,21 +1266,19 @@ function FAT_init(){
     let draggingHopup = false;
     const startHopupDrag = e => {
       draggingHopup = true;
-      setHopFromClientX(e.touches ? e.touches[0].clientX : e.clientX);
+      setHopFromClientX(e.clientX);
       e.preventDefault();
     };
     const moveHopupDrag = e => {
       if (!draggingHopup) return;
-      setHopFromClientX(e.touches ? e.touches[0].clientX : e.clientX);
+      setHopFromClientX(e.clientX);
       e.preventDefault();
     };
     const endHopupDrag = () => { draggingHopup = false; };
-    hopupContainer.addEventListener('mousedown', startHopupDrag);
-    hopupContainer.addEventListener('touchstart', startHopupDrag);
-    document.addEventListener('mousemove', moveHopupDrag);
-    document.addEventListener('touchmove', moveHopupDrag);
-    document.addEventListener('mouseup', endHopupDrag);
-    document.addEventListener('touchend', endHopupDrag);
+    hopupContainer.addEventListener('pointerdown', startHopupDrag, {passive:false});
+    document.addEventListener('pointermove', moveHopupDrag, {passive:false});
+    document.addEventListener('pointerup', endHopupDrag);
+    document.addEventListener('pointercancel', endHopupDrag);
   
     // Angle de tir
     anglePlusButton.addEventListener('click', () => {

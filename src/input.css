@@ -132,3 +132,7 @@ input:checked+.toggle-slider:before {
         flex-direction: column !important;
     }
 }
+
+#hopupContainer {
+  touch-action: none;
+}

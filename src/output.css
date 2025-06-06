@@ -943,3 +943,4 @@ input:checked + .toggle-slider:before {
     }
   }
 }
+#hopupContainer{touch-action:none}
