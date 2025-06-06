@@ -290,7 +290,7 @@ function FAT_init(){
         const spinRPM = (omega / (2 * Math.PI)) * 60;
         positions.push({ x, y, energy, fps: fpsVal, time, spin: spinRPM });
   
-        let torqueScale = 8;
+        let torqueScale = 10;
         let torque = computeTorque(omega, radius, rho_air, airViscosity) * torqueScale;
         let alpha = -torque / momentOfInertia;
         omega += alpha * dt;
