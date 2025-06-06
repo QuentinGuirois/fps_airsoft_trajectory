@@ -62,7 +62,7 @@ function calculateTrajectory2D(fps, poidsGr, angleDeg, params) {
     let liftForce = 0.5 * rho_air * Cl * area * velocity * velocity;
     const weight = mass * g;
 
-    const maxLift = 15 * weight;
+    const maxLift = 100 * weight;
     if (Math.abs(liftForce) > maxLift) liftForce = maxLift * Math.sign(liftForce);
 
     const v_unit_x = velocityX / velocity;

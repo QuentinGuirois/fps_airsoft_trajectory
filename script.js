@@ -258,13 +258,16 @@ function FAT_init(){
         if (velocity === 0) break;
   
         let Cl = computeCl(omega, velocity, rho_air, radius);
-        let Cd = computeCd(omega, velocity, rho_air, radius, airViscosity);
+        const CdEmpirique = 1.10;
+        let Cd = computeCd(omega, velocity, rho_air, radius, airViscosity) * CdEmpirique;
+        
+
         const dragForce = 0.5 * rho_air * Cd * area * velocity * velocity;
         let liftForce = 0.5 * rho_air * Cl * area * velocity * velocity;
         const weight = mass * g;
   
-        // On limite la portance à 5x le poids
-        const maxLift = 5 * weight;
+        // On limite la portance à 100x le poids
+        const maxLift = 100 * weight;
         if (Math.abs(liftForce) > maxLift) {
           liftForce = maxLift * Math.sign(liftForce);
         }
@@ -290,7 +293,7 @@ function FAT_init(){
         const spinRPM = (omega / (2 * Math.PI)) * 60;
         positions.push({ x, y, energy, fps: fpsVal, time, spin: spinRPM });
   
-        let torqueScale = 10;
+        let torqueScale = 6.45;
         let torque = computeTorque(omega, radius, rho_air, airViscosity) * torqueScale;
         let alpha = -torque / momentOfInertia;
         omega += alpha * dt;
