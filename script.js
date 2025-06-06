@@ -50,8 +50,7 @@ function FAT_init(){
     const scopeAngleDisplay = document.getElementById('scopeAngleDisplay');
   
     // Hop-up
-    const hopupPlusButton = document.getElementById('hopupPlus');
-    const hopupMinusButton = document.getElementById('hopupMinus');
+    const hopupContainer = document.getElementById('hopupContainer');
     const hopupDisplay = document.getElementById('hopupDisplay');
     const hopupBar = document.getElementById('hopupBar');
   
@@ -1253,23 +1252,35 @@ function FAT_init(){
       updateResultsAndEnergies();
     });
   
-    // Hop-up
-    hopupPlusButton.addEventListener('click', () => {
-      if (hopUpPercentage < 100) {
-        hopUpPercentage += 0.25;
-        if (hopUpPercentage > 100) hopUpPercentage = 100;
-        updateHopupDisplay();
-        updateResultsAndEnergies();
-      }
-    });
-    hopupMinusButton.addEventListener('click', () => {
-      if (hopUpPercentage > 0) {
-        hopUpPercentage -= 0.25;
-        if (hopUpPercentage < 0) hopUpPercentage = 0;
-        updateHopupDisplay();
-        updateResultsAndEnergies();
-      }
-    });
+    // Hop-up drag on bar
+    function setHopFromClientX(clientX) {
+      const rect = hopupContainer.getBoundingClientRect();
+      let percent = ((clientX - rect.left) / rect.width) * 100;
+      if (percent < 0) percent = 0;
+      if (percent > 100) percent = 100;
+      percent = Math.round(percent / 0.25) * 0.25;
+      hopUpPercentage = percent;
+      updateHopupDisplay();
+      updateResultsAndEnergies();
+    }
+    let draggingHopup = false;
+    const startHopupDrag = e => {
+      draggingHopup = true;
+      setHopFromClientX(e.touches ? e.touches[0].clientX : e.clientX);
+      e.preventDefault();
+    };
+    const moveHopupDrag = e => {
+      if (!draggingHopup) return;
+      setHopFromClientX(e.touches ? e.touches[0].clientX : e.clientX);
+      e.preventDefault();
+    };
+    const endHopupDrag = () => { draggingHopup = false; };
+    hopupContainer.addEventListener('mousedown', startHopupDrag);
+    hopupContainer.addEventListener('touchstart', startHopupDrag);
+    document.addEventListener('mousemove', moveHopupDrag);
+    document.addEventListener('touchmove', moveHopupDrag);
+    document.addEventListener('mouseup', endHopupDrag);
+    document.addEventListener('touchend', endHopupDrag);
   
     // Angle de tir
     anglePlusButton.addEventListener('click', () => {
