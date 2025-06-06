@@ -771,17 +771,20 @@ function FAT_init(){
     // ---------------------------------------------------------------------
     function updateTimeComparisonTable(fps, poidsGr, angleDeg) {
       const distances = Array.from({ length: 21 }, (_, i) => i * 5); //0..100
-      const currentTimes = calculateTimesAtDistances(fps, poidsGr, angleDeg);
-      const currentMap = {};
-      currentTimes.forEach(pt => {
-        currentMap[pt.distance] = pt.time;
-      });
-  
-      let columns = [{
-        label: getCurrentLabel(fps, poidsGr),
-        color: 'magenta',
-        dataMap: currentMap
-      }];
+      let columns = [];
+
+      if (fps !== undefined && poidsGr !== undefined && angleDeg !== undefined) {
+        const currentTimes = calculateTimesAtDistances(fps, poidsGr, angleDeg);
+        const currentMap = {};
+        currentTimes.forEach(pt => {
+          currentMap[pt.distance] = pt.time;
+        });
+        columns.push({
+          label: getCurrentLabel(fps, poidsGr),
+          color: 'magenta',
+          dataMap: currentMap
+        });
+      }
       savedCurves.forEach(c => {
         let map = {};
         c.timeData.forEach(pt => {
@@ -793,6 +796,11 @@ function FAT_init(){
           dataMap: map
         });
       });
+
+      if (columns.length === 0) {
+        timeComparisonTableContainer.innerHTML = '';
+        return;
+      }
   
       let html = `<div style="overflow-x:auto;">
         <table style="border-collapse: collapse; width:100%; font-size:0.9em;">
@@ -847,21 +855,28 @@ function FAT_init(){
 
     function updateEnergyComparisonTable(fps, poidsGr, angleDeg) {
       const distances = Array.from({ length: 21 }, (_, i) => i * 5);   // 0..100
-      const currentEnergies = calculateEnergyAtDistances(fps, poidsGr, angleDeg);
-      const currentMap = {};
-      currentEnergies.forEach(pt => { currentMap[pt.distance] = pt.energy; });
-    
-      // colonne courante + éventuelles courbes sauvegardées
-      let columns = [{
-        label: getCurrentLabel(fps, poidsGr),
-        color: 'lime',
-        dataMap: currentMap
-      }];
+      let columns = [];
+
+      if (fps !== undefined && poidsGr !== undefined && angleDeg !== undefined) {
+        const currentEnergies = calculateEnergyAtDistances(fps, poidsGr, angleDeg);
+        const currentMap = {};
+        currentEnergies.forEach(pt => { currentMap[pt.distance] = pt.energy; });
+        columns.push({
+          label: getCurrentLabel(fps, poidsGr),
+          color: 'lime',
+          dataMap: currentMap
+        });
+      }
       savedCurves.forEach(c => {
         const map = {};
         c.energyData.forEach(pt => { map[pt.distance] = pt.energy; });
         columns.push({ label: c.label, color: c.color, dataMap: map });
       });
+
+      if (columns.length === 0) {
+        energyComparisonTableContainer.innerHTML = '';
+        return;
+      }
     
       // ── construction HTML identique à la table “Time” ────────────────────
       let html = `<div style="overflow-x:auto;">
@@ -1137,9 +1152,9 @@ function FAT_init(){
       );
   
       /* Tables -------------------------------------------------------- */
-      timeComparisonTableContainer.innerHTML = '';
-      energyComparisonTableContainer.innerHTML = '';  
       const p0 = savedCurves[0].params;                 // pour la table holdover
+      updateTimeComparisonTable();
+      updateEnergyComparisonTable();
       updateHoldoverTable(p0.fps, p0.poids, p0.angle);
     }
     function restoreCurvesFromUrl() {
