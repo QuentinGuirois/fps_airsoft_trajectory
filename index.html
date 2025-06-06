@@ -512,38 +512,66 @@
             <h2 class="text-xl font-semibold mb-4 flex items-center">
                 <i class="fas fa-question-circle mr-2" aria-hidden="true"></i> FAQ
             </h2>
-            <div class="space-y-4 text-sm">
-                <div>
-                    <h3 class="font-semibold">Qu'est-ce que F.A.T&nbsp;?</h3>
-                    <p class="text-grey-200">F.A.T est un outil gratuit permettant de convertir les FPS en Joules et de simuler la trajectoire d'une bille d'airsoft. Il tient compte de nombreux paramètres comme la masse, l'angle de tir ou encore la pression atmosphérique.</p>
-                </div>
-                <div>
-                    <h3 class="font-semibold">Quel modèle physique est utilisé&nbsp;?</h3>
-                    <p class="text-grey-200">Le moteur de calcul s'appuie sur les coefficients de traînée et de portance issus des travaux de <a href="https://mackila.com/airsoft/ATP/" target="_blank" class="font-bold">mackila.com</a>. Le script prend aussi en compte la perte progressive du spin via la fonction <code>computeTorque</code> afin de rester fidèle aux comportements observés sur le terrain.</p>
-                </div>
-                <div>
-                    <h3 class="font-semibold">Pourquoi avoir ajouté le <code>torqueScale</code> (torqueSquale)&nbsp;?</h3>
-                    <p class="text-grey-200">Dans la réalité, le backspin diminue plus vite que ne le prédit la théorie. Le paramètre <code>torqueScale</code> sert à amplifier le couple de freinage pour coller aux observations pratiques et fournir des trajectoires plus réalistes.</p>
-                </div>
-                <div>
-                    <h3 class="font-semibold">Comment utiliser le simulateur&nbsp;?</h3>
-                    <p class="text-grey-200">Choisissez le poids de bille, saisissez votre vitesse ou énergie, puis ajustez l'angle de tir et le hop‑up. Lancez ensuite le calcul pour afficher les courbes et la table de contre-visée.</p>
-                </div>
-                <div>
-                    <h3 class="font-semibold">Puis-je modifier la hauteur de tir&nbsp;?</h3>
-                    <p class="text-grey-200">Oui. Dans la section paramètres, renseignez la hauteur de tir et l'offset lunette afin d'obtenir un résultat adapté à votre réplique et à votre position de visée.</p>
-                </div>
-                <div>
-                    <h3 class="font-semibold">Le modèle est-il fiable&nbsp;?</h3>
-                    <p class="text-grey-200">Les équations sont basées sur des relations physiques reconnues et ajustées grâce à des tests terrain. Les résultats restent néanmoins théoriques et peuvent varier selon l'état de votre réplique ou les conditions météo.</p>
-                </div>
-                <div>
-                    <h3 class="font-semibold">Les résultats sont faux, j'ai testé la portée de ma réplique et je tape plus loin</h3>
-                    <p class="text-grey-200">C’est vrai. Le résultat que vous voyez n’est probablement pas le même que celui que vous avez mesuré, et ce pour plusieurs raisons.</p>
-                    <p class="text-grey-200 mt-2">1&nbsp;- Les conditions du tir&nbsp;: pour rendre valable la comparaison, il faut que vous tiriez sur une cible à 1&nbsp;m&nbsp;50 du sol avec un canon parfaitement parallèle au sol. Si ces conditions ne sont pas réunies, vous obtiendrez forcément des résultats différents.</p>
-                    <p class="text-grey-200 mt-2">2&nbsp;- La théorie et la précision du modèle appliqué&nbsp;: bien que le simulateur soit l’un des plus poussés disponibles sur le web, il reste théorique. Nous recherchons actuellement un partenaire pour réaliser des tests en conditions réelles afin d’ajuster la traînée ou le spin&nbsp;decay.</p>
-                    <p class="text-grey-200 mt-2">3&nbsp;- L’angle de tir&nbsp;: un paramètre souvent oublié. En visant une cible lointaine, vous levez naturellement votre réplique de quelques degrés. Ce léger angle peut expliquer un écart important avec la simulation, surtout si votre hop&nbsp;up est très efficace.</p>
-                </div>
+            <div class="space-y-2 text-sm">
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Qu'est-ce que F.A.T&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200">
+                        F.A.T est un outil gratuit permettant de convertir les FPS en Joules et de simuler la trajectoire d'une bille d'airsoft. Il tient compte de nombreux paramètres comme la masse, l'angle de tir ou encore la pression atmosphérique.
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Quel modèle physique est utilisé&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200">
+                        Le moteur de calcul s'appuie sur les coefficients de traînée et de portance issus des travaux de <a href="https://mackila.com/airsoft/ATP/" target="_blank" class="font-bold">mackila.com</a>. Le script prend aussi en compte la perte progressive du spin via la fonction <code>computeTorque</code> afin de rester fidèle aux comportements observés sur le terrain.
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Pourquoi avoir ajouté le <code>torqueScale</code> (torqueSquale)&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200">
+                        Dans la réalité, le backspin diminue plus vite que ne le prédit la théorie. Le paramètre <code>torqueScale</code> sert à amplifier le couple de freinage pour coller aux observations pratiques et fournir des trajectoires plus réalistes.
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Comment utiliser le simulateur&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200">
+                        Choisissez le poids de bille, saisissez votre vitesse ou énergie, puis ajustez l'angle de tir et le hop‑up. Lancez ensuite le calcul pour afficher les courbes et la table de contre-visée.
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Puis-je modifier la hauteur de tir&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200">
+                        Oui. Dans la section paramètres, renseignez la hauteur de tir et l'offset lunette afin d'obtenir un résultat adapté à votre réplique et à votre position de visée.
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Le modèle est-il fiable&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200">
+                        Les équations sont basées sur des relations physiques reconnues et ajustées grâce à des tests terrain. Les résultats restent néanmoins théoriques et peuvent varier selon l'état de votre réplique ou les conditions météo.
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Les résultats sont faux, j'ai testé la portée de ma réplique et je tape plus loin
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        <p>C’est vrai. Le résultat que vous voyez n’est probablement pas le même que celui que vous avez mesuré, et ce pour plusieurs raisons.</p>
+                        <p>1&nbsp;- Les conditions du tir&nbsp;: pour rendre valable la comparaison, il faut que vous tiriez sur une cible à 1&nbsp;m&nbsp;50 du sol avec un canon parfaitement parallèle au sol. Si ces conditions ne sont pas réunies, vous obtiendrez forcément des résultats différents.</p>
+                        <p>2&nbsp;- La théorie et la précision du modèle appliqué&nbsp;: bien que le simulateur soit l’un des plus poussés disponibles sur le web, il reste théorique. Nous recherchons actuellement un partenaire pour réaliser des tests en conditions réelles afin d’ajuster la traînée ou le spin&nbsp;decay.</p>
+                        <p>3&nbsp;- L’angle de tir&nbsp;: un paramètre souvent oublié. En visant une cible lointaine, vous levez naturellement votre réplique de quelques degrés. Ce léger angle peut expliquer un écart important avec la simulation, surtout si votre hop&nbsp;up est très efficace.</p>
+                    </div>
+                </details>
             </div>
         </section>
 
