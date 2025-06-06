@@ -943,3 +943,4 @@ input:checked + .toggle-slider:before {
   }
 }
 #hopupContainer{touch-action:none}
+#hopupRange{position:absolute;inset:0;width:100%;height:100%;opacity:0}
