@@ -181,7 +181,7 @@
                 <img src="./src/img/favicon.webp" class="mr-2" style="max-width: 45px;" alt="logo FAT">
                 <h1
                     class="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 leading-tight">
-                    F.A.T : Convertisseur joules fps & simulateur de trajectoire airsoft
+                    F.A.T (v2.0.9) : Convertisseur joules fps & simulateur de trajectoire airsoft
                 </h1>
             </div>
             <p class="text-gray-300 mx-auto text-center">
@@ -516,63 +516,319 @@
             <div class="space-y-2 text-sm">
                 <details class="border-t border-gray-600 group">
                     <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Qu'est-ce que F.A.T&nbsp;?
+                        Comment fonctionne ce simulateur de trajectoire airsoft ?
                     </summary>
                     <div class="pb-2 text-grey-200">
-                        F.A.T est un outil gratuit permettant de convertir les FPS en Joules et de simuler la trajectoire d'une bille d'airsoft. Il tient compte de nombreux paramètres comme la masse, l'angle de tir ou encore la pression atmosphérique.
+                        Ce simulateur calcule la trajectoire d'une bille d’airsoft à partir des lois physiques réelles:
+
+                        <ul class="mt-2 mb-2">
+                            <li>- Vitesse initiale (FPS)</li>
+                            <li>- Énergie cinétique (Joules)</li>
+                            <li>- Poids de la bille (grammage)</li>
+                            <li>- Résistance de l'air (traînée, drag)</li>
+                            <li>- Conditions environnementales (pression, température)</li>
+                            <li>- Vitesse de rotation initiale</li>
+                            <li>- Gravité</li>
+                        </ul>
+
+                        Le modèle prend en compte l’effet Magnus pour simuler la portance générée par le hop-up, la perte progressive de spin (décroissance du backspin) et la traînée aérodynamique.
+                        La trajectoire affichée est purement physique : aucune triche ni “correction magique” !
                     </div>
                 </details>
                 <details class="border-t border-gray-600 group">
                     <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Quel modèle physique est utilisé&nbsp;?
+                        Quelle est la base scientifique du modèle physique utilisé ?
                     </summary>
                     <div class="pb-2 text-grey-200">
-                        Le moteur de calcul s'appuie sur les coefficients de traînée et de portance issus des travaux de <a href="https://mackila.com/airsoft/ATP/" target="_blank" class="font-bold">mackila.com</a>. Le script prend aussi en compte la perte progressive du spin via la fonction <code>computeTorque</code> afin de rester fidèle aux comportements observés sur le terrain.
+                        <ul class="mt-2 mb-2">
+                            <li>- Les travaux de Mackila.com/airsoft/ATP (référence mondiale)</li>
+                            <li>- La physique du projectile sphérique (loi de Stokes, drag polynomial, Magnus)</li>
+                            <li>- Les modèles expérimentaux issus de la NASA, de la balistique sportive (golf, paintball) et des publications universitaires</li>
+                            
+                        </ul>
+                        Chaque force (traînée, portance Magnus, couple de freinage du spin) est modélisée avec les vraies formules utilisées dans les simulateurs de balistique.                    
                     </div>
                 </details>
                 <details class="border-t border-gray-600 group">
                     <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Pourquoi avoir ajouté le <code>torqueScale</code> (torqueSquale)&nbsp;?
+                        Le simulateur airsoft est-il fiable à 100% &nbsp;?
                     </summary>
                     <div class="pb-2 text-grey-200">
-                        Dans la réalité, le backspin diminue plus vite que ne le prédit la théorie. Le paramètre <code>torqueScale</code> sert à amplifier le couple de freinage pour coller aux observations pratiques et fournir des trajectoires plus réalistes.
+                        Non. Aucun simulateur ne peut prédire exactement le comportement réel de toutes les billes, dans toutes les conditions.
+
+                        La physique appliquée est fiable, mais la vraie vie ajoute :
+                        <ul class="mt-2 mb-2">
+                            <li>- Variations du hop-up selon la marque, usure ou montage</li>
+                            <li>- Imperfections des billes (surface, diamètre réel)</li>
+                            <li>- Conditions météo (vent, humidité, température)</li>
+                            <li>- Erreur de visée (inclinaison, angle de tir)</li>
+                            <li>- Energie différente selon la bille mesurée au chrony</li>
+                            
+                        </ul>
+                        Le simulateur donne une estimation très réaliste pour des tirs "de laboratoire", mais chaque réplique, chaque session et chaque bille aura de légères différences.
+
                     </div>
                 </details>
                 <details class="border-t border-gray-600 group">
                     <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Comment utiliser le simulateur&nbsp;?
+                        Pourquoi mes résultats sont différents de ceux du simulateur&nbsp;?
+                        
                     </summary>
                     <div class="pb-2 text-grey-200">
-                        Choisissez le poids de bille, saisissez votre vitesse ou énergie, puis ajustez l'angle de tir et le hop‑up. Lancez ensuite le calcul pour afficher les courbes et la table de contre-visée.
+                        <ul class="mt-2 mb-2">
+                            <li>- Position de tir différente (ex : canon non horizontal, cible plus haute ou plus basse)</li>
+                            <li>- Angle de visée : si tu lèves légèrement ta réplique pour “toucher plus loin”, tu modifies la portée réelle sans t’en rendre compte</li>
+                            <li>- Vent ou météo</li>
+                            <li>- Réglage du hop-up sous ou sur-performant par rapport à la théorie</li>
+                            <li>- Spin initial surestimé (le simulateur estime parfois un backspin plus élevé que ce que le joint hop-up transmet réellement)</li>
+                            <li>- Réglages d’upgrade non pris en compte : tout ce qui se passe dans le canon (volume d’air, étanchéité, pression, etc.) n’intervient que jusqu’à la sortie : c’est la bille “après la bouche” qui est simulée ici.</li>
+                        </ul>
+                    </div>
+                </details>
+                
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Pourquoi le simulateur affiche-t-il une portée plus courte que ce que je mesure&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200">
+                        <ul class="mt-2 mb-2">
+                            <li>- Tu tires en relevant (même légèrement) ta réplique</li>
+                            <li>- Ton hop-up donne un backspin plus efficace que la valeur entrée</li>
+                            <li>- Les conditions météo ou la pente du terrain te sont favorables (vent, descente, etc.)</li>
+                            <li>- Le simulateur se base sur des valeurs “pessimistes” pour éviter de survendre la portée</li>
+                            
+                        </ul>
+                        Astuce : Pour comparer, place-toi à 1,50 m du sol, canon parfaitement horizontal, terrain plat, cible à la même hauteur.
+                        Tout écart par rapport à cette condition “labo” fausse la comparaison.
                     </div>
                 </details>
                 <details class="border-t border-gray-600 group">
                     <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Puis-je modifier la hauteur de tir&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200">
-                        Oui. Dans la section paramètres, renseignez la hauteur de tir et l'offset lunette afin d'obtenir un résultat adapté à votre réplique et à votre position de visée.
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Le modèle est-il fiable&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200">
-                        Les équations sont basées sur des relations physiques reconnues et ajustées grâce à des tests terrain. Les résultats restent néanmoins théoriques et peuvent varier selon l'état de votre réplique ou les conditions météo.
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Les résultats sont faux, j'ai testé la portée de ma réplique et je tape plus loin
+                        Pourquoi la portée airsoft varie-t-elle autant entre les joueurs&nbsp;?
                     </summary>
                     <div class="pb-2 text-grey-200 space-y-2">
-                        <p>C’est vrai. Le résultat que vous voyez n’est probablement pas le même que celui que vous avez mesuré, et ce pour plusieurs raisons.</p>
-                        <p>1&nbsp;- Les conditions du tir&nbsp;: pour rendre valable la comparaison, il faut que vous tiriez sur une cible à 1&nbsp;m&nbsp;50 du sol avec un canon parfaitement parallèle au sol. Si ces conditions ne sont pas réunies, vous obtiendrez forcément des résultats différents.</p>
-                        <p>2&nbsp;- La théorie et la précision du modèle appliqué&nbsp;: bien que le simulateur soit l’un des plus poussés disponibles sur le web, il reste théorique. Nous recherchons actuellement un partenaire pour réaliser des tests en conditions réelles afin d’ajuster la traînée ou le spin&nbsp;decay.</p>
-                        <p>3&nbsp;- L’angle de tir&nbsp;: un paramètre souvent oublié. En visant une cible lointaine, vous levez naturellement votre réplique de quelques degrés. Ce léger angle peut expliquer un écart important avec la simulation, surtout si votre hop&nbsp;up est très efficace.</p>
+                        <ul class="mt-2 mb-2">
+                            <li>- Angle de tir (consciemment ou non)</li>
+                            <li>- Zérotage du viseur (tu règles le point rouge à 40 m, mais tu tires à 70 m en levant naturellement l’arme)</li>
+                            <li>- Grammage, puissance et effet hop-up différents</li>
+                            <li>- Régularité de la réplique</li>
+                            <li>- Courbe du terrain et conditions extérieures</li>
+                            
+                        </ul>
                     </div>
                 </details>
+                
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Comment sont calculées la traînée, le Magnus, et la décroissance du spin (spin decay)&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        <ul class="mt-2 mb-2">
+                            <li>- Traînée aérodynamique (drag) : basée sur un polynôme empirique calibré pour la sphère à haute vitesse, ajusté selon le spin</li>
+                            <li>- Effet Magnus (portance) : calculé via le ratio spin/vitesse, avec la vraie formule Magnus utilisée dans la balistique sportive</li>
+                            <li>- Décroissance du spin (torque, spin decay)
+                                <ul class="ml-2">
+                                <li>- Formule Mackila/NASA : $C_t = 6.45/\sqrt{Re_\omega} + 32.1/Re_\omega$</li>
+                                <li>- Plus la bille tourne vite, plus elle “dissipe” vite son backspin (turbulence, friction)</li>
+                                <li>- Plus la bille est lourde, plus elle garde longtemps son spin</li>
+                                <li>- Facteur de correction (torqueSquale) pour mieux coller à la réalité et aux observation terrain.</li>
+                            </ul></li>
+                            
+                        </ul>
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Pourquoi la courbe n'est-elle pas parfaitement droite, même avec un hop-up fort&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        <ul class="mt-2 mb-2">
+                            <li>- Gravité (la tire vers le sol)</li>
+                            <li>- Portance Magnus (la soulève si le spin est suffisant)</li>
+                            <li>- Résistance de l’air (ralentit, donc réduit la portance avec la distance)
+                                Même avec un tir “tendu”, la bille monte légèrement puis finit par chuter.</li>
+                            
+                            
+                        </ul>
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Quelle bille va le plus loin&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        <ul class="mt-2 mb-2">
+                            <li>- Bille lourde : meilleure inertie, meilleure énergie résiduelle, courbe plus stable</li>
+                            <li>- Bille légère : vitesse initiale plus haute, mais perd rapidement son énergie et sa portée réelle est souvent moindre au-delà de 40m</li>
+                            
+                            
+                        </ul>
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Pourquoi la bille lourde frappe-t-elle plus fort à longue distance&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        L’inertie de la bille lourde fait qu’elle ralentit moins vite, garde une énergie d’impact plus élevée, et subit moins le vent et les micro-turbulences
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        À partir de quelle distance la bille lourde “rattrape” la bille légère&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        En général, après 35-45m (selon le setup), la bille lourde aura la même vitesse, voire une vitesse supérieure à la bille légère tirée à la même énergie.
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Comment calculer la vitesse d’une bille d’airsoft en FPS ou en joules&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        <ul class="mt-2 mb-2">
+                            <li>- Énergie (J) = 0.5 × masse (kg) × vitesse² (m/s)</li>
+                            <li>- Pour convertir en FPS : 1 m/s = 3.28084 fps</li>
+                            <li>- Utilise notre outil “convertisseur fps-joules” pour ne jamais te tromper :D</li>
+                        </ul>
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Pourquoi la masse influe-t-elle autant sur la trajectoire et la portée&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        Une bille lourde perd moins d’énergie à chaque mètre parcouru, résiste mieux au vent, et conserve sa trajectoire malgré les pertes de vitesse initiale.
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Quel est le rôle du hop-up dans la portée et la courbe&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        <ul class="mt-2 mb-2">
+                            <li>- Il génère le backspin qui crée une portance Magnus, permettant à la bille de "flotter" plus longtemps avant de chuter.</li>
+                            <li>- Trop de hop-up : la bille “monte”, pas assez : la bille “plonge”.
+                            Le réglage idéal est celui qui donne la trajectoire la plus plate et la plus longue possible.</li>
+                        </ul>
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Pourquoi faut-il tirer parfaitement à l’horizontale pour tester la portée&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        <ul class="mt-2 mb-2">
+                            <li>- Pour comparer de façon “physique pure” et neutraliser l’effet du tireur, du viseur ou du terrain.</li>
+                            <li>- L’idéal : canon à 1,50 m du sol, cible à la même hauteur, terrain plat, pas de vent.</li>
+                        </ul>
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        L’angle de tir influence-t-il la portée réelle&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        Oui !
+                        Même 1 ou 2 degrés de relèvement ajoutent 5 à 15 m de portée en fin de courbe.
+                        C’est la principale cause des écarts entre simulation et réalité terrain.
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Dois-je régler mon hop-up pour chaque grammage&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        Oui, absolument :
+                        <ul class="mt-2 mb-2">
+                            <li>- Plus la bille est lourde, plus il faut de force pour “soutenir” la bille</li>
+                            <li>- Un hop-up trop fort sur une bille légère = trajectoire en cloche</li>
+                            <li>- Un hop-up trop faible sur une bille lourde = trajectoire plongeante</li>
+                        </ul>
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Comment régler le hop-up pour un tir tendu optimal&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        
+                        <ul class="mt-2 mb-2">
+                            <li>- Tire sur une cible à 40 m</li>
+                            <li>- Ajuste pour que la bille “passe” le plus près possible de la ligne de visée sans trop monter</li>
+                            <li>- Si la bille monte trop, réduis l’appui ; si elle plonge, augmente-le.</li>
+                        </ul>
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Pourquoi l’outil ne prend-il pas en compte le volume d’air de mon cylindre, ou mes upgrades&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        Parce qu’une fois la bille sortie du canon, elle obéit uniquement aux lois de la physique extérieure.
+                        Le simulateur commence juste à la bouche, donc tous les upgrades qui influencent la vitesse, l’énergie ou le spin sont déjà “pris en compte” via les paramètres mesurés (vitesse, grammage, hop-up).
+                        
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Comment interpréter la courbe affichée sur mobile / desktop&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        <ul class="mt-2 mb-2">
+                            <li>- Pour des raisons de lisibilité, les axes hauteur et longueur sont compressés différemment sur mobile</li>
+                            <li>- Sur desktop (ordinateur de bureau), la courbe est plus “proche” de la réalité géométrique</li>
+                            
+                        </ul>
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Le record du monde “80m à 1 joule” est-il crédible selon la physique&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        <ul class="mt-2 mb-2">
+                            <li>- Les données disponibles sont imprécises</li>
+                            <li>- À 1 joule réel, même avec une 0.20 g, la portée utile max mesurée est d’environ 55–60 m (et la pénétration d’une feuille de papier à 80 m semble physiquement impossible)</li>
+                            
+                        </ul>
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Quelle bille choisir pour mon style de jeu&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        <ul class="mt-2 mb-2">
+                            <li>- Ultra CQB : 0.20–0.25 g, répliques rapides, tir court</li>
+                            <li>- Forêt, extérieur : 0.32–0.36 g pour le standard, 0.40–0.48 g pour DMR/sniper</li>
+                            <li>Plus la bille est lourde, plus elle sera précise à longue distance et moins sensible au vent</li>
+                        </ul>
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                        Mon impact à 20m ne se ressent pas sur le joueur adverse, c’est normal&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        <ul class="mt-2 mb-2">
+                            <li>- Oui, surtout avec de la 0.20 g à 1 joule : à 20 m, tu as déjà perdu jusqu’à 60–80 % de l’énergie initiale</li>
+                            <li>- Privilégie les billes lourdes (0.32–0.48 g) pour un meilleur ressenti à l’impact</li>
+                        </ul>
+                    </div>
+                </details>
+                <details class="border-t border-gray-600 group">
+                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
+                       Pourquoi le simulateur ne prend-il pas en compte le vent, la pluie ou l’humidité&nbsp;?
+                    </summary>
+                    <div class="pb-2 text-grey-200 space-y-2">
+                        <ul class="mt-2 mb-2">
+                            <li>- Parce que ces variables sont trop imprévisibles, et rendent la comparaison impossible entre joueurs</li>
+                            <li>- Le but du simulateur est de fournir une base physique universelle, neutre, et la plus comparable possible</li>
+                        </ul>
+                    </div>
+                </details>
+
             </div>
         </section>
 
