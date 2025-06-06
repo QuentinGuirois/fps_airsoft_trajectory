@@ -23,7 +23,7 @@ function FAT_init(){
     let scopeAngleDelta = 0;
     let pressureHpa = 1020;
     let temperatureCelsius = 20;
-    let hopUpPercentage = 49;
+    let hopUpPercentage = 60;
     let shootingHeight = 1.5;
     let scopeOffset = 0.05; // 5 cm
   
@@ -244,8 +244,8 @@ function FAT_init(){
   
       const rho_air = calculateAirDensity(temperatureCelsius, pressureHpa);
   
-      let omegaBase = 25000;
-      let omega = omegaBase * (hopUpPercentage / 100);
+      const omegaBase = 170000; // RPM
+      let omega = omegaBase * (hopUpPercentage / 100) * (2 * Math.PI / 60); // rad/s
       const momentOfInertia = (2 / 5) * mass * (radius ** 2);
   
       let time = 0;
@@ -290,7 +290,7 @@ function FAT_init(){
         const spinRPM = (omega / (2 * Math.PI)) * 60;
         positions.push({ x, y, energy, fps: fpsVal, time, spin: spinRPM });
   
-        let torqueScale = 10;
+        let torqueScale = 8;
         let torque = computeTorque(omega, radius, rho_air, airViscosity) * torqueScale;
         let alpha = -torque / momentOfInertia;
         omega += alpha * dt;

@@ -57,13 +57,18 @@ export function computeCd(omega, Vbb, rho_air, radius, mu) {
   return numerator / denominator;
 }
 
-export function computeTorque(omega, radius, rho_air, mu) {
-  const ReOmega = (rho_air * Math.abs(omega) * (radius ** 2)) / mu;
+export function computeTorque(omega, radius, rho_air, airViscosity) {
+  // Calcul du nombre de Reynolds rotationnel
+  const ReOmega = (rho_air * Math.abs(omega) * Math.pow(radius, 2)) / airViscosity;
+
+  let torque;
   if (ReOmega < 1) {
-    return 8 * Math.PI * mu * (radius ** 3) * omega;
+    // Régime Stokes (laminaire)
+    torque = 8 * Math.PI * airViscosity * Math.pow(radius, 3) * omega;
   } else {
-    // Based on mackila's equation for rotating spheres
+    // Régime turbulent (Mackila/empirique)
     const CtVal = 6.45 / Math.sqrt(ReOmega) + 32.1 / ReOmega;
-    return 0.5 * CtVal * rho_air * (radius ** 5) * omega * Math.abs(omega);
+    torque = 0.5 * rho_air * CtVal * Math.pow(radius, 5) * omega * Math.abs(omega);
   }
+  return torque;
 }

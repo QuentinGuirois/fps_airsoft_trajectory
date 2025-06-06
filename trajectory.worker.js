@@ -43,8 +43,8 @@ function calculateTrajectory2D(fps, poidsGr, angleDeg, params) {
 
   const rho_air = calculateAirDensity(temperatureCelsius, pressureHpa);
 
-  const omegaBase = 25000;
-  let omega = omegaBase * (hopUpPercentage / 100);
+  const omegaBase = 170000;
+  let omega = omegaBase * (hopUpPercentage / 100) * (2 * Math.PI / 60);
   const momentOfInertia = (2 / 5) * mass * (radius ** 2);
 
   let time = 0;
@@ -62,7 +62,7 @@ function calculateTrajectory2D(fps, poidsGr, angleDeg, params) {
     let liftForce = 0.5 * rho_air * Cl * area * velocity * velocity;
     const weight = mass * g;
 
-    const maxLift = 5 * weight;
+    const maxLift = 15 * weight;
     if (Math.abs(liftForce) > maxLift) liftForce = maxLift * Math.sign(liftForce);
 
     const v_unit_x = velocityX / velocity;
@@ -83,7 +83,7 @@ function calculateTrajectory2D(fps, poidsGr, angleDeg, params) {
     const spinRPM = (omega / (2 * Math.PI)) * 60;
     positions.push({ x, y, energy, fps: fpsVal, time, spin: spinRPM });
 
-    const torque = computeTorque(omega, radius, rho_air, airViscosity) * 10;
+    const torque = computeTorque(omega, radius, rho_air, airViscosity);
     const alpha = -torque / momentOfInertia;
     omega = Math.max(0, omega + alpha * dt);
 
