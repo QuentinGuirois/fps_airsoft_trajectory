@@ -1,0 +1,48 @@
+{
+  "name": "F.A.T. — Calculateur balistique Airsoft",
+  "short_name": "F.A.T.",
+  "description": "Convertisseur Joules/FPS et simulateur de trajectoire de billes airsoft fondé sur le modèle ATP de Mackila.",
+  "lang": "fr-FR",
+  "id": "/",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#10140c",
+  "theme_color": "#10140c",
+  "categories": ["sports", "utilities", "education"],
+  "icons": [
+    {
+      "src": "/assets/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/img/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Simuler un tir",
+      "short_name": "Simuler",
+      "url": "/#calculateur",
+      "icons": [{ "src": "/assets/img/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Convertir Joules / FPS",
+      "short_name": "Convertir",
+      "url": "/convertisseur-joules-fps/",
+      "icons": [{ "src": "/assets/img/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

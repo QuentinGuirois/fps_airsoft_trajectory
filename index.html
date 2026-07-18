@@ -1,842 +1,348 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="./src/img/favicon.png">
-    <!-- Output non bloquant-->
-    <link rel="stylesheet" href="./src/output.css">
-    <script type="application/ld+json">
-        {
-          "@context": "https://schema.org",
-          "@type": "SoftwareApplication",
-          "name": "FPS Airsoft Trajectory Calculator",
-          "url": "https://fps-airsoft-trajectory.com",
-          "description": "Calculateur de trajectoire pour billes Airsoft prenant en compte la vitesse initiale (FPS), le poids de la bille, l'angle de tir et la résistance de l'air.",
-          "applicationCategory": "SportsApplication",
-          "operatingSystem": "All",
-          "browserRequirements": "JavaScript",
-          "inLanguage": "fr-FR",
-          "softwareVersion": "2.0.8",
-          "datePublished": "2025-03-15",
-          "author": {
-            "@type": "Person",
-            "name": "Quentin Guirois (Keep)",
-            "url": "https://www.linkedin.com/in/quentin-guirois-386636163/"
-          },
-          "publisher": {
-            "@type": "Organization",
-            "name": "Fps Airsoft Trajectory",
-            "logo": {
-              "@type": "ImageObject",
-              "url": "https://fps-airsoft-trajectory.com/src/img/favicon.png"
-            }
-          },
-          "screenshot": "https://fps-airsoft-trajectory.com/src/img/social-media-share.png",
-          "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "EUR",
-            "url": "https://fps-airsoft-trajectory.com"
-          },
-          "potentialAction": {
-            "@type": "SearchAction",
-            "target": "https://fps-airsoft-trajectory.com/?q={search_term}",
-            "query-input": "required name=search_term"
-          }
-        }
-        </script>
-        
-    <title>Convertisseur Joules FPS & Simulateur de trajectoire Airsoft | F.A.T</title>
-    <meta name="description"
-        content="Convertisseur Joules en FPS et FPS en Joules pour l'airsoft. Simulez précisément la trajectoire de vos billes avec F.A.T (FPS Airsoft Trajectory).">
-    <meta property="og:title" content="Convertisseur Joules FPS & Simulateur de trajectoire Airsoft | F.A.T">
-    <meta property="og:description"
-        content="Simulez précisément la trajectoire de vos billes d'airsoft et convertissez facilement (Joules en FPS / FPS en joules) avec F.A.T">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="https://fps-airsoft-trajectory.com/src/img/social-media-share.png">
-    <meta property="og:url" content="https://fps-airsoft-trajectory.com/">
-    <!-- Pré‑connexion au CDN Plotly -->
-    <link rel="preconnect" href="https://cdn.plot.ly" crossorigin>
-    <!-- Pré‑chargement font awesome -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style"
-        crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-            crossorigin="anonymous">
-    </noscript>
-
-    <style>
-        /* ==== Critical CSS, aucun @apply (≈ 1 kio) ==== */
-
-        /* Couleurs, reset élémentaire */
-        :root {
-            --grad-start: #60a5fa;
-            /* blue‑400 */
-            --grad-end: #a78bfa;
-            /* purple‑500 */
-        }
-
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box
-        }
-
-        html,
-        body {
-            margin: 0
-        }
-
-        body {
-            background: #111827;
-            /* gray‑900 */
-            color: #f1f5f9;
-            /* slate‑100 */
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6,
-        p {
-            margin: 0
-        }
-
-        .container {
-            width: 100%;
-            margin-left: auto;
-            margin-right: auto;
-            padding: 2rem 1rem;
-            /* py‑8 px‑4 */
-        }
-
-
-        /* Header LCP */
-        header.hero {
-            min-height: 96px;
-            /* réserve l’espace -> pas de shift */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: .5rem;
-            padding: 1rem;
-            text-align: center
-        }
-
-        header.hero img {
-            width: 42px;
-            height: 42px
-        }
-
-        header.hero h1 {
-            font-size: clamp(1.6rem, 6vw, 2rem);
-            font-weight: 700;
-            line-height: 1.25;
-            background: linear-gradient(90deg, var(--grad-start), var(--grad-end));
-            -webkit-background-clip: text;
-            color: transparent;
-        }
-
-        /* Réserve la hauteur des graphiques avant Plotly */
-        .chart-container {
-            min-height: 400px
-        }
-
-        /* Libellé hop‑up : largeur fixe -> aucune re‑flow */
-        #hopupDisplay {
-            display: inline-block;
-            min-width: 4ch;
-            text-align: right
-        }
-
-        /* Conteneur des 2 toggles : évite push quand JS les insère */
-        .toggle-container {
-            min-height: 48px
-        }
-
-        /* Petits ajustements contraste / focus */
-        .text-grey-200 {
-            color: #e5e7eb
-        }
-
-        /* remplace gray‑400 non‑AA */
-        .btn-primary:focus {
-            outline: 2px solid #3b82f6;
-            outline-offset: 2px
-        }
-    </style>
-
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#10140c">
+  <meta name="description" content="Convertissez Joules et FPS puis simulez la trajectoire, la portée, l'énergie et la dérive d'une bille airsoft avec le modèle ATP de Mackila.">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <title>Calculateur Airsoft : Joules, FPS et trajectoire | F.A.T.</title>
+  <link rel="canonical" href="https://fps-airsoft-trajectory.com/">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <script>(()=>{const e=document.documentElement;let m='system';try{m=localStorage.getItem('fat-theme')||m}catch{}if(!['system','dark','light'].includes(m))m='system';const d=m==='dark'||(m==='system'&&(!window.matchMedia||matchMedia('(prefers-color-scheme: dark)').matches));const t=d?'dark':'light';e.dataset.themeMode=m;e.dataset.theme=t;e.style.colorScheme=t;document.querySelector('meta[name="theme-color"]').content=d?'#10140c':'#eef0e2'})()</script>
+  <link rel="stylesheet" href="/assets/site.css">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:site_name" content="F.A.T.">
+  <meta property="og:title" content="Le calculateur balistique des airsofteurs">
+  <meta property="og:description" content="Joules, FPS, hop-up, portée, énergie résiduelle et vent : passe ton setup au banc ATP.">
+  <meta property="og:url" content="https://fps-airsoft-trajectory.com/">
+  <meta property="og:image" content="https://fps-airsoft-trajectory.com/assets/img/partage-fat.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@graph":[
+      {
+        "@type":"WebSite",
+        "@id":"https://fps-airsoft-trajectory.com/#website",
+        "url":"https://fps-airsoft-trajectory.com/",
+        "name":"F.A.T. — FPS Airsoft Trajectory",
+        "inLanguage":"fr-FR"
+      },
+      {
+        "@type":"SoftwareApplication",
+        "@id":"https://fps-airsoft-trajectory.com/#app",
+        "name":"F.A.T. — Calculateur balistique Airsoft",
+        "url":"https://fps-airsoft-trajectory.com/",
+        "applicationCategory":"SportsApplication",
+        "operatingSystem":"Web, Android, iOS, Windows, macOS",
+        "browserRequirements":"Navigateur moderne avec JavaScript",
+        "description":"Convertisseur Joules/FPS et simulateur de trajectoire de bille airsoft fondé sur le modèle ATP de Mackila.",
+        "isAccessibleForFree":true,
+        "offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},
+        "author":{"@type":"Person","name":"Quentin Guirois","alternateName":"Keep"}
+      },
+      {
+        "@type":"FAQPage",
+        "mainEntity":[
+          {"@type":"Question","name":"Comment convertir des Joules en FPS en airsoft ?","acceptedAnswer":{"@type":"Answer","text":"Il faut connaître la masse réelle de la bille. La vitesse est obtenue à partir de l'énergie cinétique E = 1/2 × m × v², puis convertie de mètres par seconde en feet per second."}},
+          {"@type":"Question","name":"Le simulateur prédit-il exactement la portée d'une réplique ?","acceptedAnswer":{"@type":"Answer","text":"Non. Il calcule un tir théorique à partir des paramètres saisis. La régularité de la réplique, le joint hop-up, les billes, le vent variable et le tireur créent des écarts sur le terrain."}},
+          {"@type":"Question","name":"Quel modèle physique est utilisé ?","acceptedAnswer":{"@type":"Answer","text":"F.A.T. applique le modèle documenté par l'Airsoft Trajectory Project de Mackila : traînée d'une sphère, effet Magnus, spin decay, gravité, densité de l'air et vent."}}
+        ]
+      }
+    ]
+  }
+  </script>
 </head>
+<body>
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <header class="site-header">
+    <div class="shell nav-row">
+      <a class="brand" href="/" aria-label="F.A.T., accueil">
+        <svg class="brand-mark" viewBox="0 0 120 76" aria-hidden="true" focusable="false"><path class="brand-curve" d="M6 62C30 30 62 22 78 26C96 31 106 44 112 62"/><circle class="brand-ball" cx="78" cy="26" r="13"/><path class="brand-spin" d="M60 30A20 20 0 0 1 71 15"/><line class="brand-ground" x1="2" y1="68" x2="118" y2="68"/></svg>
+        <span><strong>F.A.T<span class="brand-dot">.</span></strong><small>FPS Airsoft Trajectory</small></span>
+      </a>
+      <button class="button button-small menu-button" type="button" data-menu-button aria-expanded="false" aria-controls="menu">Menu</button>
+      <nav class="menu" id="menu" data-menu aria-label="Navigation principale">
+        <a href="/#calculateur">Calculateur</a>
+        <a href="/convertisseur-joules-fps/">Joules ↔ FPS</a>
+        <a href="/outils/choisir-gaz-airsoft-pression-temperature/">Gaz / température</a>
+        <a href="/guides/choisir-poids-bille-airsoft/">Guides</a>
+        <a href="/modele-physique-atp/">Le modèle ATP</a>
+        <a href="/a-propos/">Keep</a>
+      </nav>
+      <button class="button button-primary button-small nav-install" type="button" data-install-app hidden>Installer l’app</button>
+    </div>
+  </header>
 
-<body class="gradient-bg min-h-screen text-gray-100">
-    <div class="container mx-auto px-4 py-8">
-        <header class="mb-8 text-center" style="min-height: 110px;">
-            <div class="w-full flex text-center justify-center items-center space-x-2">
-                <img src="./src/img/favicon.webp" class="mr-2" style="max-width: 45px;" alt="logo FAT">
-                <h1
-                    class="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 leading-tight">
-                    F.A.T (v2.0.10) : Convertisseur joules fps & simulateur de trajectoire airsoft
-                </h1>
-            </div>
-            <p class="text-gray-300 mx-auto text-center">
-                Simulez précisément la trajectoire de vos billes d'airsoft grâce au convertisseur FPS en Joules intégré,
-                ajustable selon divers paramètres de jeu.
-            </p>
-        </header>
+  <main id="contenu">
+    <section class="hero">
+      <div class="shell hero-grid">
+        <div>
+          <p class="eyebrow">Calculateur balistique airsoft</p>
+          <h1>Ta bille ne ment pas.<br><span>Les maths non plus.</span></h1>
+          <p class="hero-lead">Convertis Joules et FPS, règle le hop-up, ajoute le vent et visualise la trajectoire réelle de ta bille. F.A.T. transforme le modèle ATP de Mackila en outil de terrain gratuit et installable.</p>
+          <div class="button-row">
+            <a class="button button-primary" href="#calculateur">Passer mon setup au banc</a>
+            <a class="button button-ghost" href="/simulateur-3d-airsoft/" data-advanced-entry>Passer au simulateur 3D avancé</a>
+            <a class="button button-ghost" href="/modele-physique-atp/">Voir ce qu’il y a sous le capot</a>
+          </div>
+          <p class="hero-note">Pas de “+10 mètres parce que ton canon est très joli”. Seulement les paramètres que tu donnes.</p>
+        </div>
+        <div class="hero-console" aria-hidden="true">
+          <div class="console-top"><span>Simulation / ATP</span><span class="trust-tag" data-trust="estimated">Théorique</span></div>
+          <div class="console-number">1,50<small>J</small></div>
+          <div class="console-line">
+            <svg viewBox="0 0 400 90" preserveAspectRatio="none"><path d="M5 66C70 62 118 51 170 43S255 40 304 47 360 67 395 83" fill="none" stroke="var(--chart-active)" stroke-width="4"/><path d="M5 66H395" stroke="var(--ranger)" stroke-dasharray="8 8"/></svg>
+          </div>
+          <div class="console-stats"><div><small>Bille</small><strong>0,28 g</strong></div><div><small>Vitesse</small><strong>340 fps</strong></div><div><small>Hop ATP</small><strong>V/U 0,267</strong></div></div>
+        </div>
+      </div>
+    </section>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <!-- Input Section -->
-            <div class="glass-card rounded-xl p-6 col-span-1">
-                <h2 class="text-xl font-semibold mb-4 flex items-center">
-                    <i class="fas fa-sliders-h mr-2" aria-hidden="true"></i> Paramètres de tir
-                </h2>
+    <section class="trust-strip" aria-label="Caractéristiques principales">
+      <div class="shell trust-grid">
+        <div><strong>Modèle ATP</strong><span>Traînée, Magnus et rotation documentés par Mackila.</span></div>
+        <div><strong>Calcul 3D</strong><span>Hauteur, énergie, temps de vol et dérive au vent.</span></div>
+        <div><strong>100 % gratuit</strong><span>Aucun compte. Ton setup reste dans ton navigateur.</span></div>
+        <div><strong>Mode terrain</strong><span>PWA installable et calculateur disponible hors connexion.</span></div>
+      </div>
+    </section>
 
-                <div class="space-y-4">
-                    <!-- Poids de la bille -->
-                    <div>
-                        <label class="block text-sm font-medium mb-1" for="bbWeight">Poids de la bille (g)</label>
-                        <input type="number" id="bbWeight" step="0.01" min="0.12" max="0.88"
-                            class="input-field w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <p class="text-xs text-grey-200 mt-1">Valeur entre 0.12g et 0.88g</p>
-                    </div>
-
-                    <!-- Vitesse ou énergie -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1" for="bbVelocity">Vitesse (FPS)</label>
-                            <input type="number" id="bbVelocity" step="1" min="0"
-                                class="input-field w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1" for="bbEnergy">Énergie (J)</label>
-                            <input type="number" id="bbEnergy" step="0.01" min="0"
-                                class="input-field w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                    </div>
-
-                    <!-- Hauteur de tir et offset lunette -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1" for="shootingHeight">Hauteur de tir
-                                (m)</label>
-                            <input type="number" id="shootingHeight" step="0.01" min="0" value="1.5"
-                                class="input-field w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1" for="scopeOffset">Offset lunette (cm)</label>
-                            <input type="number" id="scopeOffset" step="0.1" min="0" value="5"
-                                class="input-field w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                    </div>
-
-                    <!-- Angle de tir et angle lunette -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Angle de tir</label>
-                            <div class="flex items-center space-x-2">
-                                <button id="angleMinus" aria-label="diminuer l’angle de tir"
-                                    class="btn-primary px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md">
-                                    <i class="fas fa-minus" aria-hidden="true"></i>
-                                </button>
-                                <span id="angleDisplay" class="flex-1 text-center">0.0°</span>
-                                <button id="anglePlus" aria-label="Augmenter l’angle de tir"
-                                    class="btn-primary px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md">
-                                    <i class="fas fa-plus" aria-hidden="true"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Angle lunette</label>
-                            <div class="flex items-center space-x-2">
-                                <button id="scopeAngleMinus" aria-label="Diminuer l’angle de la lunette"
-                                    class="btn-primary px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md">
-                                    <i class="fas fa-minus" aria-hidden="true"></i>
-                                </button>
-                                <span id="scopeAngleDisplay" class="flex-1 text-center">0.0°</span>
-                                <button id="scopeAnglePlus" aria-label="Augmenter l’angle de la lunette"
-                                    class="btn-primary px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md">
-                                    <i class="fas fa-plus" aria-hidden="true"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Hop-up -->
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Réglage Hop-up</label>
-                        <div class="flex items-center space-x-2">
-                            <div class="flex-1">
-                                <div class="flex justify-between text-xs mb-1">
-                                    <span>0%</span>
-                                    <span>50%</span>
-                                    <span>100%</span>
-                                </div>
-                                <div id="hopupContainer" class="relative select-none">
-                                    <input id="hopupRange" type="range" min="0" max="100" step="0.25" value="60" class="absolute top-0 left-0 w-full h-2 opacity-0">
-                                    <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
-                                        <div id="hopupBar" class="h-full" style="width: 60%; background: linear-gradient(to right, #135aff, #a78bfa);"></div>
-                                    </div>
-                                    <span id="hopupDisplay" class="absolute top-0 right-0 text-xs">60%</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Conditions environnementales -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Pression (hPa)</label>
-                            <div class="flex items-center space-x-2">
-                                <button id="pressureMinus" aria-label="Diminuer la pression atmosphérique"
-                                    class="btn-primary px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md">
-                                    <i class="fas fa-minus" aria-hidden="true"></i>
-                                </button>
-                                <span id="pressureDisplay" class="flex-1 text-center">1020 hPa</span>
-                                <button id="pressurePlus" aria-label="Augmenter la pression atmosphérique"
-                                    class="btn-primary px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md">
-                                    <i class="fas fa-plus" aria-hidden="true"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Température (°C)</label>
-                            <div class="flex items-center space-x-2">
-                                <button id="temperatureMinus" aria-label="Diminuer la température"
-                                    class="btn-primary px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md">
-                                    <i class="fas fa-minus" aria-hidden="true"></i>
-                                </button>
-                                <span id="temperatureDisplay" class="flex-1 text-center">20 °C</span>
-                                <button id="temperaturePlus" aria-label="Augmenter la température"
-                                    class="btn-primary px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md">
-                                    <i class="fas fa-plus" aria-hidden="true"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Options d'affichage -->
-                    <div class="pt-2 border-t border-gray-700 toggle-container">
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <div class="toggle-switch">
-                                <input type="checkbox" id="showCanonLine">
-                                <span class="toggle-slider" aria-hidden="true"></span>
-                            </div>
-                            <span class="text-sm">Afficher l'axe du canon</span>
-                        </label>
-                        <label class="flex items-center space-x-2 cursor-pointer mt-2">
-                            <div class="toggle-switch">
-                                <input type="checkbox" id="showScopeLine">
-                                <span class="toggle-slider" aria-hidden="true"></span>
-                            </div>
-                            <span class="text-sm">Afficher l'axe de visée</span>
-                        </label>
-                    </div>
-
-                    <!-- Boutons d'action -->
-                    <div class="grid grid-cols-2 gap-3 pt-4">
-                        <button id="saveCurve" aria-label="Sauvegarder et comparer la courbe"
-                            class="btn-primary py-2 bg-blue-600 hover:bg-blue-700 rounded-md flex items-center justify-center">
-                            <i class="fas fa-save mr-2" aria-hidden="true"></i> Enregistrer & Comparer
-                        </button>
-                        <button id="resetCurves" aria-label="Réinitialiser la courbe"
-                            class="btn-primary py-2 bg-purple-600 hover:bg-purple-700 rounded-md flex items-center justify-center">
-                            <i class="fas fa-trash-alt mr-2" aria-hidden="true"></i> Réinitialiser
-                        </button>
-                    </div>
-                    <button id="shareButton" aria-label="Partager les résultats"
-                        class="btn-primary w-full py-2 bg-purple-600 hover:bg-purple-700 rounded-md flex items-center justify-center">
-                        <i class="fas fa-share-alt mr-2" aria-hidden="true"></i> Partager
-                    </button>
-                    <div id="shareLinkContainer" class="hidden mt-2 p-3 bg-gray-800 rounded-md text-sm"></div>
-                </div>
-            </div>
-
-            <!-- Results Section -->
-            <div class="glass-card rounded-xl p-6 col-span-1 lg:col-span-2">
-                <div class="flex space-x-4 border-b border-gray-700 mb-4">
-                    <button id="trajectoryTab" aria-label="Tableau des trajectoires"
-                        class="tab-active pb-2 px-1 font-medium">
-                        <i class="fas fa-project-diagram mr-1" aria-hidden="true"></i> Trajectoire
-                    </button>
-                    <button id="timeTab" aria-label="Temps de vol"
-                        class="pb-2 px-1 font-medium text-grey-200 hover:text-white">
-                        <i class="fas fa-stopwatch mr-1" aria-hidden="true"></i> Temps de vol
-                    </button>
-                    <button id="energyTab" aria-label="Energie résiduelle"
-                        class="pb-2 px-1 font-medium text-grey-200 hover:text-white">
-                        <i class="fas fa-bolt mr-1" aria-hidden="true"></i> Énergie
-                    </button>
-                    <button id="spinTab" aria-label="Décroissance du spin"
-                        class="pb-2 px-1 font-medium text-grey-200 hover:text-white">
-                        <i class="fas fa-spinner mr-1" aria-hidden="true"></i> Spin
-                    </button>
-                </div>
-
-                <!-- Trajectoire TAB -->
-                <div id="trajectoryChartContainer" class="chart-container">
-                    <div id="trajectory2D" class="w-full" style="height: 400px;"></div>
-                    <!-- Resultats trajectoire -->
-                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="bg-gray-800 p-4 rounded-lg">
-                            <h3 class="font-semibold text-lg mb-2 flex items-center">
-                                <i class="fas fa-info-circle mr-2 text-blue-400" aria-hidden="true"></i> Informations de
-                                trajectoire
-                            </h3>
-                            <div id="resultInfo" class="text-sm space-y-2">
-                                <p>Entrez les paramètres pour calculer la trajectoire.</p>
-                            </div>
-                        </div>
-                        <div class="bg-gray-800 p-4 rounded-lg">
-                            <h3 class="font-semibold text-lg mb-2 flex items-center">
-                                <i class="fas fa-bullseye mr-2 text-green-400" aria-hidden="true"></i> Portée utile
-                            </h3>
-                            <div id="engagementInfo" class="text-sm">
-                                <p>Distance d'engagement: -</p>
-                                <p class="mt-2">Distance de ressenti (audible sur gilet): -</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Time to Hit TAB -->
-                <div id="timeChartContainer" class="chart-container hidden">
-                    <div id="timeChart" class="w-full" style="height: 400px;"></div>
-                    <!-- Time Comparison Table -->
-                    <div class="mt-6 bg-gray-800 p-4 rounded-lg">
-                        <h3 class="font-semibold text-lg mb-2 flex items-center">
-                            <i class="fas fa-clock mr-2 text-purple-400" aria-hidden="true"></i> Comparaison des temps
-                        </h3>
-                        <div id="timeComparisonTableContainer" class="overflow-x-auto">
-                            <!-- Will be filled by JS -->
-                        </div>
-                    </div>
-                </div>
-                <div id="impactChartContainer" class="chart-container hidden">
-                    <div id="impactChart" class="w-full" style="height: 400px;"></div>
-                    <!-- Energy résiduelle Table -->
-                    <div class="mt-6 bg-gray-800 p-4 rounded-lg">
-                        <h3 class="font-semibold text-lg mb-2 flex items-center">
-                            <i class="fas fa-bullseye mr-2" aria-hidden="true"></i> Comparaison des énergies
-                        </h3>
-                        <div id="energyComparisonTableContainer" class="overflow-x-auto">
-                            <!-- Will be filled by JS -->
-                        </div>
-                    </div>
-                </div>
-                <div id="spinChartContainer" class="chart-container hidden">
-                    <div id="spinChart" class="w-full" style="height: 400px;"></div>
-                </div>
-
-
-
-                <!-- Holdover Table -->
-                <div class="mt-6 bg-gray-800 p-4 rounded-lg">
-                    <h3 class="font-semibold text-lg mb-2 flex items-center">
-                        <i class="fas fa-ruler-combined mr-2 text-yellow-400" aria-hidden="true"></i> Contre-visée (bille actuelle)
-                    </h3>
-                    <div id="holdoverTableContainer" class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead>
-                                <tr>
-                                    <th class="px-4 py-2">Distance&nbsp;(m)</th>
-                                    <th class="px-4 py-2">Différence&nbsp;(cm)</th>
-                                    <th class="px-4 py-2">Énergie</th>
-                                    <th class="px-4 py-2">Spin</th>
-                                </tr>
-                            </thead>
-                            <tbody id="holdoverTableBody" class="text-center divide-y divide-gray-700">
-                                <!-- Will be filled by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-
-            </div>
-
+    <section class="calculator-wrap section" id="calculateur" data-trajectory-app>
+      <div class="shell">
+        <div class="section-head">
+          <div><p class="eyebrow">Banc balistique</p><h2>Simule ton tir</h2></div>
+          <p>Entre une mesure de chronographe faite avec le grammage réellement joué. Compare ensuite plusieurs billes ou plusieurs réglages de hop-up.</p>
         </div>
 
-        <footer
-            class="glass-card rounded-xl mx-auto max-w-7xl mb-8 flex-col responsive-footer items-start justify-between gap-6 p-6">
-
-
-            <div class="flex sm:flex-col items-start gap-4">
-                <div class="rounded-full from-blue-500 to-purple-500 flex items-center justify-center">
-                    <img src="./src/img/quentin_guirois.webp" class="rounded-full avatar w-80" alt="Quentin Guirois">
-                </div>
-                <div class="rounded-full from-blue-500 to-purple-500 items-center justify-center">
-                    <p class="font-medium">KEEP, un développeur passionné d'airsoft, et amateur de physique.</p>
-                    <p class="text-sm text-grey-200">
-                        Merci à :
-                        <a href="https://mackila.com/airsoft/ATP/" target="_blank" class="font-bold">mackila.com</a>,
-                        <a href="https://www.youtube.com/@5.95airsoft" target="_blank" class="font-bold">El Bridos</a>,
-                        <a href="https://www.youtube.com/@KantumCat" target="_blank" class="font-bold">Kantum Cat</a>,
-                        <a href="https://www.youtube.com/channel/UCkBA0vGZSaJZ_MFIynppWIw" target="_blank"
-                            class="font-bold">Airsoft Tailor</a>,
-                        et
-                        <a href="https://www.youtube.com/c/ChefPanPan" target="_blank" class="font-bold">Chef Pan
-                            Pan</a>,
-                        pour avoir contribué directement, et indirectement à ce projet. Mention spéciale à mackila.com,
-                        un passionné resté longtemps dans l'ombre mais qui a révolutionné notre univers. Merci à lui, au
-                        nom de tous.tes.
-                    </p>
-                    <p class="text-sm text-grey-200 mt">
-                        Propulsé initialement par
-                        <a href="https://colt37-airsoft-touraine.fr" target="_blank" class="font-bold">colt37</a>.
-                    </p>
-                </div>
+        <section class="cockpit-scene" aria-labelledby="scene-title">
+          <div class="cockpit-scene-head">
+            <div class="cockpit-scene-heading">
+              <div><p class="eyebrow">Scène balistique</p><h3 id="scene-title">Trajectoire ATP</h3></div>
+              <div class="view-mode-switch" role="group" aria-label="Mode de visualisation">
+                <button type="button" aria-pressed="true" data-view-mode="2d">PROFIL 2D</button>
+                <button type="button" aria-pressed="false" data-view-mode="3d" hidden disabled><span class="view-label-desktop">VUE DRONE 3D</span><span class="view-label-mobile">OUVRIR LA 3D</span></button>
+              </div>
             </div>
-
-
-            <a href="https://www.linkedin.com/in/quentin-guirois-386636163/" target="_blank" rel="noopener noreferrer"
-                class="btn-primary w-full p-4 mt-6 bg-blue-600 rounded-md flex items-center justify-center">
-                <i class="fab fa-linkedin mr-2" aria-hidden="true"></i> LinkedIn
-            </a>
-        </footer>
-
-        <section id="faq" class="glass-card rounded-xl mx-auto max-w-7xl mb-8 p-6">
-            <h2 class="text-xl font-semibold mb-4 flex items-center">
-                <i class="fas fa-question-circle mr-2" aria-hidden="true"></i> FAQ
-            </h2>
-
-            <div class="space-y-2 text-sm">
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Comment fonctionne ce simulateur de trajectoire airsoft ?
-                    </summary>
-                    <div class="pb-2 text-grey-200">
-                        Ce simulateur calcule la trajectoire d'une bille d’airsoft à partir des lois physiques réelles:
-
-                        <ul class="mt-2 mb-2">
-                            <li>- Vitesse initiale (FPS)</li>
-                            <li>- Énergie cinétique (Joules)</li>
-                            <li>- Poids de la bille (grammage)</li>
-                            <li>- Résistance de l'air (traînée, drag)</li>
-                            <li>- Conditions environnementales (pression, température)</li>
-                            <li>- Vitesse de rotation initiale</li>
-                            <li>- Gravité</li>
-                        </ul>
-
-                        Le modèle prend en compte l’effet Magnus pour simuler la portance générée par le hop-up, la perte progressive de spin (décroissance du backspin) et la traînée aérodynamique.
-                        La trajectoire affichée est purement physique : aucune triche ni “correction magique” !
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Quelle est la base scientifique du modèle physique utilisé ?
-                    </summary>
-                    <div class="pb-2 text-grey-200">
-                        <ul class="mt-2 mb-2">
-                            <li>- Les travaux de Mackila.com/airsoft/ATP (référence mondiale)</li>
-                            <li>- La physique du projectile sphérique (loi de Stokes, drag polynomial, Magnus)</li>
-                            <li>- Les modèles expérimentaux issus de la NASA, de la balistique sportive (golf, paintball) et des publications universitaires</li>
-                            
-                        </ul>
-                        Chaque force (traînée, portance Magnus, couple de freinage du spin) est modélisée avec les vraies formules utilisées dans les simulateurs de balistique.                    
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Le simulateur airsoft est-il fiable à 100% &nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200">
-                        Non. Aucun simulateur ne peut prédire exactement le comportement réel de toutes les billes, dans toutes les conditions.
-
-                        La physique appliquée est fiable, mais la vraie vie ajoute :
-                        <ul class="mt-2 mb-2">
-                            <li>- Variations du hop-up selon la marque, usure ou montage</li>
-                            <li>- Imperfections des billes (surface, diamètre réel)</li>
-                            <li>- Conditions météo (vent, humidité, température)</li>
-                            <li>- Erreur de visée (inclinaison, angle de tir)</li>
-                            <li>- Energie différente selon la bille mesurée au chrony</li>
-                            
-                        </ul>
-                        Le simulateur donne une estimation très réaliste pour des tirs "de laboratoire", mais chaque réplique, chaque session et chaque bille aura de légères différences.
-
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Pourquoi mes résultats sont différents de ceux du simulateur&nbsp;?
-                        
-                    </summary>
-                    <div class="pb-2 text-grey-200">
-                        <ul class="mt-2 mb-2">
-                            <li>- Position de tir différente (ex : canon non horizontal, cible plus haute ou plus basse)</li>
-                            <li>- Angle de visée : si tu lèves légèrement ta réplique pour “toucher plus loin”, tu modifies la portée réelle sans t’en rendre compte</li>
-                            <li>- Vent ou météo</li>
-                            <li>- Réglage du hop-up sous ou sur-performant par rapport à la théorie</li>
-                            <li>- Spin initial surestimé (le simulateur estime parfois un backspin plus élevé que ce que le joint hop-up transmet réellement)</li>
-                            <li>- Réglages d’upgrade non pris en compte : tout ce qui se passe dans le canon (volume d’air, étanchéité, pression, etc.) n’intervient que jusqu’à la sortie : c’est la bille “après la bouche” qui est simulée ici.</li>
-                        </ul>
-                    </div>
-                </details>
-                
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Pourquoi le simulateur affiche-t-il une portée plus courte que ce que je mesure&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200">
-                        <ul class="mt-2 mb-2">
-                            <li>- Tu tires en relevant (même légèrement) ta réplique</li>
-                            <li>- Ton hop-up donne un backspin plus efficace que la valeur entrée</li>
-                            <li>- Les conditions météo ou la pente du terrain te sont favorables (vent, descente, etc.)</li>
-                            <li>- Le simulateur se base sur des valeurs “pessimistes” pour éviter de survendre la portée</li>
-                            
-                        </ul>
-                        Astuce : Pour comparer, place-toi à 1,50 m du sol, canon parfaitement horizontal, terrain plat, cible à la même hauteur.
-                        Tout écart par rapport à cette condition “labo” fausse la comparaison.
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Pourquoi la portée airsoft varie-t-elle autant entre les joueurs&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        <ul class="mt-2 mb-2">
-                            <li>- Angle de tir (consciemment ou non)</li>
-                            <li>- Zérotage du viseur (tu règles le point rouge à 40 m, mais tu tires à 70 m en levant naturellement l’arme)</li>
-                            <li>- Grammage, puissance et effet hop-up différents</li>
-                            <li>- Régularité de la réplique</li>
-                            <li>- Courbe du terrain et conditions extérieures</li>
-                            
-                        </ul>
-                    </div>
-                </details>
-                
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Comment sont calculées la traînée, le Magnus, et la décroissance du spin (spin decay)&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        <ul class="mt-2 mb-2">
-                            <li>- Traînée aérodynamique (drag) : basée sur un polynôme empirique calibré pour la sphère à haute vitesse, ajusté selon le spin</li>
-                            <li>- Effet Magnus (portance) : calculé via le ratio spin/vitesse, avec la vraie formule Magnus utilisée dans la balistique sportive</li>
-                            <li>- Décroissance du spin (torque, spin decay)
-                                <ul class="ml-2">
-                                <li>- Formule Mackila/NASA : $C_t = 6.45/\sqrt{Re_\omega} + 32.1/Re_\omega$</li>
-                                <li>- Plus la bille tourne vite, plus elle “dissipe” vite son backspin (turbulence, friction)</li>
-                                <li>- Plus la bille est lourde, plus elle garde longtemps son spin</li>
-                                <li>- Facteur de correction (torqueSquale) pour mieux coller à la réalité et aux observation terrain.</li>
-                            </ul></li>
-                            
-                        </ul>
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Pourquoi la courbe n'est-elle pas parfaitement droite, même avec un hop-up fort&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        <ul class="mt-2 mb-2">
-                            <li>- Gravité (la tire vers le sol)</li>
-                            <li>- Portance Magnus (la soulève si le spin est suffisant)</li>
-                            <li>- Résistance de l’air (ralentit, donc réduit la portance avec la distance)
-                                Même avec un tir “tendu”, la bille monte légèrement puis finit par chuter.</li>
-                            
-                            
-                        </ul>
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Quelle bille va le plus loin&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        <ul class="mt-2 mb-2">
-                            <li>- Bille lourde : meilleure inertie, meilleure énergie résiduelle, courbe plus stable</li>
-                            <li>- Bille légère : vitesse initiale plus haute, mais perd rapidement son énergie et sa portée réelle est souvent moindre au-delà de 40m</li>
-                            
-                            
-                        </ul>
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Pourquoi la bille lourde frappe-t-elle plus fort à longue distance&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        L’inertie de la bille lourde fait qu’elle ralentit moins vite, garde une énergie d’impact plus élevée, et subit moins le vent et les micro-turbulences
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        À partir de quelle distance la bille lourde “rattrape” la bille légère&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        En général, après 35-45m (selon le setup), la bille lourde aura la même vitesse, voire une vitesse supérieure à la bille légère tirée à la même énergie.
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Comment calculer la vitesse d’une bille d’airsoft en FPS ou en joules&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        <ul class="mt-2 mb-2">
-                            <li>- Énergie (J) = 0.5 × masse (kg) × vitesse² (m/s)</li>
-                            <li>- Pour convertir en FPS : 1 m/s = 3.28084 fps</li>
-                            <li>- Utilise notre outil “convertisseur fps-joules” pour ne jamais te tromper :D</li>
-                        </ul>
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Pourquoi la masse influe-t-elle autant sur la trajectoire et la portée&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        Une bille lourde perd moins d’énergie à chaque mètre parcouru, résiste mieux au vent, et conserve sa trajectoire malgré les pertes de vitesse initiale.
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Quel est le rôle du hop-up dans la portée et la courbe&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        <ul class="mt-2 mb-2">
-                            <li>- Il génère le backspin qui crée une portance Magnus, permettant à la bille de "flotter" plus longtemps avant de chuter.</li>
-                            <li>- Trop de hop-up : la bille “monte”, pas assez : la bille “plonge”.
-                            Le réglage idéal est celui qui donne la trajectoire la plus plate et la plus longue possible.</li>
-                        </ul>
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Pourquoi faut-il tirer parfaitement à l’horizontale pour tester la portée&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        <ul class="mt-2 mb-2">
-                            <li>- Pour comparer de façon “physique pure” et neutraliser l’effet du tireur, du viseur ou du terrain.</li>
-                            <li>- L’idéal : canon à 1,50 m du sol, cible à la même hauteur, terrain plat, pas de vent.</li>
-                        </ul>
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        L’angle de tir influence-t-il la portée réelle&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        Oui !
-                        Même 1 ou 2 degrés de relèvement ajoutent 5 à 15 m de portée en fin de courbe.
-                        C’est la principale cause des écarts entre simulation et réalité terrain.
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Dois-je régler mon hop-up pour chaque grammage&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        Oui, absolument :
-                        <ul class="mt-2 mb-2">
-                            <li>- Plus la bille est lourde, plus il faut de force pour “soutenir” la bille</li>
-                            <li>- Un hop-up trop fort sur une bille légère = trajectoire en cloche</li>
-                            <li>- Un hop-up trop faible sur une bille lourde = trajectoire plongeante</li>
-                        </ul>
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Comment régler le hop-up pour un tir tendu optimal&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        
-                        <ul class="mt-2 mb-2">
-                            <li>- Tire sur une cible à 40 m</li>
-                            <li>- Ajuste pour que la bille “passe” le plus près possible de la ligne de visée sans trop monter</li>
-                            <li>- Si la bille monte trop, réduis l’appui ; si elle plonge, augmente-le.</li>
-                        </ul>
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Pourquoi l’outil ne prend-il pas en compte le volume d’air de mon cylindre, ou mes upgrades&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        Parce qu’une fois la bille sortie du canon, elle obéit uniquement aux lois de la physique extérieure.
-                        Le simulateur commence juste à la bouche, donc tous les upgrades qui influencent la vitesse, l’énergie ou le spin sont déjà “pris en compte” via les paramètres mesurés (vitesse, grammage, hop-up).
-                        
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Comment interpréter la courbe affichée sur mobile / desktop&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        <ul class="mt-2 mb-2">
-                            <li>- Pour des raisons de lisibilité, les axes hauteur et longueur sont compressés différemment sur mobile</li>
-                            <li>- Sur desktop (ordinateur de bureau), la courbe est plus “proche” de la réalité géométrique</li>
-                            
-                        </ul>
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Le record du monde “80m à 1 joule” est-il crédible selon la physique&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        <ul class="mt-2 mb-2">
-                            <li>- Les données disponibles sont imprécises</li>
-                            <li>- À 1 joule réel, même avec une 0.20 g, la portée utile max mesurée est d’environ 55–60 m (et la pénétration d’une feuille de papier à 80 m semble physiquement impossible)</li>
-                            
-                        </ul>
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Quelle bille choisir pour mon style de jeu&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        <ul class="mt-2 mb-2">
-                            <li>- Ultra CQB : 0.20–0.25 g, répliques rapides, tir court</li>
-                            <li>- Forêt, extérieur : 0.32–0.36 g pour le standard, 0.40–0.48 g pour DMR/sniper</li>
-                            <li>Plus la bille est lourde, plus elle sera précise à longue distance et moins sensible au vent</li>
-                        </ul>
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                        Mon impact à 20m ne se ressent pas sur le joueur adverse, c’est normal&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        <ul class="mt-2 mb-2">
-                            <li>- Oui, surtout avec de la 0.20 g à 1 joule : à 20 m, tu as déjà perdu jusqu’à 60–80 % de l’énergie initiale</li>
-                            <li>- Privilégie les billes lourdes (0.32–0.48 g) pour un meilleur ressenti à l’impact</li>
-                        </ul>
-                    </div>
-                </details>
-                <details class="border-t border-gray-600 group">
-                    <summary class="py-2 cursor-pointer font-semibold flex justify-between items-center">
-                       Pourquoi le simulateur ne prend-il pas en compte le vent, la pluie ou l’humidité&nbsp;?
-                    </summary>
-                    <div class="pb-2 text-grey-200 space-y-2">
-                        <ul class="mt-2 mb-2">
-                            <li>- Parce que ces variables sont trop imprévisibles, et rendent la comparaison impossible entre joueurs</li>
-                            <li>- Le but du simulateur est de fournir une base physique universelle, neutre, et la plus comparable possible</li>
-                        </ul>
-                    </div>
-                </details>
-
+            <div class="cockpit-scene-state">
+              <span class="trust-tag" data-trust="calculated">Calculé · ATP</span>
+              <span class="scale-chip" id="vertical-scale-chip" hidden>HAUTEUR ×10</span>
+              <span class="status-pill" id="result-status" aria-live="polite">Initialisation…</span>
             </div>
+          </div>
+          <div class="profile-2d-view" data-profile-2d>
+            <div class="chart-tabs" role="tablist" aria-label="Donnée affichée">
+              <button type="button" role="tab" aria-selected="true" tabindex="0" data-chart-mode="trajectory">Trajectoire</button>
+              <button type="button" role="tab" aria-selected="false" tabindex="-1" data-chart-mode="sight">Écart visée</button>
+              <button type="button" role="tab" aria-selected="false" tabindex="-1" data-chart-mode="energy">Énergie</button>
+              <button type="button" role="tab" aria-selected="false" tabindex="-1" data-chart-mode="drift">Dérive</button>
+              <button type="button" role="tab" aria-selected="false" tabindex="-1" data-chart-mode="spin">Rotation</button>
+            </div>
+            <div class="chart-frame">
+              <div class="chart-viewport">
+                <canvas id="trajectory-chart" role="img" aria-label="Hauteur de la bille au-dessus du sol selon la distance" aria-describedby="chart-caption chart-reference-legend"></canvas>
+              </div>
+              <p id="chart-caption">Hauteur de la bille au-dessus du sol selon la distance.</p>
+            </div>
+            <div class="mobile-metric-dock" aria-label="Résultats essentiels">
+              <div><small>Utile</small><strong data-mobile-metric="usefulRange">—</strong></div>
+              <div><small>Impact</small><strong data-mobile-metric="maximumRange">—</strong></div>
+              <div><small>Temps 50 m</small><strong data-mobile-metric="time50">—</strong></div>
+              <div><small>Énergie 50 m</small><strong data-mobile-metric="energy50">—</strong></div>
+            </div>
+            <div class="chart-legends">
+              <ul class="comparison-list" id="comparison-list" aria-label="Courbes comparées"></ul>
+              <ul class="chart-reference-legend" id="chart-reference-legend" aria-label="Repères du graphe"></ul>
+            </div>
+          </div>
+          <div class="drone-view" data-drone-view hidden>
+            <div class="drone-host" data-drone-host></div>
+            <p class="drone-help">Glisser = orbiter · molette ou pincement = zoom · double appui = recadrer</p>
+            <div class="drone-controls" aria-label="Contrôles de la vue 3D">
+              <div class="drone-cameras" role="group" aria-label="Caméra">
+                <button type="button" aria-pressed="true" data-drone-camera="drone">DRONE</button>
+                <button type="button" aria-pressed="false" data-drone-camera="shooter">TIREUR</button>
+                <button type="button" aria-pressed="false" data-drone-camera="profile">PROFIL</button>
+              </div>
+              <button type="button" data-drone-frame>RECADRER</button>
+              <button type="button" data-drone-replay>▶ REJOUER LE TIR</button>
+              <button class="drone-exit" type="button" data-drone-exit>QUITTER LA 3D</button>
+            </div>
+            <p class="visually-hidden" data-drone-status aria-live="polite"></p>
+          </div>
         </section>
 
+        <div class="calculator-grid">
+          <form class="control-panel" onsubmit="return false">
+            <div class="panel-title"><div><h3>Paramètres du setup</h3><p>Les valeurs sont recalculées en direct.</p></div></div>
+            <div class="preset-row" aria-label="Préréglages">
+              <button type="button" data-shot-preset='{"massG":0.2,"energyJ":0.98,"initialRpm":120000}'>Réf. Mackila · 120k</button>
+              <button type="button" data-shot-preset='{"massG":0.25,"energyJ":1}'>CQB · 1 J</button>
+              <button type="button" data-shot-preset='{"massG":0.28,"energyJ":1.5}'>AEG · 1,5 J</button>
+              <button type="button" data-shot-preset='{"massG":0.36,"energyJ":1.9}'>DMR · 1,9 J</button>
+              <button type="button" data-shot-preset='{"massG":0.45,"energyJ":2}'>Bolt · 2 J</button>
+            </div>
+
+            <div class="field-grid">
+              <div class="field"><label for="mass">Masse de bille <span>g</span></label><input id="mass" data-shot-field="massG" type="number" inputmode="decimal" min="0.12" max="0.88" step="0.01" value="0.28"></div>
+              <div class="field"><label for="energy">Énergie mesurée <span>J</span></label><input id="energy" data-shot-field="energyJ" type="number" inputmode="decimal" min="0.01" max="10" step="0.01" value="1.50"></div>
+              <div class="field"><label for="fps">Vitesse <span>FPS</span></label><input id="fps" data-shot-field="velocityFps" type="number" inputmode="numeric" min="1" max="1000" step="1"></div>
+              <div class="field"><label for="mps">Vitesse <span>m/s</span></label><input id="mps" data-shot-field="velocityMps" type="number" tabindex="-1" readonly aria-readonly="true"></div>
+              <div class="field field-wide">
+                <span class="field-label"><span>Hop-up</span><span>auto + réglage fin</span></span>
+                <div class="spin-stepper" role="group" aria-label="Réglage fin du hop-up">
+                  <button type="button" data-spin-delta="-250" aria-label="Réduire le hop-up de 250 tours par minute">−</button>
+                  <button class="spin-auto" id="spin-auto" type="button" aria-label="Revenir au hop-up automatique conseillé">
+                    <strong id="spin-setting">HOP UP AUTO</strong><span id="spin-adjustment">tir tendu conseillé</span>
+                  </button>
+                  <button type="button" data-spin-delta="250" aria-label="Augmenter le hop-up de 250 tours par minute">+</button>
+                </div>
+                <input id="rpm" data-shot-field="initialRpm" type="hidden" value="88000">
+                <small class="field-hint" id="rpm-output">Recherche du réglage tendu…</small>
+              </div>
+              <div class="field"><label for="zero">Zéro optique <span>m</span></label><input id="zero" data-shot-field="zeroDistanceM" type="number" min="5" max="150" step="1" value="35"><small class="field-hint">Ajuste la visée, pas la trajectoire</small></div>
+              <div class="field"><label for="angle">Angle du canon <span>°</span></label><input id="angle" data-shot-field="angleDeg" type="number" min="-10" max="35" step="0.1" value="0"><small class="field-hint">0° = canon horizontal</small></div>
+              <div class="field"><label for="wind">Vitesse du vent <span>km/h</span></label><input id="wind" data-shot-field="windSpeedKmh" type="number" min="0" max="100" step="1" value="0"></div>
+              <div class="field"><label for="wind-angle">Direction du vent <span>°</span></label><select id="wind-angle" data-shot-field="windAngleDeg"><option value="0">0° · de face</option><option value="45">45° · face/droite</option><option value="90">90° · de droite</option><option value="135">135° · dos/droite</option><option value="180">180° · de dos</option><option value="225">225° · dos/gauche</option><option value="270">270° · de gauche</option><option value="315">315° · face/gauche</option></select></div>
+
+              <details class="advanced">
+                <summary>Atmosphère, optique et paramètres avancés</summary>
+                <div class="field-grid">
+                  <div class="field"><label for="temperature">Température <span>°C</span></label><input id="temperature" data-shot-field="temperatureC" type="number" min="-30" max="55" step="1" value="20"></div>
+                  <div class="field"><label for="pressure">Pression <span>hPa</span></label><input id="pressure" data-shot-field="pressureHpa" type="number" min="700" max="1100" step="1" value="1013.25"></div>
+                  <div class="field"><label for="height">Hauteur de tir <span>m</span></label><input id="height" data-shot-field="shootingHeightM" type="number" min="0.1" max="3" step="0.05" value="1.5"></div>
+                  <div class="field"><label for="scope-height">Hauteur de l’optique <span>m</span></label><input id="scope-height" data-shot-field="scopeHeightM" type="number" min="0" max="0.2" step="0.005" value="0.05"></div>
+                  <div class="field"><label for="cant">Inclinaison latérale <span>°</span></label><input id="cant" data-shot-field="cantDeg" type="number" min="-90" max="90" step="1" value="0"></div>
+                  <div class="field"><label for="latitude">Latitude <span>°</span></label><input id="latitude" data-shot-field="latitudeDeg" type="number" min="-90" max="90" step="1" value="47"></div>
+                  <div class="field"><label for="diameter">Diamètre bille <span>mm</span></label><input id="diameter" data-shot-field="diameterMm" type="number" min="5.85" max="6.1" step="0.01" value="6"></div>
+                </div>
+              </details>
+            </div>
+
+            <div class="control-actions">
+              <button class="button button-primary button-small" id="compare-shot" type="button">Ajouter à la comparaison</button>
+              <button class="button button-small" id="share-shot" type="button">Partager le setup</button>
+              <button class="button button-ghost button-small" id="reset-shot" type="button">Réinitialiser</button>
+            </div>
+            <p id="share-feedback" aria-live="polite"></p>
+          </form>
+
+          <section class="result-panel" aria-labelledby="results-title">
+            <div class="panel-title"><div><h3 id="results-title">Résultats du tir</h3><p>La portée utile suit l’enveloppe ATP de ±15,24 cm autour de la visée.</p></div><span class="trust-tag result-trust" data-trust="calculated">Calculé · ATP</span></div>
+            <div class="metric-grid">
+              <div class="metric metric-primary"><small>Portée utile ATP</small><strong data-metric="usefulRange">—</strong></div>
+              <div class="metric"><small>Portée maximale</small><strong data-metric="maximumRange">—</strong></div>
+              <div class="metric"><small>Temps à 50 m</small><strong data-metric="time50">—</strong></div>
+              <div class="metric"><small>Énergie à 50 m</small><strong data-metric="energy50">—</strong></div>
+              <div class="metric"><small>Énergie bouche</small><strong data-metric="muzzleEnergy">—</strong></div>
+              <div class="metric"><small>Dérive à 50 m</small><strong data-metric="drift50">—</strong></div>
+              <div class="metric"><small>Rotation initiale de la bille (effet hop-up)</small><strong data-metric="rpm">—</strong></div>
+              <div class="metric"><small>Angle du canon</small><strong data-metric="cannonAngle">—</strong></div>
+            </div>
+
+            <details class="data-block">
+              <summary>Afficher la table de contre-visée</summary>
+              <div class="table-scroll">
+                <table>
+                  <thead><tr><th>Distance</th><th>Écart visée</th><th>Correction</th><th>Énergie</th><th>Temps</th><th>Dérive</th></tr></thead>
+                  <tbody id="holdover-body"></tbody>
+                </table>
+              </div>
+            </details>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="shell">
+        <div class="section-head"><div><p class="eyebrow">Pas qu’un convertisseur</p><h2>Comprendre avant d’upgrader</h2></div><p>F.A.T. relie la mesure au chrony à ce qui se passe après la sortie du canon. C’est là que la masse, le spin et l’air commencent leur petite négociation musclée.</p></div>
+        <div class="card-grid">
+          <article class="card"><span class="card-number">07 / Gaz</span><h3>Choisir son gaz selon la température</h3><p>Compare 49 références au même degré, retrouve leur pression source et distingue mesure, interpolation, estimation et extrapolation.</p><a class="card-link" href="/outils/choisir-gaz-airsoft-pression-temperature/">Estimer la pression →</a></article>
+          <article class="card"><span class="card-number">01 / Énergie</span><h3>Joules, FPS et m/s</h3><p>Convertis une mesure avec le bon grammage et évite le grand classique : comparer des FPS obtenus avec deux billes différentes.</p><a class="card-link" href="/convertisseur-joules-fps/">Ouvrir le convertisseur →</a></article>
+          <article class="card"><span class="card-number">02 / Grammage</span><h3>Choisir son poids de bille</h3><p>Une bille lourde part moins vite à énergie égale, mais garde mieux sa vitesse et son énergie dans la deuxième moitié du trajet.</p><a class="card-link" href="/guides/choisir-poids-bille-airsoft/">Comparer les grammages →</a></article>
+          <article class="card"><span class="card-number">03 / Hop-up</span><h3>Régler sans invoquer les esprits</h3><p>Le bon réglage ne cherche pas la plus grande cloche. Il cherche une trajectoire exploitable, régulière et cohérente avec ta distance de jeu.</p><a class="card-link" href="/guides/regler-hop-up-airsoft/">Régler le hop-up →</a></article>
+          <article class="card"><span class="card-number">04 / Portée</span><h3>Portée utile ou bille touristique ?</h3><p>La portée maximale dit où la bille touche le sol. La portée utile dit jusqu’où elle reste proche de ta ligne de visée.</p><a class="card-link" href="/guides/portee-airsoft/">Comprendre la portée →</a></article>
+          <article class="card"><span class="card-number">05 / Chrony</span><h3>Joule Creep</h3><p>Une conversion mathématique conserve l’énergie. Une vraie réplique à gaz, HPA ou gros volume peut en produire davantage avec une bille lourde.</p><a class="card-link" href="/guides/joule-creep-airsoft/">Éviter le piège →</a></article>
+          <article class="card"><span class="card-number">06 / Physique</span><h3>Le modèle ATP de Mackila</h3><p>Les équations, les hypothèses, les limites et les choix d’implémentation sont documentés. La magie reste réservée aux moteurs qui gagnent 20 m au marketing.</p><a class="card-link" href="/modele-physique-atp/">Lire la documentation →</a></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-tight">
+      <div class="shell content-grid">
+        <div class="prose">
+          <p class="eyebrow">Ce que calcule F.A.T.</p>
+          <h2>De la bouche au dernier mètre</h2>
+          <p>La conversion Joules/FPS n’est que le point de départ. Une fois dans l’air, la bille perd de la vitesse sous l’effet de la traînée. Le backspin appliqué par le hop-up crée une portance par effet Magnus. La rotation diminue elle aussi, tandis que le vent change la vitesse de l’air rencontrée et pousse la bille latéralement.</p>
+          <p>Le calculateur intègre ces forces par petits pas de temps. Il estime la position, la vitesse, l’énergie, le temps de vol et la rotation tout au long du tir. L’angle du canon est exactement celui que tu saisis : 0° produit un départ horizontal et le zéro optique ne modifie que la ligne de visée. Le résultat n’est pas une promesse commerciale : c’est une expérience numérique reproductible.</p>
+          <h3>Ce que le simulateur ne connaît pas</h3>
+          <p>Il ne voit ni la qualité de ton joint, ni une bille ovalisée, ni un canon sale, ni la rafale de vent entre deux palettes. Il ne sait pas non plus si tu penches la réplique sans t’en rendre compte. Utilise-le pour comparer des hypothèses et préparer un réglage, puis valide toujours au chronographe et sur une zone de tir adaptée.</p>
+        </div>
+        <aside class="toc" aria-label="Repères du modèle"><strong>Repères ATP</strong><ol><li><a href="/modele-physique-atp/#trainee">Traînée aérodynamique</a></li><li><a href="/modele-physique-atp/#magnus">Effet Magnus</a></li><li><a href="/modele-physique-atp/#spin">Décroissance du spin</a></li><li><a href="/modele-physique-atp/#vent">Vent et dérive</a></li><li><a href="/modele-physique-atp/#limites">Limites du modèle</a></li></ol></aside>
+      </div>
+    </section>
+
+    <section class="section-tight">
+      <div class="shell author-card">
+        <img src="/assets/img/quentin-guirois.webp" width="80" height="80" alt="Quentin Guirois, Keep, créateur de F.A.T.">
+        <div><h2>Keep, derrière le clavier et sur le terrain</h2><p>Quentin Guirois est développeur web et airsofteur. Il a créé F.A.T. pour rendre les travaux de Mackila manipulables sans ouvrir MATLAB entre deux parties — parce qu’un sac d’hydratation est déjà assez lourd.</p><a href="/a-propos/">Qui est Keep et pourquoi cet outil ? →</a></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="shell">
+        <div class="section-head"><div><p class="eyebrow">Questions fréquentes</p><h2>Avant de sortir le chrony</h2></div><a href="/faq-airsoft-balistique/">Voir toute la FAQ</a></div>
+        <div class="faq-list">
+          <details><summary>Comment convertir des Joules en FPS en airsoft ?</summary><p>Il faut saisir la masse de la bille. F.A.T. applique l’énergie cinétique <strong>E = ½mv²</strong>, puis convertit la vitesse en FPS. Sans grammage, une valeur en FPS ne dit pas toute la puissance du tir.</p></details>
+          <details><summary>La portée calculée est-elle garantie sur le terrain ?</summary><p>Non. Le résultat décrit le tir théorique saisi. Le vent irrégulier, la dispersion, le montage hop-up, la qualité des billes et le tireur ajoutent des écarts. Le simulateur est un banc de comparaison, pas un certificat de portée.</p></details>
+          <details><summary>Pourquoi un faible hop-up peut-il faire plonger la bille ?</summary><p>Le polynôme ATP prévoit une zone de portance négative lorsque le ratio entre vitesse de surface et vitesse linéaire est trop faible. C’est le Reverse Magnus : un peu de spin mal placé peut être moins favorable que pas de spin.</p></details>
+          <details><summary>Pourquoi mesurer avec le grammage joué ?</summary><p>Parce qu’une réplique réelle peut présenter du Joule Creep. La conversion suppose une énergie constante ; elle ne remplace donc pas une mesure au chronographe avec la bille utilisée en partie.</p></details>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-tight">
+      <div class="shell cta-panel">
+        <p class="eyebrow">PWA / mode terrain</p>
+        <h2>Installe F.A.T. avant que le réseau ne disparaisse derrière le bunker.</h2>
+        <p>L’application s’ajoute à l’écran d’accueil et conserve le moteur principal hors connexion. Aucun store, aucun compte, aucun “mot de passe oublié” à 8 h 12 au briefing.</p>
+        <div class="button-row"><button class="button button-primary" type="button" data-install-app>Installer F.A.T.</button><a class="button" href="#calculateur">Continuer dans le navigateur</a></div>
+        <p data-install-help hidden>Sur iPhone : bouton Partager, puis « Sur l’écran d’accueil ». Sur Android : menu du navigateur, puis « Installer l’application ».</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="calculation-loader" data-calculation-loader data-mode="fullscreen" data-state="idle" role="status" aria-live="polite" aria-atomic="true" hidden>
+    <div class="calculation-loader-panel">
+      <div class="calculation-loader-visual" aria-hidden="true">
+        <div class="calculation-loader-mark">
+          <svg viewBox="0 0 120 76"><path class="loader-curve-base" d="M6 62C30 30 62 22 78 26C96 31 106 44 112 62"/><path class="loader-curve-active" pathLength="100" d="M6 62C30 30 62 22 78 26C96 31 106 44 112 62"/><line class="loader-ground" x1="2" y1="70" x2="118" y2="70"/></svg>
+          <span class="calculation-loader-ball"></span>
+        </div>
+      </div>
+      <div class="calculation-loader-lockup"><div class="calculation-loader-name">F.A.T<span>.</span></div><div class="calculation-loader-subtitle">FPS Airsoft Trajectory</div></div>
+      <div class="calculation-loader-progress" data-loader-progress role="progressbar" aria-label="Progression du calcul" aria-valuemin="0" aria-valuemax="100" aria-valuenow="4"><span data-loader-bar></span></div>
+      <p class="calculation-loader-status"><span data-loader-phrase>Réveil du Web Worker…</span><span data-loader-percent>4 %</span></p>
     </div>
+  </div>
 
-    <!-- Bootloader non‑bloquant -->
-    <script type="module" defer>
-        const ric = window.requestIdleCallback || (cb => setTimeout(cb, 200));
-        ric(() => {
-            const s = document.createElement('script');
-            s.src = 'https://cdn.plot.ly/plotly-gl2d-2.30.0.min.js';
-            s.crossOrigin = 'anonymous';
-            s.onload = () => import('./script.js');
-            document.head.appendChild(s);
-        });
-    </script>
+  <footer class="site-footer">
+    <div class="shell">
+      <div class="footer-grid">
+        <div><a class="brand" href="/"><strong>F.A.T.</strong></a><p>Le calculateur balistique airsoft qui préfère une hypothèse annoncée à une portée racontée.</p></div>
+        <div><h2>Outils</h2><ul><li><a href="/#calculateur">Simulateur de trajectoire</a></li><li><a href="/convertisseur-joules-fps/">Convertisseur Joules/FPS</a></li><li><a href="/simulateur-trajectoire-airsoft/">Mode d’emploi</a></li></ul></div>
+        <div><h2>Guides</h2><ul><li><a href="/guides/choisir-poids-bille-airsoft/">Poids de bille</a></li><li><a href="/guides/regler-hop-up-airsoft/">Réglage hop-up</a></li><li><a href="/guides/portee-airsoft/">Portée airsoft</a></li><li><a href="/guides/joule-creep-airsoft/">Joule Creep</a></li></ul></div>
+        <div><h2>Projet</h2><ul><li><a href="/modele-physique-atp/">Modèle ATP & Mackila</a></li><li><a href="/a-propos/">À propos de Keep</a></li><li><a href="/faq-airsoft-balistique/">FAQ</a></li></ul></div>
+      </div>
+      <div class="footer-bottom"><span>© 2026 Quentin Guirois — F.A.T.</span><span>Mesure au chrony et règles de l’organisateur toujours prioritaires.</span></div>
+    </div>
+  </footer>
+  <a class="mobile-cta" href="#calculateur">Simuler mon setup</a>
+  <script type="module" src="/site.js"></script>
+  <script type="module" src="/app.js"></script>
 </body>
-
 </html>
