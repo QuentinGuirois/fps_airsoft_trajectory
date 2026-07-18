@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -19,7 +20,7 @@ const browser = spawn(chrome, [
 
 try {
   let ready = false;
-  for (let attempt = 0; attempt < 50; attempt += 1) {
+  for (let attempt = 0; attempt < 200; attempt += 1) {
     try {
       const response = await fetch(`http://127.0.0.1:${port}/json/version`);
       if (response.ok) { ready = true; break; }
@@ -31,6 +32,11 @@ try {
   await import('./browser-lot1.mjs');
 } finally {
   browser.kill();
-  await new Promise((resolve) => setTimeout(resolve, 250));
-  await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+  if (browser.exitCode === null) {
+    await Promise.race([
+      once(browser, 'exit'),
+      new Promise((resolve) => setTimeout(resolve, 2_000)),
+    ]);
+  }
+  await rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
 }
