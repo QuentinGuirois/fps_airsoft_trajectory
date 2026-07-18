@@ -11,6 +11,8 @@ export function initAccountLogin({
   const tabs = [...root.querySelectorAll('[data-account-tab]')];
   const forms = [...root.querySelectorAll('[data-account-form]')];
   const status = root.querySelector('[data-account-status]');
+  const forgotForm = root.querySelector('[data-account-forgot-form]');
+  const resetForm = root.querySelector('[data-account-reset-form]');
   const controller = new AbortController();
   let mode = 'login';
 
@@ -73,10 +75,57 @@ export function initAccountLogin({
   }, { signal: controller.signal }));
 
   root.querySelector('[data-forgot-password]')?.addEventListener('click', () => {
-    announce('La récupération sera disponible avec le service de compte sécurisé.', 'notice');
+    forms.forEach((form) => { form.hidden = true; });
+    forgotForm.hidden = false;
+    forgotForm.querySelector('input')?.focus();
   }, { signal: controller.signal });
 
+  root.querySelector('[data-account-cancel-recovery]')?.addEventListener('click', () => {
+    forgotForm.hidden = true;
+    selectMode('login');
+  }, { signal: controller.signal });
+
+  forgotForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const submit = forgotForm.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    try {
+      await accountRepository.forgotPassword(fieldValue(forgotForm, 'email'), { signal: controller.signal });
+      announce('Si ce compte existe, le lien vient d’être envoyé.', 'success');
+    } catch (error) { announce(error.message, 'error'); }
+    finally { submit.disabled = false; }
+  }, { signal: controller.signal });
+
+  resetForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const token = new URLSearchParams(location.search).get('reset') || '';
+    const submit = resetForm.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    try {
+      await accountRepository.resetPassword(token, fieldValue(resetForm, 'password'), { signal: controller.signal });
+      history.replaceState(null, '', '/compte/');
+      resetForm.hidden = true;
+      selectMode('login');
+      announce('Mot de passe réinitialisé. Tu peux te connecter.', 'success');
+    } catch (error) { announce(error.message, 'error'); }
+    finally { submit.disabled = false; }
+  }, { signal: controller.signal });
+
+  const parameters = new URLSearchParams(location.search);
   selectMode('login');
+  if (parameters.get('reset')) {
+    forms.forEach((form) => { form.hidden = true; });
+    resetForm.hidden = false;
+  }
+  const verification = parameters.get('verify');
+  if (verification) {
+    accountRepository.verifyEmail(verification, { signal: controller.signal })
+      .then(() => {
+        history.replaceState(null, '', '/compte/');
+        announce('Email vérifié. Tu peux maintenant te connecter.', 'success');
+      })
+      .catch((error) => announce(error.message, 'error'));
+  }
   const ready = accountRepository.getSession({ signal: controller.signal })
     .then((session) => {
       if (session?.authenticated) redirect('/compte/armurerie.html');

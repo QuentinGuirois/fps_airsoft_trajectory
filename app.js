@@ -12,6 +12,7 @@ import {
 import { fitChartDomain, prepareChartSeries } from './chart-data.js';
 import { createCalculationLoader } from './calculation-loader.js';
 import { detectWebGL } from './render-capabilities.js';
+import { serializeCurveThumbnail } from './assets/js/curve-thumbnail.js';
 
 const root = document.querySelector('[data-trajectory-app]');
 
@@ -362,6 +363,17 @@ if (root) {
     }
     calculationLoader?.complete(message.requestId);
     state.latestResult = message;
+    try {
+      sessionStorage.setItem('fat.pending-replica.v1', JSON.stringify({
+        simulationUrl: buildShareUrl(message.simulation.config),
+        curveThumbnailSvg: serializeCurveThumbnail(message),
+        usefulRangeM: message.metrics?.usefulRangeM ?? null,
+        maximumRangeM: message.metrics?.maximumRangeM ?? null,
+        massG: message.simulation?.config?.massG ?? null,
+        energyJ: message.simulation?.config?.energyJ ?? null,
+        generatedAt: Date.now(),
+      }));
+    } catch { /* L’enregistrement de card reste une amélioration facultative. */ }
     persistLastSummary(message);
     root.dataset.lastRequestId = String(message.requestId);
     root.dataset.lastPointCount = String(message.simulation.points.length);

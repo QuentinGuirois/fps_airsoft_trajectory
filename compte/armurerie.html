@@ -60,6 +60,26 @@
         <div class="button-row"><button class="button" type="button" data-cancel-archive>ANNULER</button><button class="button archive-confirm" type="button" data-confirm-archive>ARCHIVER</button></div>
       </form>
     </dialog>
+
+    <dialog class="replica-editor-dialog" data-replica-dialog aria-labelledby="replica-editor-title">
+      <form data-replica-form>
+        <span class="patch-stencil">CARD PRIVÉE</span>
+        <h2 id="replica-editor-title">Ajouter une réplique</h2>
+        <p>La courbe et les portées viennent du dernier calcul ATP effectué dans cet onglet. Elles ne sont pas recalculées ici.</p>
+        <label for="replica-model">MODÈLE</label>
+        <input id="replica-model" name="modelName" required minlength="2" maxlength="80">
+        <label for="replica-type">TYPE</label>
+        <select id="replica-type" name="type" required><option>AEG</option><option>GBBR</option><option>GBB</option><option>HPA</option><option>SPRING</option><option>AUTRE</option></select>
+        <label for="replica-simulation">LIEN COMPLET F.A.T.</label>
+        <input id="replica-simulation" name="simulationUrl" type="url" required maxlength="2048">
+        <label for="replica-youtube">LIEN YOUTUBE (OPTIONNEL)</label>
+        <input id="replica-youtube" name="youtubeUrl" type="url" maxlength="512">
+        <label for="replica-photo">PHOTO DE PROFIL — JPEG, PNG OU WEBP, 8 MO MAX.</label>
+        <input id="replica-photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp">
+        <label class="replica-rights"><input name="rightsConfirmed" type="checkbox" required> Je possède les droits sur cette photo.</label>
+        <div class="button-row"><button class="button" type="button" data-cancel-replica>ANNULER</button><button class="button button-primary" type="submit">ENREGISTRER →</button></div>
+      </form>
+    </dialog>
   </div>
   <script type="module" src="/assets/js/armory-entry.js"></script>
 </body>

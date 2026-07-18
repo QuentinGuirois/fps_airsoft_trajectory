@@ -95,6 +95,6 @@ test('le guidage est accessible, résilient et n’intervient pas dans les calcu
 
 test('le module est précaché et la version PWA est incrémentée', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-25'/);
+  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-26'/);
   assert.match(worker, /'\/calculator-tutorial\.js'/);
 });

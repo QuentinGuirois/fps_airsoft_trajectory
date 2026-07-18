@@ -33,7 +33,7 @@ test('les repositories HTTP utilisent même origine, no-store, credentials et CS
   const calls = [];
   const fetchImpl = async (url, options) => {
     calls.push({ url, options });
-    return jsonResponse(url.endsWith('/session') && options.method === 'GET'
+    return jsonResponse(url.endsWith('/me') && options.method === 'GET'
       ? { authenticated: true, csrfToken: 'csrf-123', user: { pseudo: 'Test' } }
       : { ok: true, replicas: [] });
   };
@@ -43,14 +43,15 @@ test('les repositories HTTP utilisent même origine, no-store, credentials et CS
   await account.getSession();
   await account.login({ identity: 'test@example.test', password: 'secret-long' });
   await replicas.list();
-  await replicas.archive('replica/unsafe');
+  await replicas.archive('replica/unsafe', 4);
   assert.equal(calls.length, 4);
   for (const call of calls) {
     assert.equal(call.options.credentials, 'same-origin');
     assert.equal(call.options.cache, 'no-store');
   }
   assert.equal(calls[1].options.headers.get('X-CSRF-Token'), 'csrf-123');
-  assert.match(calls[3].url, /replica%2Funsafe\/archive$/);
+  assert.match(calls[3].url, /replicas\/replica%2Funsafe$/);
+  assert.equal(JSON.parse(calls[3].options.body).version, 4);
 });
 
 test('les erreurs API restent typées sans inventer de session', async () => {
@@ -123,7 +124,7 @@ test('l’archivage est réversible dans les textes et aucune suppression physiq
 
 test('le service worker cache seulement les shells et contourne toutes les réponses API privées', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-25'/);
+  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-26'/);
   for (const path of ['/compte/', '/compte/armurerie.html', '/assets/js/replica-card.js', '/assets/js/community-repositories.js']) {
     assert.ok(worker.includes(`'${path}'`), path);
   }

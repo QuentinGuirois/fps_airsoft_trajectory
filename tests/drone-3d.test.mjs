@@ -74,7 +74,7 @@ test('Three.js r185.1 et OrbitControls sont auto-hébergés avec licence', async
 
 test('le cache différé référence tous les modules 3D sans les précacher', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /fat-v3-2026-07-18-25/);
+  assert.match(worker, /fat-v3-2026-07-18-26/);
   for (const path of [
     '/drone-3d.js',
     '/assets/vendor/three-r185/build/three.module.min.js',

@@ -13,12 +13,19 @@ export class AccountRepository {
   async login() { throw new Error('AccountRepository.login() doit être implémenté.'); }
   async register() { throw new Error('AccountRepository.register() doit être implémenté.'); }
   async logout() { throw new Error('AccountRepository.logout() doit être implémenté.'); }
+  async verifyEmail() { throw new Error('AccountRepository.verifyEmail() doit être implémenté.'); }
+  async forgotPassword() { throw new Error('AccountRepository.forgotPassword() doit être implémenté.'); }
+  async resetPassword() { throw new Error('AccountRepository.resetPassword() doit être implémenté.'); }
 }
 
 export class ReplicaRepository {
   async list() { throw new Error('ReplicaRepository.list() doit être implémenté.'); }
+  async create() { throw new Error('ReplicaRepository.create() doit être implémenté.'); }
+  async update() { throw new Error('ReplicaRepository.update() doit être implémenté.'); }
+  async uploadPhoto() { throw new Error('ReplicaRepository.uploadPhoto() doit être implémenté.'); }
+  async processingStatus() { throw new Error('ReplicaRepository.processingStatus() doit être implémenté.'); }
+  async submit() { throw new Error('ReplicaRepository.submit() doit être implémenté.'); }
   async archive() { throw new Error('ReplicaRepository.archive() doit être implémenté.'); }
-  async retryBackgroundRemoval() { throw new Error('ReplicaRepository.retryBackgroundRemoval() doit être implémenté.'); }
 }
 
 export class HttpApiClient {
@@ -33,17 +40,17 @@ export class HttpApiClient {
     this.csrfToken = typeof value === 'string' ? value : '';
   }
 
-  async request(path, { method = 'GET', body, signal } = {}) {
+  async request(path, { method = 'GET', body, form, signal } = {}) {
     const headers = new Headers({ Accept: 'application/json' });
     const mutation = !['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase());
-    if (body !== undefined) headers.set('Content-Type', 'application/json');
+    if (body !== undefined && form === undefined) headers.set('Content-Type', 'application/json');
     if (mutation && this.csrfToken) headers.set('X-CSRF-Token', this.csrfToken);
     let response;
     try {
       response = await this.fetchImpl(`${this.baseUrl}${path}`, {
         method,
         headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
+        body: form ?? (body === undefined ? undefined : JSON.stringify(body)),
         credentials: 'same-origin',
         cache: 'no-store',
         signal,
@@ -76,14 +83,17 @@ export class HttpAccountRepository extends AccountRepository {
     this.client = client;
   }
 
-  getSession({ signal } = {}) { return this.client.request('/session', { signal }); }
+  getSession({ signal } = {}) { return this.client.request('/me', { signal }); }
   login(credentials, { signal } = {}) {
-    return this.client.request('/session', { method: 'POST', body: credentials, signal });
+    return this.client.request('/auth/login', { method: 'POST', body: credentials, signal });
   }
   register(account, { signal } = {}) {
-    return this.client.request('/accounts', { method: 'POST', body: account, signal });
+    return this.client.request('/auth/register', { method: 'POST', body: account, signal });
   }
-  logout({ signal } = {}) { return this.client.request('/session', { method: 'DELETE', signal }); }
+  logout({ signal } = {}) { return this.client.request('/auth/logout', { method: 'POST', body: {}, signal }); }
+  verifyEmail(token, { signal } = {}) { return this.client.request('/auth/verify-email', { method: 'POST', body: { token }, signal }); }
+  forgotPassword(email, { signal } = {}) { return this.client.request('/auth/forgot-password', { method: 'POST', body: { email }, signal }); }
+  resetPassword(token, password, { signal } = {}) { return this.client.request('/auth/reset-password', { method: 'POST', body: { token, password }, signal }); }
 }
 
 export class HttpReplicaRepository extends ReplicaRepository {
@@ -95,11 +105,17 @@ export class HttpReplicaRepository extends ReplicaRepository {
   list({ signal, includeArchived = true } = {}) {
     return this.client.request(`/replicas?include_archived=${includeArchived ? '1' : '0'}`, { signal });
   }
-  archive(id, { signal } = {}) {
-    return this.client.request(`/replicas/${encodeURIComponent(id)}/archive`, { method: 'POST', body: {}, signal });
+  create(data, { signal } = {}) { return this.client.request('/replicas', { method: 'POST', body: data, signal }); }
+  update(id, data, { signal } = {}) { return this.client.request(`/replicas/${encodeURIComponent(id)}`, { method: 'PATCH', body: data, signal }); }
+  uploadPhoto(id, photo, { signal } = {}) {
+    const form = new FormData();
+    form.set('photo', photo);
+    return this.client.request(`/replicas/${encodeURIComponent(id)}/photo`, { method: 'POST', form, signal });
   }
-  retryBackgroundRemoval(id, { signal } = {}) {
-    return this.client.request(`/replicas/${encodeURIComponent(id)}/background-removal`, { method: 'POST', body: {}, signal });
+  processingStatus(id, { signal } = {}) { return this.client.request(`/replicas/${encodeURIComponent(id)}/processing-status`, { signal }); }
+  submit(id, version, { signal } = {}) { return this.client.request(`/replicas/${encodeURIComponent(id)}/submit`, { method: 'POST', body: { version }, signal }); }
+  archive(id, version, { signal } = {}) {
+    return this.client.request(`/replicas/${encodeURIComponent(id)}`, { method: 'DELETE', body: { version }, signal });
   }
 }
 

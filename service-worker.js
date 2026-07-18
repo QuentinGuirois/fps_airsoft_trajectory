@@ -1,4 +1,4 @@
-const CACHE = 'fat-v3-2026-07-18-25';
+const CACHE = 'fat-v3-2026-07-18-26';
 const CORE = [
   '/',
   '/index.html',

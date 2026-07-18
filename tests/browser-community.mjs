@@ -130,22 +130,19 @@ await send('Page.addScriptToEvaluateOnNewDocument', { source: `
       sessionStorage.setItem(callsKey, JSON.stringify(calls));
       let status = 200;
       let payload = { ok: true };
-      if (requestUrl.pathname.endsWith('/session') && method === 'GET') {
+      if (requestUrl.pathname.endsWith('/me') && method === 'GET') {
         payload = location.pathname.endsWith('/armurerie.html')
           ? fixture.session
           : { authenticated: false, csrfToken: 'browser-csrf' };
-      } else if (requestUrl.pathname.endsWith('/session') && method === 'POST') {
+      } else if (requestUrl.pathname.endsWith('/auth/login') && method === 'POST') {
         payload = fixture.session;
-      } else if (requestUrl.pathname.endsWith('/accounts') && method === 'POST') {
+      } else if (requestUrl.pathname.endsWith('/auth/register') && method === 'POST') {
         payload = { created: true, csrfToken: 'browser-csrf' };
       } else if (/\\/replicas\\?/.test(requestUrl.pathname + requestUrl.search)) {
         payload = { replicas: sessionStorage.getItem('__fatCommunityReplicaMode') === 'empty' ? [] : fixture.replicas };
-      } else if (/\\/replicas\\/[^/]+\\/archive$/.test(requestUrl.pathname)) {
-        const id = decodeURIComponent(requestUrl.pathname.split('/').at(-2));
+      } else if (/\\/replicas\\/[^/]+$/.test(requestUrl.pathname) && method === 'DELETE') {
+        const id = decodeURIComponent(requestUrl.pathname.split('/').at(-1));
         payload = { replica: { ...fixture.replicas.find((replica) => replica.id === id), state: 'archived' } };
-      } else if (/\\/replicas\\/[^/]+\\/background-removal$/.test(requestUrl.pathname)) {
-        const id = decodeURIComponent(requestUrl.pathname.split('/').at(-2));
-        payload = { replica: { ...fixture.replicas.find((replica) => replica.id === id), imageStatus: 'queued' } };
       } else {
         status = 404;
         payload = { code: 'not_found', message: 'Fixture API absente.' };
@@ -208,7 +205,7 @@ try {
 }
 await waitFor(`document.querySelectorAll('replica-card').length === ${COMMUNITY_FIXTURE.replicas.length}`);
 const apiCalls = await evaluate(`JSON.parse(sessionStorage.getItem('__fatCommunityApiCalls') || '[]')`);
-const csrfLogin = apiCalls.find((call) => call.path.endsWith('/session') && call.method === 'POST');
+const csrfLogin = apiCalls.find((call) => call.path.endsWith('/auth/login') && call.method === 'POST');
 if (!csrfLogin || csrfLogin.headers['x-csrf-token'] !== 'browser-csrf') throw new Error(`Login CSRF missing ${JSON.stringify(csrfLogin)}`);
 
 await setViewport(1440, 1000);
@@ -272,7 +269,7 @@ await navigate(base);
 await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await navigate(`${base}compte/armurerie.html?recipe=sw`);
 await waitFor(`Boolean(navigator.serviceWorker.controller)`);
-const cache = await evaluate(`Promise.all([caches.open('fat-v3-2026-07-18-25').then(cache=>cache.match('/assets/js/replica-card.js')).then(Boolean),caches.match('/api/v1/session').then(Boolean)]).then(([component,api])=>({component,api}))`, true);
+const cache = await evaluate(`Promise.all([caches.open('fat-v3-2026-07-18-26').then(cache=>cache.match('/assets/js/replica-card.js')).then(Boolean),caches.match('/api/v1/me').then(Boolean)]).then(([component,api])=>({component,api}))`, true);
 if (!cache.component || cache.api) throw new Error(`Private cache mismatch ${JSON.stringify(cache)}`);
 
 await evaluate(`sessionStorage.setItem('__fatDisableCommunityApi','1')`);

@@ -51,6 +51,19 @@
         <button class="button button-primary account-submit" type="submit">CRÉER MON COMPTE →</button>
       </form>
 
+      <form class="account-form" data-account-forgot-form hidden>
+        <label for="account-recovery-email">EMAIL DU COMPTE</label>
+        <input id="account-recovery-email" name="email" type="email" autocomplete="email" required maxlength="254">
+        <button class="button button-primary account-submit" type="submit">ENVOYER LE LIEN →</button>
+        <button class="button" type="button" data-account-cancel-recovery>RETOUR</button>
+      </form>
+
+      <form class="account-form" data-account-reset-form hidden>
+        <label for="account-reset-password">NOUVEAU MOT DE PASSE</label>
+        <input id="account-reset-password" name="password" type="password" autocomplete="new-password" required minlength="12">
+        <button class="button button-primary account-submit" type="submit">RÉINITIALISER →</button>
+      </form>
+
       <div class="account-oauth" data-oauth-unavailable hidden aria-hidden="true">
         <button type="button" disabled>Google — indisponible</button><button type="button" disabled>Discord — indisponible</button>
       </div>

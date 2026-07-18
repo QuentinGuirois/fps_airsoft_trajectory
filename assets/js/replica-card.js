@@ -60,6 +60,7 @@ export function normalizeReplicaCardData(input, {
     energyJ: finiteOrNull(data.energyJ),
     usefulRangeM: finiteOrNull(data.usefulRangeM),
     maximumRangeM: finiteOrNull(data.maximumRangeM),
+    version: Math.max(1, Number.parseInt(data.version, 10) || 1),
     curveThumbSvg: typeof data.curveThumbSvg === 'string' && data.curveThumbSvg.length <= 80_000 ? data.curveThumbSvg : '',
     simUrl: simulation.ok ? `${new URL(simulation.url).pathname}${new URL(simulation.url).search}` : '',
     user: {
