@@ -278,24 +278,121 @@ navigator.serviceWorker?.addEventListener('controllerchange', updatePwaStatus);
 let installPrompt = null;
 const installButtons = [...document.querySelectorAll('[data-install-app]')];
 
+function appIsInstalled() {
+  return window.matchMedia?.('(display-mode: standalone)').matches
+    || window.matchMedia?.('(display-mode: fullscreen)').matches
+    || window.navigator.standalone === true;
+}
+
+function usesIosInstallFlow() {
+  const agent = window.navigator.userAgent || '';
+  return /iPad|iPhone|iPod/i.test(agent)
+    || (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
+}
+
+function ensureInstallGuide() {
+  let guide = document.querySelector('[data-install-guide]');
+  if (guide) return guide;
+  guide = document.createElement('div');
+  guide.className = 'pwa-install-guide';
+  guide.dataset.installGuide = '';
+  guide.hidden = true;
+  guide.setAttribute('role', 'dialog');
+  guide.setAttribute('aria-modal', 'true');
+  guide.setAttribute('aria-labelledby', 'pwa-install-title');
+  guide.innerHTML = `<div class="pwa-install-backdrop" data-install-close></div>
+    <section class="pwa-install-panel">
+      <span class="stencil-patch">APPLICATION F.A.T.</span>
+      <h2 id="pwa-install-title">Installer sur ce mobile</h2>
+      <p data-install-intro></p>
+      <ol data-install-steps></ol>
+      <p class="pwa-install-note">Une fois installée, F.A.T. s’ouvre comme une application et reste utilisable hors connexion après une première visite.</p>
+      <button class="button button-primary" type="button" data-install-close>J’ai compris</button>
+    </section>`;
+  document.body.append(guide);
+  return guide;
+}
+
+function closeInstallGuide(restoreFocus = true) {
+  const guide = document.querySelector('[data-install-guide]');
+  if (!guide || guide.hidden) return;
+  guide.hidden = true;
+  document.body.classList.remove('has-install-guide');
+  if (restoreFocus) guide.installTrigger?.focus();
+}
+
+function openInstallGuide(trigger) {
+  const guide = ensureInstallGuide();
+  const ios = usesIosInstallFlow();
+  guide.installTrigger = trigger;
+  guide.querySelector('[data-install-intro]').textContent = ios
+    ? 'Sur iPhone ou iPad, l’installation se fait depuis Safari.'
+    : 'Ton navigateur ne propose pas l’installation automatique. Tu peux tout de même ajouter F.A.T. à ton écran d’accueil.';
+  guide.querySelector('[data-install-steps]').innerHTML = ios
+    ? '<li>Ouvre cette page dans <strong>Safari</strong>.</li><li>Touche le bouton <strong>Partager</strong>.</li><li>Choisis <strong>Sur l’écran d’accueil</strong>, puis <strong>Ajouter</strong>.</li>'
+    : '<li>Ouvre le <strong>menu du navigateur</strong> (souvent ⋮).</li><li>Choisis <strong>Installer l’application</strong> ou <strong>Ajouter à l’écran d’accueil</strong>.</li><li>Confirme l’installation.</li>';
+  guide.hidden = false;
+  document.body.classList.add('has-install-guide');
+  guide.querySelector('.pwa-install-panel [data-install-close]')?.focus();
+}
+
+function refreshInstallButtons() {
+  const installed = appIsInstalled();
+  installButtons.forEach((button) => {
+    button.hidden = installed;
+    button.dataset.installMode = installPrompt ? 'prompt' : 'instructions';
+    if (installPrompt) button.removeAttribute('aria-haspopup');
+    else button.setAttribute('aria-haspopup', 'dialog');
+  });
+}
+
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault();
   installPrompt = event;
-  installButtons.forEach((button) => { button.hidden = false; });
+  refreshInstallButtons();
+});
+
+window.addEventListener('appinstalled', () => {
+  installPrompt = null;
+  closeInstallGuide(false);
+  refreshInstallButtons();
+});
+
+document.addEventListener('click', (event) => {
+  if (event.target.closest('[data-install-close]')) closeInstallGuide();
+});
+
+document.addEventListener('keydown', (event) => {
+  const guide = document.querySelector('[data-install-guide]');
+  if (!guide || guide.hidden) return;
+  if (event.key === 'Escape') {
+    closeInstallGuide();
+    return;
+  }
+  if (event.key !== 'Tab') return;
+  const focusable = [...guide.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+    .filter((item) => !item.hidden && !item.disabled);
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable.at(-1);
+  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
 });
 
 installButtons.forEach((button) => {
   button.addEventListener('click', async () => {
     if (!installPrompt) {
-      document.querySelector('[data-install-help]')?.removeAttribute('hidden');
+      openInstallGuide(button);
       return;
     }
     installPrompt.prompt();
     await installPrompt.userChoice;
     installPrompt = null;
-    installButtons.forEach((item) => { item.hidden = true; });
+    refreshInstallButtons();
   });
 });
+
+refreshInstallButtons();
 
 document.querySelectorAll('[data-converter]').forEach((converter) => {
   if (!document.querySelector('[data-converter-trust]')) {

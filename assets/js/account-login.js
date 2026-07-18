@@ -1,4 +1,4 @@
-import { RepositoryError } from './community-repositories.js?v=20260718-40';
+import { RepositoryError } from './community-repositories.js?v=20260718-41';
 
 export function safeAccountReturn(search = globalThis.location?.search || '') {
   try {

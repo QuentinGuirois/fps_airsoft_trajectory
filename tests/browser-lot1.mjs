@@ -202,6 +202,15 @@ await navigate(`${base}?visual-lot1=mobile`);
 await waitFor(`document.querySelectorAll('input[name="fat-theme"]').length === 3`);
 const mobile = await evaluate(`({innerWidth,scrollWidth:document.documentElement.scrollWidth,themeVisible:getComputedStyle(document.querySelector('[data-theme-control]')).display})`);
 if (mobile.innerWidth !== 390 || mobile.scrollWidth > mobile.innerWidth || mobile.themeVisible === 'none') throw new Error(`Mobile overflow ${JSON.stringify(mobile)}`);
+const mobileInstall = await evaluate(`(()=>{const button=document.querySelector('.nav-install');const style=getComputedStyle(button);const rect=button.getBoundingClientRect();return{hidden:button.hidden,display:style.display,height:rect.height,mode:button.dataset.installMode}})()`);
+if (mobileInstall.hidden || mobileInstall.display === 'none' || mobileInstall.height < 43.5) throw new Error(`Mobile install action missing ${JSON.stringify(mobileInstall)}`);
+if (mobileInstall.mode === 'instructions') {
+  await evaluate(`document.querySelector('.nav-install').click()`);
+  await wait(200);
+  const installGuide = await evaluate(`(()=>{const guide=document.querySelector('[data-install-guide]');const mode=document.querySelector('.nav-install').dataset.installMode;return{nativePrompt:mode==='prompt',visible:Boolean(guide&&!guide.hidden),title:guide?.querySelector('#pwa-install-title')?.textContent||'',steps:guide?.querySelectorAll('[data-install-steps] li').length||0,focus:Boolean(document.activeElement?.matches('.pwa-install-panel [data-install-close]'))}})()`);
+  if (!installGuide.nativePrompt && (!installGuide.visible || !installGuide.title.includes('Installer') || installGuide.steps !== 3 || !installGuide.focus)) throw new Error(`Install guide mismatch ${JSON.stringify(installGuide)}`);
+  if (installGuide.visible) await evaluate(`document.querySelector('.pwa-install-panel [data-install-close]').click()`);
+}
 
 const resources = await evaluate(`Promise.all(['/assets/site.css','/theme.js','/calculation-loader.js','/assets/fonts/saira-latin-400-900.woff2','/assets/img/icon-maskable-512.png'].map(async u=>[u,(await fetch(u)).status]))`, true);
 if (resources.some(([, status]) => status !== 200)) throw new Error(`HTTP resources ${JSON.stringify(resources)}`);
@@ -212,7 +221,7 @@ await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await navigate(`${base}?visual-lot1=sw-control`);
 await waitFor(`Boolean(navigator.serviceWorker.controller)`);
 const cache = await evaluate(`caches.keys().then(keys=>({keys,controller:Boolean(navigator.serviceWorker.controller)}))`, true);
-if (!cache.keys.includes('fat-v3-2026-07-18-40') || !cache.controller) throw new Error(`PWA cache mismatch ${JSON.stringify(cache)}`);
+if (!cache.keys.includes('fat-v3-2026-07-18-41') || !cache.controller) throw new Error(`PWA cache mismatch ${JSON.stringify(cache)}`);
 await navigate(`${base}simulateur-trajectoire-airsoft/`);
 await navigate(`${base}outils/choisir-gaz-airsoft-pression-temperature/`);
 await waitFor(`document.documentElement.dataset.gasPressureReady === 'true'`);

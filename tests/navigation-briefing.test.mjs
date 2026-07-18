@@ -87,9 +87,29 @@ test('animations, reduced motion, PWA et fond CSS respectent la salle de briefin
   assert.doesNotMatch(`${site}\n${css}`, /three\.js|three-r185/i);
   assert.match(site, /SERVICE WORKER EN INITIALISATION/);
   assert.match(site, /HORS CONNEXION PRÊT/);
-  assert.match(worker, /fat-v3-2026-07-18-40/);
+  assert.match(worker, /fat-v3-2026-07-18-41/);
   assert.match(worker, /'\/outils\/'/);
   assert.match(worker, /'\/guides\/'/);
+});
+
+test('l’installation mobile reste visible avec invite native ou instructions Safari', async () => {
+  const [site, css] = await Promise.all([read('site.js'), read('assets', 'site.css')]);
+  assert.match(site, /function appIsInstalled\(\)/);
+  assert.match(site, /display-mode: standalone/);
+  assert.match(site, /window\.navigator\.standalone === true/);
+  assert.match(site, /beforeinstallprompt/);
+  assert.match(site, /Sur l’écran d’accueil/);
+  assert.match(site, /Installer l’application/);
+  assert.match(site, /refreshInstallButtons\(\);/);
+  assert.match(css, /@media \(max-width: 760px\)[\s\S]*\.nav-install\[data-install-mode\] \{ display: inline-flex/);
+  assert.match(css, /\.pwa-install-guide\[hidden\] \{ display: none/);
+});
+
+test('le pseudo joueur est traité comme l’identité principale de chaque card', async () => {
+  const [component, css] = await Promise.all([read('assets', 'js', 'replica-card.js'), read('assets', 'site.css')]);
+  assert.match(component, /header\.append\(element\(doc, 'span', 'replica-pseudo', data\.user\.pseudo\), avatar\)/);
+  assert.match(css, /\.replica-pseudo \{[^}]*border-left: 3px solid var\(--acid\)/);
+  assert.match(css, /\.replica-pseudo \{[^}]*font: 800 \.82rem\/1 var\(--font-display\)/);
 });
 
 test('les trois petites corrections visuelles restent protégées', async () => {
