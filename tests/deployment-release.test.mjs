@@ -40,6 +40,8 @@ test('le déploiement sauvegarde, migre, active atomiquement et restaure sur éc
     read('bin/deploy-release.sh'), read('bin/rollback-release.sh'),
   ]);
   assert.match(deploy, /flock -n/);
+  assert.match(deploy, /\/opt\/plesk\/php\/8\.3\/bin\/php/);
+  assert.match(deploy, /"\$php_bin" -l/);
   assert.match(deploy, /mariadb-dump|mysqldump/);
   assert.match(deploy, /single-transaction/);
   assert.match(deploy, /FAT_CONFIG_FILE=.*bin\/migrate\.php/);

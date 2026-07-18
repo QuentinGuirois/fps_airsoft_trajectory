@@ -12,6 +12,12 @@ mkdir -p -- "$root_input"
 root=$(cd "$root_input" && pwd -P)
 [[ "$root" != "/" && "$root" != "/var" && "$root" != "/var/www" ]] || { echo "DEPLOY_PATH trop large." >&2; exit 2; }
 
+php_bin=$(command -v php || true)
+if [[ -z "$php_bin" && -x /opt/plesk/php/8.3/bin/php ]]; then
+  php_bin=/opt/plesk/php/8.3/bin/php
+fi
+[[ -n "$php_bin" && -x "$php_bin" ]] || { echo "PHP CLI 8.3 est introuvable." >&2; exit 2; }
+
 incoming="$root/incoming"
 archive="$incoming/$sha.tar.gz"
 private="$root/private"
@@ -43,9 +49,9 @@ safe_extract() {
     echo "Release incomplète." >&2
     return 1
   }
-  php -l "$destination/api/v1/index.php" >/dev/null
-  php -l "$destination/bin/migrate.php" >/dev/null
-  php -l "$destination/bin/promote-admin.php" >/dev/null
+  "$php_bin" -l "$destination/api/v1/index.php" >/dev/null
+  "$php_bin" -l "$destination/bin/migrate.php" >/dev/null
+  "$php_bin" -l "$destination/bin/promote-admin.php" >/dev/null
 }
 
 if [[ "$mode" == "--dry-run" ]]; then
@@ -116,7 +122,7 @@ backup="$private/backups/db-$sha.sql.gz"
 [[ -s "$backup_tmp" ]] || { rm -f -- "$backup_tmp"; echo "Sauvegarde MariaDB vide." >&2; exit 10; }
 mv -- "$backup_tmp" "$backup"
 
-FAT_CONFIG_FILE="$app_config" php "$release/bin/migrate.php"
+FAT_CONFIG_FILE="$app_config" "$php_bin" "$release/bin/migrate.php"
 next="$root/.current-$sha"
 rm -f -- "$next"
 ln -s "$release" "$next"
@@ -125,7 +131,7 @@ mv -Tf -- "$next" "$root/current"
 health_ok=false
 for attempt in 1 2 3 4 5; do
   response=$(curl --fail --silent --show-error --max-time 10 "$health_url" 2>/dev/null || true)
-  if printf '%s' "$response" | php -r '$v=json_decode(stream_get_contents(STDIN),true);exit(($v["status"]??null)==="ok"?0:1);'; then
+  if printf '%s' "$response" | "$php_bin" -r '$v=json_decode(stream_get_contents(STDIN),true);exit(($v["status"]??null)==="ok"?0:1);'; then
     health_ok=true
     break
   fi
