@@ -23,7 +23,7 @@ const briefingNavigation = [
 const number = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
 
 function brandMarkup() {
-  return `<a class="brand" href="/" aria-label="F.A.T., accueil">
+  return `<a class="brand" href="/">
     <svg class="brand-mark" viewBox="0 0 120 76" aria-hidden="true" focusable="false"><path class="brand-curve" d="M6 62C30 30 62 22 78 26C96 31 106 44 112 62"/><circle class="brand-ball" cx="78" cy="26" r="13"/><path class="brand-spin" d="M60 30A20 20 0 0 1 71 15"/><line class="brand-ground" x1="2" y1="68" x2="118" y2="68"/></svg>
     <span><strong>F.A.T<span class="brand-dot">.</span></strong><small>FPS Airsoft Trajectory</small></span>
   </a>`;

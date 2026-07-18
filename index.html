@@ -10,6 +10,8 @@
   <link rel="canonical" href="https://fps-airsoft-trajectory.com/">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/assets/site.css?v=20260718-40" as="style">
+  <link rel="preload" href="/assets/fonts/saira-latin-400-900.woff2" as="font" type="font/woff2" crossorigin>
   <script src="/theme-bootstrap.js?v=20260718-40" data-cfasync="false"></script>
   <link rel="stylesheet" href="/assets/site.css?v=20260718-40">
   <meta property="og:type" content="website">
@@ -171,7 +173,7 @@
                 <span class="field-label"><span>Hop-up</span><span>auto + réglage fin</span></span>
                 <div class="spin-stepper" role="group" aria-label="Réglage fin du hop-up">
                   <button type="button" data-spin-delta="-250" aria-label="Réduire le hop-up de 250 tours par minute">−</button>
-                  <button class="spin-auto" id="spin-auto" type="button" aria-label="Revenir au hop-up automatique conseillé">
+                  <button class="spin-auto" id="spin-auto" type="button" title="Revenir au hop-up automatique conseillé">
                     <strong id="spin-setting">HOP UP AUTO</strong><span id="spin-adjustment">tir tendu conseillé</span>
                   </button>
                   <button type="button" data-spin-delta="250" aria-label="Augmenter le hop-up de 250 tours par minute">+</button>

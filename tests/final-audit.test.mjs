@@ -165,5 +165,25 @@ test('le pipeline fige Lighthouse, archive ses rapports et differe HSTS includeS
   assert.match(desktop, /require\('\.\/lighthouserc-mobile\.cjs'\)/);
   assert.match(desktop, /preset: 'desktop'/);
   assert.match(htaccess, /Strict-Transport-Security "max-age=31536000"/);
+  assert.match(htaccess, /Header add Link "<\/assets\/site\.css\?v=20260718-40>; rel=preload; as=style"/);
   assert.doesNotMatch(htaccess, /Strict-Transport-Security "[^"]*includeSubDomains/);
+});
+
+test('les correctifs Lighthouse conservent des noms accessibles et une region publique nommee', async () => {
+  const [site, home, gas, advanced, gallery] = await Promise.all([
+    read('site.js'), read('index.html'),
+    read('outils', 'choisir-gaz-airsoft-pression-temperature', 'index.html'),
+    read('simulateur-3d-airsoft', 'index.html'),
+    read('tu-joues-avec-quoi', 'index.html'),
+  ]);
+  assert.doesNotMatch(site, /class="brand"[^>]+aria-label/);
+  assert.match(home, /id="spin-auto"[^>]+title="Revenir au hop-up automatique conseillé"/);
+  assert.doesNotMatch(home, /id="spin-auto"[^>]+aria-label/);
+  assert.match(gallery, /data-community-grid role="region" aria-label="Cards de répliques publiées"/);
+  for (const html of [home, gas, advanced, gallery]) {
+    const preload = html.indexOf('<link rel="preload" href="/assets/site.css?v=20260718-40" as="style">');
+    const bootstrap = html.indexOf('<script src="/theme-bootstrap.js?v=20260718-40" data-cfasync="false"></script>');
+    assert.ok(preload >= 0 && preload < bootstrap);
+    assert.match(html, /rel="preload" href="\/assets\/fonts\/saira-latin-400-900\.woff2" as="font" type="font\/woff2" crossorigin/);
+  }
 });

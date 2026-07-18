@@ -60,7 +60,7 @@ test('chaque page initialise le thème dans le head avant la feuille de style', 
   for (const path of files) {
     const html = await readFile(path, 'utf8');
     const initPosition = html.indexOf('<script src="/theme-bootstrap.js?v=20260718-40" data-cfasync="false"></script>');
-    const cssPosition = html.search(/href="\/assets\/site\.css\?v=20260718-40"/);
+    const cssPosition = html.search(/<link rel="stylesheet" href="\/assets\/site\.css\?v=20260718-40">/);
     assert.ok(initPosition > 0, path);
     assert.ok(cssPosition > initPosition, path);
     assert.match(html, /meta name="theme-color" content="#10140c"/);
