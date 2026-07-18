@@ -98,7 +98,7 @@
       <div class="shell">
         <div class="section-head">
           <div><p class="eyebrow">Banc balistique</p><h2>Simule ton tir</h2></div>
-          <p>Entre une mesure de chronographe faite avec le grammage réellement joué. Compare ensuite plusieurs billes ou plusieurs réglages de hop-up.</p>
+          <div class="tutorial-section-actions"><p>Entre une mesure de chronographe faite avec le grammage réellement joué. Compare ensuite plusieurs billes ou plusieurs réglages de hop-up.</p><button class="button button-ghost button-small tutorial-launch-button" type="button" data-tutorial-launch>Comment utiliser le calculateur ?</button></div>
         </div>
 
         <section class="cockpit-scene" aria-labelledby="scene-title">
@@ -170,11 +170,11 @@
             </div>
 
             <div class="field-grid">
-              <div class="field"><label for="mass">Masse de bille <span>g</span></label><input id="mass" data-shot-field="massG" type="number" inputmode="decimal" min="0.12" max="0.88" step="0.01" value="0.28"></div>
-              <div class="field"><label for="energy">Énergie mesurée <span>J</span></label><input id="energy" data-shot-field="energyJ" type="number" inputmode="decimal" min="0.01" max="10" step="0.01" value="1.50"></div>
-              <div class="field"><label for="fps">Vitesse <span>FPS</span></label><input id="fps" data-shot-field="velocityFps" type="number" inputmode="numeric" min="1" max="1000" step="1"></div>
+              <div class="field" data-tuto="masse"><label for="mass">Masse de bille <span>g</span></label><input id="mass" data-shot-field="massG" type="number" inputmode="decimal" min="0.12" max="0.88" step="0.01" value="0.28"></div>
+              <div class="field" data-tuto="energie"><label for="energy">Énergie mesurée <span>J</span></label><input id="energy" data-shot-field="energyJ" type="number" inputmode="decimal" min="0.01" max="10" step="0.01" value="1.50"></div>
+              <div class="field" data-tuto-include="energie"><label for="fps">Vitesse <span>FPS</span></label><input id="fps" data-shot-field="velocityFps" type="number" inputmode="numeric" min="1" max="1000" step="1"></div>
               <div class="field"><label for="mps">Vitesse <span>m/s</span></label><input id="mps" data-shot-field="velocityMps" type="number" tabindex="-1" readonly aria-readonly="true"></div>
-              <div class="field field-wide">
+              <div class="field field-wide" data-tuto="hopup">
                 <span class="field-label"><span>Hop-up</span><span>auto + réglage fin</span></span>
                 <div class="spin-stepper" role="group" aria-label="Réglage fin du hop-up">
                   <button type="button" data-spin-delta="-250" aria-label="Réduire le hop-up de 250 tours par minute">−</button>
@@ -187,11 +187,11 @@
                 <small class="field-hint" id="rpm-output">Recherche du réglage tendu…</small>
               </div>
               <div class="field"><label for="zero">Zéro optique <span>m</span></label><input id="zero" data-shot-field="zeroDistanceM" type="number" min="5" max="150" step="1" value="35"><small class="field-hint">Ajuste la visée, pas la trajectoire</small></div>
-              <div class="field"><label for="angle">Angle du canon <span>°</span></label><input id="angle" data-shot-field="angleDeg" type="number" min="-10" max="35" step="0.1" value="0"><small class="field-hint">0° = canon horizontal</small></div>
+              <div class="field" data-tuto="angle"><label for="angle">Angle du canon <span>°</span></label><input id="angle" data-shot-field="angleDeg" type="number" min="-10" max="35" step="0.1" value="0"><small class="field-hint">0° = canon horizontal</small></div>
               <div class="field"><label for="wind">Vitesse du vent <span>km/h</span></label><input id="wind" data-shot-field="windSpeedKmh" type="number" min="0" max="100" step="1" value="0"></div>
               <div class="field"><label for="wind-angle">Direction du vent <span>°</span></label><select id="wind-angle" data-shot-field="windAngleDeg"><option value="0">0° · de face</option><option value="45">45° · face/droite</option><option value="90">90° · de droite</option><option value="135">135° · dos/droite</option><option value="180">180° · de dos</option><option value="225">225° · dos/gauche</option><option value="270">270° · de gauche</option><option value="315">315° · face/gauche</option></select></div>
 
-              <details class="advanced">
+              <details class="advanced" data-tuto="avance">
                 <summary>Atmosphère, optique et paramètres avancés</summary>
                 <div class="field-grid">
                   <div class="field"><label for="temperature">Température <span>°C</span></label><input id="temperature" data-shot-field="temperatureC" type="number" min="-30" max="55" step="1" value="20"></div>
@@ -206,8 +206,8 @@
             </div>
 
             <div class="control-actions">
-              <button class="button button-primary button-small" id="compare-shot" type="button">Ajouter à la comparaison</button>
-              <button class="button button-small" id="share-shot" type="button">Partager le setup</button>
+              <button class="button button-primary button-small" id="compare-shot" type="button" data-tuto="comparer">Ajouter à la comparaison</button>
+              <button class="button button-small" id="share-shot" type="button" data-tuto="partager">Partager le setup</button>
               <button class="button button-ghost button-small" id="reset-shot" type="button">Réinitialiser</button>
             </div>
             <p id="share-feedback" aria-live="polite"></p>
@@ -334,5 +334,6 @@
   <a class="mobile-cta" href="#calculateur">Simuler mon setup</a>
   <script type="module" src="/site.js"></script>
   <script type="module" src="/app.js"></script>
+  <script type="module" src="/calculator-tutorial.js"></script>
 </body>
 </html>

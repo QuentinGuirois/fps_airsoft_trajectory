@@ -105,7 +105,7 @@ function ensureBriefingMenu() {
       <section class="briefing-main" aria-labelledby="briefing-menu-title"><p class="briefing-kicker" id="briefing-menu-title">// Navigation principale</p><nav class="briefing-links" aria-label="Toutes les rubriques">${briefingNavigation.map(briefingLinkMarkup).join('')}</nav></section>
       <aside class="briefing-sidebar">
         <section class="last-setup-card" data-last-setup-card aria-labelledby="last-setup-title"></section>
-        <nav class="briefing-secondary" aria-label="Liens du projet"><a href="/modele-physique-atp/">Le modèle ATP</a><a href="/a-propos/">À propos / Keep</a><a href="/faq-airsoft-balistique/">FAQ</a><button type="button" data-install-app hidden>Installer l’app ↓</button></nav>
+        <nav class="briefing-secondary" aria-label="Liens du projet"><a href="/modele-physique-atp/">Le modèle ATP</a><a href="/a-propos/">À propos / Keep</a><a href="/faq-airsoft-balistique/">FAQ</a><a href="/#tutoriel-calculateur" data-tutorial-launch>Relancer le tutoriel</a><button type="button" data-install-app hidden>Installer l’app ↓</button></nav>
         <div class="briefing-theme" data-theme-slot></div>
         <p class="briefing-install-help" data-install-help hidden>L’installation dépend du navigateur. Utilise son menu « Installer l’application » ou « Ajouter à l’écran d’accueil ».</p>
         <div class="briefing-pwa-status"><span aria-hidden="true"></span><p data-pwa-status>SERVICE WORKER EN INITIALISATION</p></div>

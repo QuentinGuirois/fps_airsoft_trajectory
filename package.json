@@ -11,6 +11,7 @@
     "test:browser:cockpit": "node tests/run-browser-cockpit-2d.mjs",
     "test:browser:drone": "node tests/run-browser-drone-3d.mjs",
     "test:browser:advanced": "node tests/run-browser-advanced-3d.mjs",
+    "test:browser:tutorial": "node tests/run-browser-tutorial.mjs",
     "test:background-removal": "python tests/test_background_removal.py",
     "serve": "python -m http.server 8080"
   },

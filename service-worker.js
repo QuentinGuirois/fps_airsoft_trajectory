@@ -1,4 +1,4 @@
-const CACHE = 'fat-v3-2026-07-18-23';
+const CACHE = 'fat-v3-2026-07-18-24';
 const CORE = [
   '/',
   '/index.html',
@@ -25,6 +25,7 @@ const CORE = [
   '/advanced-device.js',
   '/advanced-transition.js',
   '/calculation-loader.js',
+  '/calculator-tutorial.js',
   '/chart-data.js',
   '/render-capabilities.js',
   '/site.js',
