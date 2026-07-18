@@ -112,7 +112,13 @@ await send('Page.enable');
 await send('Runtime.enable');
 await send('Log.enable');
 await send('Network.enable');
-const browserFixture = JSON.stringify(COMMUNITY_FIXTURE).replaceAll('<', '\\u003c');
+const browserFixtureData = structuredClone(COMMUNITY_FIXTURE);
+if (!['127.0.0.1', 'localhost'].includes(new URL(base).hostname)) {
+  for (const replica of browserFixtureData.replicas) {
+    if (replica.photoUrl) replica.photoUrl = '/assets/img/quentin-guirois.webp';
+  }
+}
+const browserFixture = JSON.stringify(browserFixtureData).replaceAll('<', '\\u003c');
 await send('Page.addScriptToEvaluateOnNewDocument', { source: `
   (() => {
     const fixture = ${browserFixture};
@@ -120,9 +126,13 @@ await send('Page.addScriptToEvaluateOnNewDocument', { source: `
     const callsKey = '__fatCommunityApiCalls';
     globalThis.fetch = async (input, init = {}) => {
       const requestUrl = new URL(typeof input === 'string' || input instanceof URL ? input : input.url, location.href);
-      if (!requestUrl.pathname.startsWith('/api/v1/') || sessionStorage.getItem('__fatDisableCommunityApi') === '1') {
+      if (!requestUrl.pathname.startsWith('/api/v1/')) {
         return nativeFetch(input, init);
       }
+      if (sessionStorage.getItem('__fatForceCommunityApiFailure') === '1') {
+        throw new TypeError('Failed to fetch');
+      }
+      if (sessionStorage.getItem('__fatDisableCommunityApi') === '1') return nativeFetch(input, init);
       const method = String(init.method || (input instanceof Request ? input.method : 'GET')).toUpperCase();
       const headers = Object.fromEntries(new Headers(init.headers || (input instanceof Request ? input.headers : undefined)).entries());
       const calls = JSON.parse(sessionStorage.getItem(callsKey) || '[]');
@@ -273,6 +283,7 @@ const cache = await evaluate(`Promise.all([caches.open('fat-v3-2026-07-18-28').t
 if (!cache.component || cache.api) throw new Error(`Private cache mismatch ${JSON.stringify(cache)}`);
 
 await evaluate(`sessionStorage.setItem('__fatDisableCommunityApi','1')`);
+await evaluate(`sessionStorage.setItem('__fatForceCommunityApiFailure','1')`);
 const offlineErrorStart = consoleErrors.length;
 await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 });
 await navigate(`${base}compte/armurerie.html?recipe=offline`);
