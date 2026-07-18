@@ -61,6 +61,18 @@ test('les erreurs API restent typées sans inventer de session', async () => {
   ));
 });
 
+test('le client lie fetch au contexte global requis par les navigateurs', async () => {
+  let receiver;
+  const fetchImpl = function fetchWithRequiredReceiver() {
+    receiver = this;
+    if (this !== globalThis) throw new TypeError('Illegal invocation');
+    return jsonResponse({ turnstile: { enabled: true, siteKey: 'public-test' } });
+  };
+  const result = await new HttpAccountRepository({ client: new HttpApiClient({ fetchImpl }) }).getTurnstileConfig();
+  assert.equal(receiver, globalThis);
+  assert.equal(result.turnstile.enabled, true);
+});
+
 test('les mocks sont isolés dans tests et couvrent archivage et relance', async () => {
   const account = new MockAccountRepository(COMMUNITY_FIXTURE.session);
   const replicas = new MockReplicaRepository(COMMUNITY_FIXTURE.replicas);
@@ -125,7 +137,7 @@ test('l’archivage est réversible dans les textes et aucune suppression physiq
 test('le service worker cache seulement les shells et contourne toutes les réponses API privées', async () => {
   const worker = await read('service-worker.js');
   assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-32'/);
-  for (const path of ['/compte/', '/compte/armurerie.html', '/assets/js/replica-card.js?v=20260718-28', '/assets/js/community-repositories.js?v=20260718-30', '/assets/js/turnstile-client.js?v=20260718-30']) {
+  for (const path of ['/compte/', '/compte/armurerie.html', '/assets/js/replica-card.js?v=20260718-28', '/assets/js/community-repositories.js?v=20260718-33', '/assets/js/turnstile-client.js?v=20260718-30']) {
     assert.ok(worker.includes(`'${path}'`), path);
   }
   assert.match(worker, /url\.pathname\.startsWith\('\/api\/'\)[\s\S]*event\.respondWith\(fetch\(event\.request\)\);[\s\S]*return;/);

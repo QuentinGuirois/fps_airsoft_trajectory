@@ -32,7 +32,9 @@ export class ReplicaRepository {
 export class HttpApiClient {
   constructor({ fetchImpl = globalThis.fetch, baseUrl = '/api/v1' } = {}) {
     if (typeof fetchImpl !== 'function') throw new TypeError('Une implémentation fetch est requise.');
-    this.fetchImpl = fetchImpl;
+    // window.fetch exige son receveur Window dans les navigateurs. Sans ce
+    // binding, l'appel via this.fetchImpl(...) échoue avec "Illegal invocation".
+    this.fetchImpl = fetchImpl.bind(globalThis);
     this.baseUrl = String(baseUrl).replace(/\/$/, '');
     this.csrfToken = '';
   }
