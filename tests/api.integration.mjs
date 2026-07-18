@@ -2,18 +2,20 @@ import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { readFile, rm } from 'node:fs/promises';
 import http from 'node:http';
+import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url)).replace(/[\\\/]$/, '');
-const PHP = process.env.FAT_TEST_PHP || 'C:\\tools\\php\\php.exe';
+const PHP = process.env.FAT_TEST_PHP || (process.platform === 'win32' ? 'C:\\tools\\php\\php.exe' : 'php');
 const ORIGIN = 'http://127.0.0.1:8082';
 const env = {
   ...process.env,
   APP_ENV: 'local', APP_ORIGIN: ORIGIN,
   APP_KEY: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
-  DB_DSN: 'mysql:host=127.0.0.1;port=3308;dbname=fat_test;charset=utf8mb4',
-  DB_USER: 'fat_test', DB_PASSWORD: 'fat_local_test_only', STORAGE_ROOT: 'storage',
+  DB_DSN: process.env.FAT_TEST_DB_DSN || 'mysql:host=127.0.0.1;port=3308;dbname=fat_test;charset=utf8mb4',
+  DB_USER: process.env.FAT_TEST_DB_USER || 'fat_test',
+  DB_PASSWORD: process.env.FAT_TEST_DB_PASSWORD || 'fat_local_test_only', STORAGE_ROOT: 'storage',
   TRUSTED_HOST: '127.0.0.1:8082', MAIL_MODE: 'log', FEATURE_COMMUNITY: 'false',
   TURNSTILE_ENABLED: 'true',
   TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
@@ -50,8 +52,10 @@ function command(executable, args, options = {}) {
 }
 
 function resetDatabase() {
-  command('docker', ['exec', 'fat-mariadb-test', 'mariadb', '-uroot', '-pfat_local_root_only', '-e',
-    'DROP DATABASE IF EXISTS fat_test; CREATE DATABASE fat_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; GRANT ALL ON fat_test.* TO fat_test@\'%\';']);
+  if (process.env.FAT_TEST_SKIP_DB_RESET !== 'true') {
+    command('docker', ['exec', 'fat-mariadb-test', 'mariadb', '-uroot', '-pfat_local_root_only', '-e',
+      'DROP DATABASE IF EXISTS fat_test; CREATE DATABASE fat_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; GRANT ALL ON fat_test.* TO fat_test@\'%\';']);
+  }
   command(PHP, ['bin/migrate.php']);
   const repeated = command(PHP, ['bin/migrate.php']);
   assert.match(repeated, /déjà appliquée 001_auth\.sql/);
@@ -108,7 +112,7 @@ async function waitForServer() {
 }
 
 async function latestMailToken(kind) {
-  const log = `${ROOT}\\storage\\logs\\mail-test.jsonl`;
+  const log = join(ROOT, 'storage', 'logs', 'mail-test.jsonl');
   for (let index = 0; index < 20; index += 1) {
     try {
       const lines = (await readFile(log, 'utf8')).trim().split(/\r?\n/).filter(Boolean);
@@ -123,7 +127,7 @@ async function latestMailToken(kind) {
 }
 
 resetDatabase();
-await rm(`${ROOT}\\storage\\logs\\mail-test.jsonl`, { force: true });
+await rm(join(ROOT, 'storage', 'logs', 'mail-test.jsonl'), { force: true });
 await new Promise((resolveListen, reject) => {
   turnstileServer.once('error', reject);
   turnstileServer.listen(8083, '127.0.0.1', resolveListen);

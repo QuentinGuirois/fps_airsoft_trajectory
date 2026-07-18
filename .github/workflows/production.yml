@@ -1,0 +1,200 @@
+name: Tests et release production
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Valider l’archive sans servir, ou déployer"
+        required: true
+        default: dry-run
+        type: choice
+        options:
+          - dry-run
+          - deploy
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: JS, navigateur, PHP et Python
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          package-manager-cache: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Installer les dépendances système de test
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes php-cli php-curl php-intl php-mbstring php-mysql
+          python -m pip install --disable-pip-version-check 'Pillow>=10,<13' 'numpy>=1.24,<3' 'scipy>=1.10,<2'
+      - name: Tests unitaires et syntaxes
+        run: |
+          npm test
+          find api bin -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          python -m compileall -q server/background-removal tests/test_background_removal.py
+          npm run test:background-removal
+      - name: Recette Chromium locale
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+          FAT_BASE_URL: http://127.0.0.1:8080/
+        run: |
+          python -m http.server 8080 >"$RUNNER_TEMP/fat-http.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 40); do curl --fail --silent http://127.0.0.1:8080/ >/dev/null && break; sleep 0.25; done
+          npm run test:browser:lot1
+          npm run test:browser:lot2
+          npm run test:browser:cockpit
+          npm run test:browser:tutorial
+          npm run test:browser:community
+          npm run test:browser:drone
+          npm run test:browser:advanced
+
+  api:
+    name: API et MariaDB
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: fat_ci_root_only
+          MARIADB_DATABASE: fat_test
+          MARIADB_USER: fat_test
+          MARIADB_PASSWORD: fat_ci_user_only
+        ports:
+          - 3308:3306
+        options: >-
+          --health-cmd="mariadb-admin ping -h 127.0.0.1 -uroot -pfat_ci_root_only --silent"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          package-manager-cache: false
+      - name: Installer PHP
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes php-cli php-curl php-intl php-mbstring php-mysql
+      - name: Tests API d’intégration
+        env:
+          FAT_TEST_PHP: php
+          FAT_TEST_DB_DSN: mysql:host=127.0.0.1;port=3308;dbname=fat_test;charset=utf8mb4
+          FAT_TEST_DB_USER: fat_test
+          FAT_TEST_DB_PASSWORD: fat_ci_user_only
+          FAT_TEST_SKIP_DB_RESET: "true"
+        run: npm run test:api
+
+  release:
+    name: Construire l’archive immuable
+    needs: [quality, api]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Exporter uniquement les fichiers de production
+        run: |
+          release_root="$RUNNER_TEMP/release"
+          mkdir -p "$release_root"
+          git archive HEAD | tar -x -C "$release_root"
+          RELEASE_ROOT="$release_root" node --input-type=module <<'NODE'
+          import { readFile, writeFile } from 'node:fs/promises';
+          import { join } from 'node:path';
+          const path = join(process.env.RELEASE_ROOT, 'service-worker.js');
+          const source = await readFile(path, 'utf8');
+          const updated = source.replace(/^const CACHE = '[^']+';/m, `const CACHE = 'fat-v3-${process.env.GITHUB_SHA}';`);
+          if (updated === source) throw new Error('Version du cache PWA introuvable.');
+          await writeFile(path, updated);
+          NODE
+          tar -czf "$RUNNER_TEMP/fat-release-$GITHUB_SHA.tar.gz" -C "$release_root" .
+          bash bin/verify-release-archive.sh "$RUNNER_TEMP/fat-release-$GITHUB_SHA.tar.gz" "$GITHUB_SHA"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: fat-release-${{ github.sha }}
+          path: ${{ runner.temp }}/fat-release-${{ github.sha }}.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    name: Plesk — dry-run ou production
+    needs: release
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && vars.DEPLOY_LIVE_ENABLED == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    concurrency:
+      group: production-release
+      cancel-in-progress: false
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
+      DEPLOY_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'deploy' }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v5
+        with:
+          name: fat-release-${{ github.sha }}
+          path: ${{ runner.temp }}/artifact
+      - name: Configurer SSH avec empreinte épinglée
+        run: |
+          for name in DEPLOY_HOST DEPLOY_PORT DEPLOY_USER DEPLOY_PATH DEPLOY_SSH_KEY DEPLOY_HOST_KEY; do
+            [[ -n "${!name:-}" ]] || { echo "Secret GitHub Environment manquant : $name" >&2; exit 2; }
+          done
+          [[ "$DEPLOY_PORT" =~ ^[0-9]{1,5}$ ]]
+          [[ "$DEPLOY_USER" =~ ^[A-Za-z0-9._-]+$ ]]
+          [[ "$DEPLOY_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
+          [[ "$DEPLOY_PATH" =~ ^/[A-Za-z0-9._/-]+$ && "$DEPLOY_PATH" != "/" ]]
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_KEY" | tr -d '\r' > "$HOME/.ssh/fat_deploy"
+          chmod 600 "$HOME/.ssh/fat_deploy"
+          printf '%s\n' "$DEPLOY_HOST_KEY" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+          ssh-keygen -y -f "$HOME/.ssh/fat_deploy" >/dev/null
+      - name: Transférer et activer la release
+        run: |
+          archive="$RUNNER_TEMP/artifact/fat-release-$GITHUB_SHA.tar.gz"
+          [[ -f "$archive" ]]
+          ssh_options=(-p "$DEPLOY_PORT" -i "$HOME/.ssh/fat_deploy" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes)
+          scp_options=(-P "$DEPLOY_PORT" -i "$HOME/.ssh/fat_deploy" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes)
+          ssh "${ssh_options[@]}" "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p -- '$DEPLOY_PATH/incoming'"
+          scp "${scp_options[@]}" "$archive" "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/incoming/$GITHUB_SHA.tar.gz.part"
+          ssh "${ssh_options[@]}" "$DEPLOY_USER@$DEPLOY_HOST" "mv -- '$DEPLOY_PATH/incoming/$GITHUB_SHA.tar.gz.part' '$DEPLOY_PATH/incoming/$GITHUB_SHA.tar.gz'"
+          flag=--deploy
+          [[ "$DEPLOY_MODE" == "dry-run" ]] && flag=--dry-run
+          ssh "${ssh_options[@]}" "$DEPLOY_USER@$DEPLOY_HOST" "bash -s -- '$DEPLOY_PATH' '$GITHUB_SHA' '$flag'" < bin/deploy-release.sh
+      - name: Vérifier HTTPS après activation
+        if: env.DEPLOY_MODE == 'deploy'
+        run: |
+          root_headers=$(curl --fail --silent --show-error --head https://fps-airsoft-trajectory.com/)
+          www_headers=$(curl --fail --silent --show-error --head https://www.fps-airsoft-trajectory.com/)
+          grep -qi '^strict-transport-security:' <<< "$root_headers"
+          grep -qi '^content-security-policy:' <<< "$root_headers"
+          grep -qi '^location: https://fps-airsoft-trajectory.com/' <<< "$www_headers"

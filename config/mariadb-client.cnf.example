@@ -1,0 +1,5 @@
+# Fichier privé attendu sous <DEPLOY_PATH>/private/config/mariadb-client.cnf
+[client]
+host=127.0.0.1
+user=replace-with-dedicated-backup-user
+password=replace-interactively-outside-git
