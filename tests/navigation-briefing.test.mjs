@@ -101,6 +101,7 @@ test('l’installation mobile reste visible avec invite native ou instructions S
   assert.match(site, /Sur l’écran d’accueil/);
   assert.match(site, /Installer l’application/);
   assert.match(site, /refreshInstallButtons\(\);/);
+  assert.match(site, /service-worker\.js\?v=20260718-41/);
   assert.match(css, /@media \(max-width: 760px\)[\s\S]*\.nav-install\[data-install-mode\] \{ display: inline-flex/);
   assert.match(css, /\.pwa-install-guide\[hidden\] \{ display: none/);
 });
