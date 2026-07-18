@@ -11,6 +11,7 @@ use Fat\Api\Services\AuditLogger;
 use Fat\Api\Services\Mailer;
 use Fat\Api\Services\RateLimiter;
 use Fat\Api\Services\SessionService;
+use Fat\Api\Services\TurnstileVerifier;
 use Fat\Api\Support;
 use Fat\Api\Validation\Validator;
 use PDO;
@@ -25,14 +26,16 @@ final class AuthController
         private readonly RateLimiter $limits,
         private readonly AuditLogger $audit,
         private readonly Mailer $mailer,
+        private readonly TurnstileVerifier $turnstile,
     ) {
     }
 
     public function register(Request $request): never
     {
         $body = $request->json();
-        Validator::keys($body, ['pseudo','email','password'], ['pseudo','email','password']);
+        Validator::keys($body, ['pseudo','email','password','turnstileToken'], ['pseudo','email','password','turnstileToken']);
         $this->limits->hit('register', $request->ip(), 4, 3600);
+        $this->turnstile->verify($body['turnstileToken'], 'register', $request);
         $pseudo = Validator::text($body['pseudo'], 'Le pseudo', 2, 32);
         $email = Validator::email($body['email']);
         $password = Validator::password($body['password']);
@@ -87,9 +90,10 @@ final class AuthController
     public function login(Request $request): never
     {
         $body = $request->json();
-        Validator::keys($body, ['identity','password'], ['identity','password']);
+        Validator::keys($body, ['identity','password','turnstileToken'], ['identity','password','turnstileToken']);
         $identity = mb_strtolower(trim((string) $body['identity']));
         $this->limits->hit('login', $request->ip() . "\0" . $identity, 8, 900);
+        $this->turnstile->verify($body['turnstileToken'], 'login', $request);
         $statement = $this->db->prepare('SELECT * FROM users WHERE (email=? OR LOWER(pseudo)=?) AND deletion_requested_at IS NULL LIMIT 1');
         $statement->execute([$identity, $identity]);
         $user = $statement->fetch();
@@ -122,9 +126,10 @@ final class AuthController
     public function forgotPassword(Request $request): never
     {
         $body = $request->json();
-        Validator::keys($body, ['email'], ['email']);
+        Validator::keys($body, ['email','turnstileToken'], ['email','turnstileToken']);
         $email = Validator::email($body['email']);
         $this->limits->hit('forgot_password', $request->ip() . "\0" . $email, 4, 3600);
+        $this->turnstile->verify($body['turnstileToken'], 'forgot_password', $request);
         $statement = $this->db->prepare('SELECT id FROM users WHERE email=? AND deletion_requested_at IS NULL LIMIT 1');
         $statement->execute([$email]);
         $userId = $statement->fetchColumn();
@@ -164,6 +169,11 @@ final class AuthController
         $this->db->commit();
         $this->audit->write($request->requestId, $row['user_id'], 'auth.reset_password', 'user', $row['user_id']);
         Response::json(['reset' => true]);
+    }
+
+    public function turnstileConfig(): never
+    {
+        Response::json(['turnstile' => $this->turnstile->publicConfig()]);
     }
 
     /** @param array<string,mixed> $user @return array<string,mixed> */

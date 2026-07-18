@@ -37,13 +37,37 @@ final class Config
                 }
             }
         }
-        foreach (['APP_ENV','APP_ORIGIN','APP_KEY','DB_DSN','DB_USER','DB_PASSWORD','STORAGE_ROOT'] as $required) {
+        foreach (['APP_ENV','APP_ORIGIN','APP_KEY','DB_DSN','DB_USER','DB_PASSWORD','STORAGE_ROOT','TURNSTILE_ENABLED'] as $required) {
             if (!isset($values[$required]) || $values[$required] === '') {
                 throw new \RuntimeException("Configuration manquante: {$required}");
             }
         }
         if (!preg_match('/^[a-f0-9]{64,}$/i', $values['APP_KEY'])) {
             throw new \RuntimeException('APP_KEY doit contenir au moins 256 bits hexadécimaux.');
+        }
+        $turnstileEnabled = filter_var($values['TURNSTILE_ENABLED'], FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
+        if ($turnstileEnabled === null) {
+            throw new \RuntimeException('TURNSTILE_ENABLED doit être un booléen explicite.');
+        }
+        if ($turnstileEnabled) {
+            foreach (['TURNSTILE_SITE_KEY','TURNSTILE_SECRET_KEY','TURNSTILE_EXPECTED_HOSTNAME'] as $required) {
+                if (!isset($values[$required]) || trim($values[$required]) === '') {
+                    throw new \RuntimeException("Configuration Turnstile manquante: {$required}");
+                }
+            }
+            if (!preg_match('/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*$/i', $values['TURNSTILE_EXPECTED_HOSTNAME'])) {
+                throw new \RuntimeException('TURNSTILE_EXPECTED_HOSTNAME invalide.');
+            }
+            if (($values['APP_ENV'] ?? '') === 'production') {
+                $testKeys = [
+                    '1x00000000000000000000AA', '2x00000000000000000000AB',
+                    '1x0000000000000000000000000000000AA', '2x0000000000000000000000000000000AA',
+                    '3x0000000000000000000000000000000AA',
+                ];
+                if (in_array($values['TURNSTILE_SITE_KEY'], $testKeys, true) || in_array($values['TURNSTILE_SECRET_KEY'], $testKeys, true)) {
+                    throw new \RuntimeException('Les clés de test Turnstile sont interdites en production.');
+                }
+            }
         }
         return new self($values, $projectRoot);
     }

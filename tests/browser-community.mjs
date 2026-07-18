@@ -124,6 +124,25 @@ await send('Page.addScriptToEvaluateOnNewDocument', { source: `
     const fixture = ${browserFixture};
     const nativeFetch = globalThis.fetch.bind(globalThis);
     const callsKey = '__fatCommunityApiCalls';
+    let widgetSequence = 0;
+    const turnstileWidgets = new Map();
+    globalThis.turnstile = {
+      render(container, options) {
+        const id = ++widgetSequence;
+        const widget = { options, token: 'browser-' + options.action + '-' + id };
+        turnstileWidgets.set(id, widget);
+        queueMicrotask(() => options.callback(widget.token));
+        return id;
+      },
+      getResponse(id) { return turnstileWidgets.get(id)?.token || ''; },
+      reset(id) {
+        const widget = turnstileWidgets.get(id);
+        if (!widget) return;
+        widget.token = 'browser-' + widget.options.action + '-' + id + '-' + Date.now();
+        queueMicrotask(() => widget.options.callback(widget.token));
+      },
+      remove(id) { turnstileWidgets.delete(id); },
+    };
     globalThis.fetch = async (input, init = {}) => {
       const requestUrl = new URL(typeof input === 'string' || input instanceof URL ? input : input.url, location.href);
       if (!requestUrl.pathname.startsWith('/api/v1/')) {
@@ -135,19 +154,28 @@ await send('Page.addScriptToEvaluateOnNewDocument', { source: `
       if (sessionStorage.getItem('__fatDisableCommunityApi') === '1') return nativeFetch(input, init);
       const method = String(init.method || (input instanceof Request ? input.method : 'GET')).toUpperCase();
       const headers = Object.fromEntries(new Headers(init.headers || (input instanceof Request ? input.headers : undefined)).entries());
+      const requestBody = typeof init.body === 'string' ? JSON.parse(init.body) : null;
       const calls = JSON.parse(sessionStorage.getItem(callsKey) || '[]');
-      calls.push({ path: requestUrl.pathname + requestUrl.search, method, headers });
+      calls.push({ path: requestUrl.pathname + requestUrl.search, method, headers, turnstile: Boolean(requestBody?.turnstileToken) });
       sessionStorage.setItem(callsKey, JSON.stringify(calls));
       let status = 200;
       let payload = { ok: true };
-      if (requestUrl.pathname.endsWith('/me') && method === 'GET') {
+      if (requestUrl.pathname.endsWith('/auth/turnstile-config') && method === 'GET') {
+        payload = { turnstile: { enabled: true, siteKey: '1x00000000000000000000AA' } };
+      } else if (requestUrl.pathname.endsWith('/me') && method === 'GET') {
         payload = location.pathname.endsWith('/armurerie.html')
           ? fixture.session
           : { authenticated: false, csrfToken: 'browser-csrf' };
       } else if (requestUrl.pathname.endsWith('/auth/login') && method === 'POST') {
-        payload = fixture.session;
+        if (!requestBody?.turnstileToken?.startsWith('browser-login-')) {
+          status = 422;
+          payload = { code: 'turnstile_invalid', message: 'Contrôle anti-robot invalide.' };
+        } else payload = fixture.session;
       } else if (requestUrl.pathname.endsWith('/auth/register') && method === 'POST') {
-        payload = { created: true, csrfToken: 'browser-csrf' };
+        if (!requestBody?.turnstileToken?.startsWith('browser-register-')) {
+          status = 422;
+          payload = { code: 'turnstile_invalid', message: 'Contrôle anti-robot invalide.' };
+        } else payload = { created: true, csrfToken: 'browser-csrf' };
       } else if (/\\/replicas\\?/.test(requestUrl.pathname + requestUrl.search)) {
         payload = { replicas: sessionStorage.getItem('__fatCommunityReplicaMode') === 'empty' ? [] : fixture.replicas };
       } else if (/\\/replicas\\/[^/]+$/.test(requestUrl.pathname) && method === 'DELETE') {
@@ -216,7 +244,7 @@ try {
 await waitFor(`document.querySelectorAll('replica-card').length === ${COMMUNITY_FIXTURE.replicas.length}`);
 const apiCalls = await evaluate(`JSON.parse(sessionStorage.getItem('__fatCommunityApiCalls') || '[]')`);
 const csrfLogin = apiCalls.find((call) => call.path.endsWith('/auth/login') && call.method === 'POST');
-if (!csrfLogin || csrfLogin.headers['x-csrf-token'] !== 'browser-csrf') throw new Error(`Login CSRF missing ${JSON.stringify(csrfLogin)}`);
+if (!csrfLogin || csrfLogin.headers['x-csrf-token'] !== 'browser-csrf' || !csrfLogin.turnstile) throw new Error(`Login CSRF/Turnstile missing ${JSON.stringify(csrfLogin)}`);
 
 await setViewport(1440, 1000);
 await setTheme('dark');
@@ -279,7 +307,7 @@ await navigate(base);
 await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await navigate(`${base}compte/armurerie.html?recipe=sw`);
 await waitFor(`Boolean(navigator.serviceWorker.controller)`);
-const cache = await evaluate(`Promise.all([caches.open('fat-v3-2026-07-18-28').then(cache=>cache.match('/assets/js/replica-card.js?v=20260718-28')).then(Boolean),caches.match('/api/v1/me').then(Boolean)]).then(([component,api])=>({component,api}))`, true);
+const cache = await evaluate(`Promise.all([caches.open('fat-v3-2026-07-18-30').then(cache=>cache.match('/assets/js/replica-card.js?v=20260718-28')).then(Boolean),caches.match('/api/v1/me').then(Boolean)]).then(([component,api])=>({component,api}))`, true);
 if (!cache.component || cache.api) throw new Error(`Private cache mismatch ${JSON.stringify(cache)}`);
 
 await evaluate(`sessionStorage.setItem('__fatDisableCommunityApi','1')`);

@@ -124,8 +124,8 @@ test('l’archivage est réversible dans les textes et aucune suppression physiq
 
 test('le service worker cache seulement les shells et contourne toutes les réponses API privées', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-29'/);
-  for (const path of ['/compte/', '/compte/armurerie.html', '/assets/js/replica-card.js?v=20260718-28', '/assets/js/community-repositories.js?v=20260718-28']) {
+  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-30'/);
+  for (const path of ['/compte/', '/compte/armurerie.html', '/assets/js/replica-card.js?v=20260718-28', '/assets/js/community-repositories.js?v=20260718-30', '/assets/js/turnstile-client.js?v=20260718-30']) {
     assert.ok(worker.includes(`'${path}'`), path);
   }
   assert.match(worker, /url\.pathname\.startsWith\('\/api\/'\)[\s\S]*event\.respondWith\(fetch\(event\.request\)\);[\s\S]*return;/);

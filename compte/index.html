@@ -38,6 +38,8 @@
         <input id="account-identity" name="identity" autocomplete="username" required maxlength="254">
         <div class="account-label-row"><label for="account-password">MOT DE PASSE</label><button type="button" data-forgot-password>OUBLIÉ ?</button></div>
         <input id="account-password" name="password" type="password" autocomplete="current-password" required minlength="10">
+        <div data-turnstile-action="login" aria-label="Vérification anti-robot de connexion"></div>
+        <p class="account-status" data-turnstile-message="login" aria-live="polite"></p>
         <button class="button button-primary account-submit" type="submit">ENTRER SUR LE TERRAIN →</button>
       </form>
 
@@ -48,12 +50,16 @@
         <input id="account-email" name="email" type="email" autocomplete="email" required maxlength="254">
         <label for="account-new-password">MOT DE PASSE</label>
         <input id="account-new-password" name="password" type="password" autocomplete="new-password" required minlength="10">
+        <div data-turnstile-action="register" aria-label="Vérification anti-robot d’inscription"></div>
+        <p class="account-status" data-turnstile-message="register" aria-live="polite"></p>
         <button class="button button-primary account-submit" type="submit">CRÉER MON COMPTE →</button>
       </form>
 
       <form class="account-form" data-account-forgot-form hidden>
         <label for="account-recovery-email">EMAIL DU COMPTE</label>
         <input id="account-recovery-email" name="email" type="email" autocomplete="email" required maxlength="254">
+        <div data-turnstile-action="forgot_password" aria-label="Vérification anti-robot de récupération"></div>
+        <p class="account-status" data-turnstile-message="forgot_password" aria-live="polite"></p>
         <button class="button button-primary account-submit" type="submit">ENVOYER LE LIEN →</button>
         <button class="button" type="button" data-account-cancel-recovery>RETOUR</button>
       </form>
@@ -72,6 +78,6 @@
       <div class="account-theme" data-theme-slot></div>
     </section>
   </main>
-  <script type="module" data-cfasync="false" src="/assets/js/account-login-entry.js?v=20260718-28"></script>
+  <script type="module" data-cfasync="false" src="/assets/js/account-login-entry.js?v=20260718-30"></script>
 </body>
 </html>

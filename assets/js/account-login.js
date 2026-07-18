@@ -1,10 +1,11 @@
-import { RepositoryError } from './community-repositories.js?v=20260718-28';
+import { RepositoryError } from './community-repositories.js?v=20260718-30';
 
 const fieldValue = (form, name) => String(new FormData(form).get(name) || '').trim();
 
 export function initAccountLogin({
   root,
   accountRepository,
+  turnstileController = null,
   redirect = (url) => { globalThis.location.href = url; },
 } = {}) {
   if (!root || !accountRepository) return null;
@@ -31,6 +32,12 @@ export function initAccountLogin({
     forms.forEach((form) => { form.hidden = form.dataset.accountForm !== mode; });
     announce('');
     root.querySelector(`[data-account-form="${mode}"] input`)?.focus();
+    turnstileController?.activate(mode).catch((error) => announce(error.message, 'error'));
+  }
+
+  async function protectedPayload(action) {
+    if (!turnstileController) return {};
+    return { turnstileToken: await turnstileController.token(action) };
   }
 
   tabs.forEach((tab) => tab.addEventListener('click', () => selectMode(tab.dataset.accountTab), { signal: controller.signal }));
@@ -43,15 +50,17 @@ export function initAccountLogin({
 
   forms.forEach((form) => form.addEventListener('submit', async (event) => {
     event.preventDefault();
+    const action = form.dataset.accountForm === 'register' ? 'register' : 'login';
     const submit = form.querySelector('button[type="submit"]');
     submit.disabled = true;
     root.setAttribute('aria-busy', 'true');
-    announce(mode === 'login' ? 'Connexion en cours…' : 'Création du compte en cours…');
+    announce(action === 'login' ? 'Connexion en cours…' : 'Création du compte en cours…');
     try {
-      if (mode === 'login') {
+      if (action === 'login') {
         await accountRepository.login({
           identity: fieldValue(form, 'identity'),
           password: fieldValue(form, 'password'),
+          ...await protectedPayload('login'),
         }, { signal: controller.signal });
         announce('Connexion réussie.', 'success');
         redirect('/compte/armurerie.html');
@@ -60,15 +69,17 @@ export function initAccountLogin({
           pseudo: fieldValue(form, 'pseudo'),
           email: fieldValue(form, 'email'),
           password: fieldValue(form, 'password'),
+          ...await protectedPayload('register'),
         }, { signal: controller.signal });
         announce('Compte créé. Vérifie maintenant l’email envoyé par F.A.T.', 'success');
       }
     } catch (error) {
-      const message = error instanceof RepositoryError
+      const message = error instanceof RepositoryError || error instanceof Error
         ? error.message
         : 'Le service de compte est indisponible pour le moment.';
       announce(message, 'error');
     } finally {
+      turnstileController?.reset(action);
       submit.disabled = false;
       root.removeAttribute('aria-busy');
     }
@@ -78,6 +89,7 @@ export function initAccountLogin({
     forms.forEach((form) => { form.hidden = true; });
     forgotForm.hidden = false;
     forgotForm.querySelector('input')?.focus();
+    turnstileController?.activate('forgot_password').catch((error) => announce(error.message, 'error'));
   }, { signal: controller.signal });
 
   root.querySelector('[data-account-cancel-recovery]')?.addEventListener('click', () => {
@@ -90,10 +102,13 @@ export function initAccountLogin({
     const submit = forgotForm.querySelector('button[type="submit"]');
     submit.disabled = true;
     try {
-      await accountRepository.forgotPassword(fieldValue(forgotForm, 'email'), { signal: controller.signal });
+      await accountRepository.forgotPassword(fieldValue(forgotForm, 'email'), {
+        signal: controller.signal,
+        ...await protectedPayload('forgot_password'),
+      });
       announce('Si ce compte existe, le lien vient d’être envoyé.', 'success');
     } catch (error) { announce(error.message, 'error'); }
-    finally { submit.disabled = false; }
+    finally { turnstileController?.reset('forgot_password'); submit.disabled = false; }
   }, { signal: controller.signal });
 
   resetForm?.addEventListener('submit', async (event) => {
@@ -135,5 +150,5 @@ export function initAccountLogin({
       if (error?.name !== 'AbortError') announce('Le service de compte est indisponible pour le moment.', 'notice');
       return null;
     });
-  return { selectMode, ready, destroy: () => controller.abort() };
+  return { selectMode, ready, destroy: () => { controller.abort(); turnstileController?.destroy(); } };
 }

@@ -13,6 +13,7 @@ use Fat\Api\Services\MailerFactory;
 use Fat\Api\Services\RateLimiter;
 use Fat\Api\Services\SessionService;
 use Fat\Api\Services\UploadService;
+use Fat\Api\Services\TurnstileVerifier;
 use PDO;
 
 final class Application
@@ -50,12 +51,14 @@ final class Application
         $sessions = new SessionService($this->db, $this->config);
         $limits = new RateLimiter($this->db, $this->config);
         $audit = new AuditLogger($this->db);
-        $auth = new AuthController($this->db, $this->config, $sessions, $limits, $audit, MailerFactory::create($this->config));
+        $turnstile = new TurnstileVerifier($this->config);
+        $auth = new AuthController($this->db, $this->config, $sessions, $limits, $audit, MailerFactory::create($this->config), $turnstile);
         $user = new UserController($this->db, $this->config, $sessions, $audit);
         $replicas = new ReplicaController($this->db, $this->config, $sessions, $limits, $audit, new UploadService($this->db, $this->config));
         $admin = new AdminController($this->db, $sessions, $limits, $audit);
         $router = new Router();
         $router->add('GET', '/health', static fn(): never => Response::json(['status' => 'ok']));
+        $router->add('GET', '/auth/turnstile-config', [$auth, 'turnstileConfig']);
         $router->add('POST', '/auth/register', [$auth, 'register']);
         $router->add('POST', '/auth/verify-email', [$auth, 'verifyEmail']);
         $router->add('POST', '/auth/login', [$auth, 'login']);

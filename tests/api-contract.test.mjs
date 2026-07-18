@@ -6,7 +6,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
 test('le routeur expose le contrat API v1 complet sans endpoint historique', async () => {
   const [app, repositories] = await Promise.all([read('api/src/Application.php'), read('assets/js/community-repositories.js')]);
-  for (const route of ['/health','/auth/register','/auth/verify-email','/auth/login','/auth/logout','/auth/forgot-password','/auth/reset-password','/me','/replicas','/admin/replicas']) {
+  for (const route of ['/health','/auth/turnstile-config','/auth/register','/auth/verify-email','/auth/login','/auth/logout','/auth/forgot-password','/auth/reset-password','/me','/replicas','/admin/replicas']) {
     assert.ok(app.includes(`'${route}`), route);
   }
   assert.doesNotMatch(repositories, /\/session|\/accounts|background-removal/);
@@ -71,6 +71,9 @@ test('Apache protège les sources PHP, les shells privés et le site sans CDN', 
   assert.match(rootRules, /Strict-Transport-Security/);
   assert.match(rootRules, /Content-Security-Policy/);
   assert.match(rootRules, /default-src 'self'/);
+  assert.match(rootRules, /script-src 'self' 'unsafe-inline' https:\/\/challenges\.cloudflare\.com/);
+  assert.match(rootRules, /frame-src https:\/\/challenges\.cloudflare\.com/);
+  assert.doesNotMatch(rootRules, /challenges\.cloudflare\.com\/\*|unsafe-eval/);
   assert.match(rootRules, /SetEnvIf Request_URI "\^\/compte/);
   assert.match(rootRules, /Header merge Cache-Control "public, no-transform" env=!fat_private_shell/);
   assert.match(sourceRules, /Require all denied/);
@@ -78,6 +81,28 @@ test('Apache protège les sources PHP, les shells privés et le site sans CDN', 
   assert.match(accountRules, /noindex, nofollow/);
   assert.match(accountRules, /ExpiresActive Off/);
   assert.match(accountRules, /unset Expires/);
+});
+
+test('Turnstile est obligatoire côté PHP avec hostname, action, fraîcheur et configuration fail closed', async () => {
+  const [auth, verifier, config, application] = await Promise.all([
+    read('api/src/Controllers/AuthController.php'),
+    read('api/src/Services/TurnstileVerifier.php'),
+    read('api/src/Config.php'),
+    read('api/src/Application.php'),
+  ]);
+  for (const action of ['register', 'login', 'forgot_password']) {
+    assert.match(auth, new RegExp(`turnstile->verify\\(\\$body\\['turnstileToken'\\], '${action}'`));
+  }
+  assert.match(verifier, /SITEVERIFY_URL/);
+  assert.match(verifier, /\$result\['success'\]/);
+  assert.match(verifier, /\$result\['hostname'\]/);
+  assert.match(verifier, /\$result\['action'\]/);
+  assert.match(verifier, /\$result\['challenge_ts'\]/);
+  assert.match(verifier, /turnstile_unavailable/);
+  assert.match(config, /TURNSTILE_ENABLED/);
+  assert.match(config, /TURNSTILE_EXPECTED_HOSTNAME/);
+  assert.match(config, /clés de test Turnstile/);
+  assert.match(application, /\/auth\/turnstile-config/);
 });
 
 test('Cloudflare ne transforme ni le thème avant paint ni les modules F.A.T.', async () => {

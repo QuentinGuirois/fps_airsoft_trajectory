@@ -1,4 +1,4 @@
-const CACHE = 'fat-v3-2026-07-18-29';
+const CACHE = 'fat-v3-2026-07-18-30';
 const CORE = [
   '/',
   '/index.html',
@@ -27,14 +27,15 @@ const CORE = [
   '/calculation-loader.js?v=20260718-28',
   '/calculator-tutorial.js?v=20260718-28',
   '/replica-utils.js?v=20260718-28',
-  '/assets/js/community-repositories.js?v=20260718-28',
+  '/assets/js/community-repositories.js?v=20260718-30',
   '/assets/js/curve-thumbnail.js?v=20260718-28',
   '/assets/js/share-link.js?v=20260718-29',
   '/assets/js/replica-card.js?v=20260718-28',
-  '/assets/js/account-login.js?v=20260718-28',
-  '/assets/js/account-login-entry.js?v=20260718-28',
-  '/assets/js/armory.js?v=20260718-28',
-  '/assets/js/armory-entry.js?v=20260718-28',
+  '/assets/js/account-login.js?v=20260718-30',
+  '/assets/js/account-login-entry.js?v=20260718-30',
+  '/assets/js/turnstile-client.js?v=20260718-30',
+  '/assets/js/armory.js?v=20260718-30',
+  '/assets/js/armory-entry.js?v=20260718-30',
   '/chart-data.js?v=20260718-28',
   '/render-capabilities.js?v=20260718-28',
   '/site.js?v=20260718-28',

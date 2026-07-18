@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { readFile, rm } from 'node:fs/promises';
+import http from 'node:http';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 
@@ -14,7 +15,33 @@ const env = {
   DB_DSN: 'mysql:host=127.0.0.1;port=3308;dbname=fat_test;charset=utf8mb4',
   DB_USER: 'fat_test', DB_PASSWORD: 'fat_local_test_only', STORAGE_ROOT: 'storage',
   TRUSTED_HOST: '127.0.0.1:8082', MAIL_MODE: 'log', FEATURE_COMMUNITY: 'false',
+  TURNSTILE_ENABLED: 'true',
+  TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
+  TURNSTILE_SECRET_KEY: '1x0000000000000000000000000000000AA',
+  TURNSTILE_EXPECTED_HOSTNAME: '127.0.0.1',
+  TURNSTILE_TIMEOUT_SECONDS: '4',
+  TURNSTILE_SITEVERIFY_URL: 'http://127.0.0.1:8083/siteverify',
 };
+
+let turnstileSequence = 0;
+const turnstileToken = (action) => `test-${action}-${++turnstileSequence}`;
+const usedTurnstileTokens = new Set();
+const turnstileServer = http.createServer((request, response) => {
+  let raw = '';
+  request.setEncoding('utf8');
+  request.on('data', (chunk) => { raw += chunk; });
+  request.on('end', () => {
+    const parameters = new URLSearchParams(raw);
+    const token = parameters.get('response') || '';
+    const action = ['register', 'login', 'forgot_password'].find((candidate) => token.startsWith(`test-${candidate}-`)) || '';
+    const duplicate = usedTurnstileTokens.has(token);
+    usedTurnstileTokens.add(token);
+    response.writeHead(200, { 'Content-Type': 'application/json' });
+    response.end(JSON.stringify(duplicate || !action
+      ? { success: false, 'error-codes': [duplicate ? 'timeout-or-duplicate' : 'invalid-input-response'] }
+      : { success: true, hostname: '127.0.0.1', action, challenge_ts: new Date().toISOString() }));
+  });
+});
 
 function command(executable, args, options = {}) {
   const result = spawnSync(executable, args, { cwd: ROOT, env, encoding: 'utf8', ...options });
@@ -80,6 +107,10 @@ async function latestMailToken(kind) {
 
 resetDatabase();
 await rm(`${ROOT}\\storage\\logs\\mail-test.jsonl`, { force: true });
+await new Promise((resolveListen, reject) => {
+  turnstileServer.once('error', reject);
+  turnstileServer.listen(8083, '127.0.0.1', resolveListen);
+});
 const server = spawn(PHP, ['-S', '127.0.0.1:8082', 'tests/api-router.php'], { cwd: ROOT, env, stdio: ['ignore', 'pipe', 'pipe'] });
 let stderr = '';
 server.stderr.on('data', (chunk) => { stderr += chunk; });
@@ -89,11 +120,11 @@ try {
   const health = await api('/health');
   assert.deepEqual(health, { status: 'ok' });
 
-  await api('/auth/register', { method: 'POST', expected: 201, body: { pseudo: 'Alpha', email: 'alpha@example.test', password: 'MotDePasseAlpha123' } });
+  await api('/auth/register', { method: 'POST', expected: 201, body: { pseudo: 'Alpha', email: 'alpha@example.test', password: 'MotDePasseAlpha123', turnstileToken: turnstileToken('register') } });
   const verifyAlpha = await latestMailToken('verify');
   await api('/auth/verify-email', { method: 'POST', body: { token: verifyAlpha } });
   await api('/auth/verify-email', { method: 'POST', expected: 422, body: { token: verifyAlpha } });
-  const login = await api('/auth/login', { method: 'POST', body: { identity: 'alpha@example.test', password: 'MotDePasseAlpha123' } });
+  const login = await api('/auth/login', { method: 'POST', body: { identity: 'alpha@example.test', password: 'MotDePasseAlpha123', turnstileToken: turnstileToken('login') } });
   assert.equal(login.user.role, 'user');
   const alphaCookie = cookie;
   const alphaCsrf = csrf;
@@ -121,17 +152,17 @@ try {
   await api(`/replicas/${cardId}/photo`, { method: 'POST', auth: true, form: hostile, expected: 422 });
 
   cookie = ''; csrf = '';
-  await api('/auth/register', { method: 'POST', expected: 201, body: { pseudo: 'Bravo', email: 'bravo@example.test', password: 'MotDePasseBravo123' } });
+  await api('/auth/register', { method: 'POST', expected: 201, body: { pseudo: 'Bravo', email: 'bravo@example.test', password: 'MotDePasseBravo123', turnstileToken: turnstileToken('register') } });
   const verifyBravo = await latestMailToken('verify');
   await api('/auth/verify-email', { method: 'POST', body: { token: verifyBravo } });
-  await api('/auth/login', { method: 'POST', body: { identity: 'bravo@example.test', password: 'MotDePasseBravo123' } });
+  await api('/auth/login', { method: 'POST', body: { identity: 'bravo@example.test', password: 'MotDePasseBravo123', turnstileToken: turnstileToken('login') } });
   await api(`/replicas/${cardId}`, { auth: true, expected: 404 });
   await api('/admin/replicas', { auth: true, expected: 403 });
 
   command('docker', ['exec', 'fat-mariadb-test', 'mariadb', '-uroot', '-pfat_local_root_only', 'fat_test', '-e', "UPDATE users SET role='admin' WHERE email='bravo@example.test'"]);
   await api('/auth/logout', { method: 'POST', auth: true, expected: 204 });
   cookie = ''; csrf = '';
-  const adminLogin = await api('/auth/login', { method: 'POST', body: { identity: 'bravo@example.test', password: 'MotDePasseBravo123' } });
+  const adminLogin = await api('/auth/login', { method: 'POST', body: { identity: 'bravo@example.test', password: 'MotDePasseBravo123', turnstileToken: turnstileToken('login') } });
   assert.equal(adminLogin.user.role, 'admin');
   await api('/admin/replicas', { auth: true });
 
@@ -141,16 +172,19 @@ try {
   const archived = await api(`/replicas/${cardId}`, { method: 'DELETE', auth: true, body: { version: updated.replica.version } });
   assert.equal(archived.replica.state, 'archived');
 
-  await api('/auth/forgot-password', { method: 'POST', expected: 202, body: { email: 'alpha@example.test' } });
+  await api('/auth/forgot-password', { method: 'POST', expected: 202, body: { email: 'alpha@example.test', turnstileToken: turnstileToken('forgot_password') } });
   const reset = await latestMailToken('reset');
   await api('/auth/reset-password', { method: 'POST', body: { token: reset, password: 'NouveauMotDePasse123' } });
   cookie = ''; csrf = '';
-  await api('/auth/login', { method: 'POST', expected: 401, body: { identity: 'alpha@example.test', password: 'MotDePasseAlpha123' } });
-  await api('/auth/login', { method: 'POST', body: { identity: 'alpha@example.test', password: 'NouveauMotDePasse123' } });
+  const replay = turnstileToken('login');
+  await api('/auth/login', { method: 'POST', expected: 401, body: { identity: 'alpha@example.test', password: 'MotDePasseAlpha123', turnstileToken: replay } });
+  await api('/auth/login', { method: 'POST', expected: 422, body: { identity: 'alpha@example.test', password: 'NouveauMotDePasse123', turnstileToken: replay } });
+  await api('/auth/login', { method: 'POST', body: { identity: 'alpha@example.test', password: 'NouveauMotDePasse123', turnstileToken: turnstileToken('login') } });
 
   console.log('API intégration: migrations, auth, CSRF, reset, rôles, IDOR, cards et upload hostile validés.');
 } finally {
   server.kill('SIGTERM');
+  turnstileServer.close();
   await delay(100);
   if (server.exitCode && server.exitCode !== 0) console.error(stderr);
 }

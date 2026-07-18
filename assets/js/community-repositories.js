@@ -9,6 +9,7 @@ export class RepositoryError extends Error {
 }
 
 export class AccountRepository {
+  async getTurnstileConfig() { throw new Error('AccountRepository.getTurnstileConfig() doit être implémenté.'); }
   async getSession() { throw new Error('AccountRepository.getSession() doit être implémenté.'); }
   async login() { throw new Error('AccountRepository.login() doit être implémenté.'); }
   async register() { throw new Error('AccountRepository.register() doit être implémenté.'); }
@@ -83,6 +84,7 @@ export class HttpAccountRepository extends AccountRepository {
     this.client = client;
   }
 
+  getTurnstileConfig({ signal } = {}) { return this.client.request('/auth/turnstile-config', { signal }); }
   getSession({ signal } = {}) { return this.client.request('/me', { signal }); }
   login(credentials, { signal } = {}) {
     return this.client.request('/auth/login', { method: 'POST', body: credentials, signal });
@@ -92,7 +94,9 @@ export class HttpAccountRepository extends AccountRepository {
   }
   logout({ signal } = {}) { return this.client.request('/auth/logout', { method: 'POST', body: {}, signal }); }
   verifyEmail(token, { signal } = {}) { return this.client.request('/auth/verify-email', { method: 'POST', body: { token }, signal }); }
-  forgotPassword(email, { signal } = {}) { return this.client.request('/auth/forgot-password', { method: 'POST', body: { email }, signal }); }
+  forgotPassword(email, { signal, turnstileToken } = {}) {
+    return this.client.request('/auth/forgot-password', { method: 'POST', body: { email, turnstileToken }, signal });
+  }
   resetPassword(token, password, { signal } = {}) { return this.client.request('/auth/reset-password', { method: 'POST', body: { token, password }, signal }); }
 }
 
