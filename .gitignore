@@ -16,3 +16,5 @@ venv/
 *.onnx
 *.processing
 *.failed
+server/background-removal/queue/
+server/background-removal/public/

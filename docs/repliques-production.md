@@ -27,8 +27,9 @@ MariaDB dédiée :
 - sessions sécurisées et jetons CSRF ;
 - requêtes préparées avec un compte MariaDB limité aux tables répliques ;
 - métadonnées et état de modération en base ;
-- originaux et file de traitement hors de `httpdocs` ;
-- seules des dérivées validées peuvent devenir publiques.
+- upload temporaire et file de traitement hors de `httpdocs` ;
+- une seule image persistante par card : un WebP validé de 102 400 octets
+  maximum, jamais l'original ni une série de dérivées.
 
 Le worker Python de détourage reste facultatif et n’est jamais exécuté dans la
 requête PHP. Il ne justifie pas à lui seul un service Node permanent.
@@ -44,12 +45,19 @@ requête PHP. Il ne justifie pas à lui seul un service Node permanent.
    `j`, bornes, CSRF, origine de requête, honeypot et quotas.
 5. Le serveur détecte le MIME avec `finfo`, décode réellement l’image, borne ses
    dimensions et sa taille, refuse SVG et noms de fichiers fournis par le client.
-6. L’original reçoit un nom aléatoire et reste privé. MariaDB reçoit une ligne
-   `pending`. Rien n’est public à cette étape.
-7. Le détourage asynchrone crée une dérivée candidate. Une dérivée normale
-   reste disponible si le résultat est mauvais ou si le worker est arrêté.
-8. Un modérateur publie ou rejette. L’API publique ne retourne que
-   `status = 'published'` et jamais un chemin privé.
+6. L’upload reste temporaire, hors zone publique, uniquement pendant le job.
+   MariaDB reçoit une ligne `pending` avec `image_status = 'queued'`.
+7. Le worker compare obligatoirement un masque `u2netp` et un second masque de
+   qualité, nettoie la géométrie, recadre, puis compresse le résultat. Un seul
+   contrôle en échec produit `rejected` ; il n’existe ni meilleur effort, ni
+   image normale de repli, ni file `needs_review`.
+8. Une sortie `ready` est relue et prouve : WebP réel, canal alpha, dimensions
+   positives et taille inférieure ou égale à 102 400 octets. Elle est écrite
+   atomiquement, puis l’upload et tous les intermédiaires sont supprimés.
+9. Une sortie `rejected` supprime également tout et demande une autre photo.
+   La validation du détourage n’exige aucune intervention administrateur. Le
+   visiteur doit néanmoins confirmer son propre résultat avant de soumettre sa
+   card ; la modération éventuelle du texte et des droits reste un sujet séparé.
 
 ## Mesures anti-abus minimales
 
@@ -67,11 +75,29 @@ requête PHP. Il ne justifie pas à lui seul un service Node permanent.
 
 ## Détourage local
 
-`server/background-removal/worker.py` traite un fichier à la fois. Le worker du
-pack perdait l’extension d’origine après le renommage en `.processing`, ce qui
-faisait échouer son propre contrôle de format. La version intégrée transporte
-explicitement l’extension originale, calcule le hash en flux et borne aussi le
-nombre de pixels.
+`server/background-removal/worker.py` traite un fichier à la fois et verrouille
+la file contre une seconde instance. Il conserve l’extension logique après le
+renommage en `.processing`, reconnaît JPEG/MPO, PNG et WebP, utilise uniquement
+la première vue d’un MPO, normalise l’orientation et ne réécrit aucune
+métadonnée.
+
+Le masque rapide `u2netp` et le masque de qualité doivent converger sur l’IoU,
+les boîtes englobantes et les extrémités. Le nettoyage conserve le composant
+horizontal dominant et ses accessoires proches, supprime les composantes
+isolées, ne comble que de petits trous et recadre avec 4 à 6 % de marge. Le
+worker tourne ensemble l’image et le premier masque lorsqu’une prise smartphone
+portrait contient bien une réplique latérale complète. Le second modèle analyse
+alors cette orientation normalisée. Le
+WebP est essayé aux qualités 82, 76, 70, 64, 58 et 52 ; à défaut, les dimensions
+sont réduites par paliers de 90 %. Le job est refusé plutôt que de dépasser
+100 Ko ou de descendre sous le plancher prévu.
+
+La base ne contient ni BLOB, ni base64, ni chemin d’original. Elle ne mémorise
+que `image_path`, `image_mime = 'image/webp'`, taille, dimensions, SHA-256,
+état et date de génération. La miniature de courbe reste vectorielle.
+Le quota additionne l'image active, les anciennes images encore dans leur délai
+privé de restauration et la nouvelle sortie. Le nettoyage des orphelins ignore
+les chemins référencés et tout WebP dont le délai n'est pas expiré.
 
 Le modèle `u2netp` doit être installé dans un environnement virtuel privé. Le
 premier lancement peut télécharger le modèle : l’opération doit être contrôlée
@@ -83,16 +109,17 @@ pendant la recette, jamais déclenchée par une visite web.
    `fileinfo`, `gd` ou `imagick` dans Plesk.
 2. Créer une base et un utilisateur dédiés, puis appliquer
    `database/replicas.sql` avec sauvegarde préalable.
-3. Créer les répertoires privés `originals`, `queue`, `public-candidates` et
-   `failed` hors de `httpdocs`, avec droits minimaux.
+3. Créer un répertoire temporaire d’upload et la file privée hors de
+   `httpdocs`, plus le répertoire final WebP avec droits minimaux. Ne créer
+   aucun stockage durable `originals`, `normal`, `thumbnail` ou `failed`.
 4. Fournir les secrets par configuration privée ou variables d’environnement,
    jamais par un fichier versionné.
 5. Déployer et tester l’API en environnement fermé : CSRF, CORS/origine,
    doubles paramètres, MIME trompeur, image défectueuse, quotas et concurrence.
 6. Installer le worker seulement si les ressources CPU/RAM et la version Python
    sont compatibles. Limiter à une instance.
-7. Tester le parcours modération, la suppression, la restauration et le repli
-   sans détourage.
+7. Tester le rejet automatique, la suppression des temporaires, le remplacement
+   atomique, le délai de restauration de l’ancien WebP et les fichiers orphelins.
 8. Ajouter la page, ses modules et ses dérivées au cache PWA uniquement après
    un premier profil vérifié et autorisé.
 9. Ajouter enfin la route au menu, aux liens internes et au sitemap.

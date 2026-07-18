@@ -69,28 +69,48 @@ test('le contrat distingue une soumission pending d’un profil vérifié', asyn
   assert.equal(verified.properties.authorization.properties.profile.const, true);
 });
 
-test('la base prépare modération, quotas et jobs sans publier automatiquement', async () => {
+test('la base prépare une image WebP unique, modération, quotas et jobs sans BLOB', async () => {
   const sql = await read('database', 'replicas.sql');
   assert.match(sql, /DEFAULT 'pending'/);
   assert.match(sql, /status ENUM\('pending','published','rejected','deleted'\)/);
   assert.match(sql, /CREATE TABLE replica_rate_limits/);
   assert.match(sql, /CREATE TABLE replica_image_jobs/);
+  assert.match(sql, /image_path VARCHAR\(512\)/);
+  assert.match(sql, /image_mime = 'image\/webp'/);
+  assert.match(sql, /image_bytes IS NULL OR image_bytes <= 102400/);
+  assert.match(sql, /image_status ENUM\('queued','processing','ready','rejected'\)/);
+  assert.match(sql, /UNIQUE KEY uq_replica_image_path/);
+  assert.match(sql, /CREATE TABLE replica_storage_quotas/);
+  assert.match(sql, /CREATE TABLE replica_image_retention/);
+  assert.match(sql, /retained_image_bytes/);
+  assert.match(sql, /delete_after DATETIME NOT NULL/);
+  assert.match(sql, /status <> 'published' OR image_status = 'ready'/);
+  assert.match(sql, /image_status <> 'ready'[\s\S]+image_path IS NULL/);
+  assert.doesNotMatch(sql, /image_original_path|image_public_path|BLOB|base64/i);
   assert.doesNotMatch(sql, /INSERT\s+INTO/i);
 });
 
-test('le worker conserve le suffixe original après la prise atomique du job', async () => {
+test('le worker impose double masque, consensus, WebP 100 Ko et destruction des uploads', async () => {
   const worker = await read('server', 'background-removal', 'worker.py');
   assert.match(worker, /return working, original_suffix/);
-  assert.match(worker, /process_one\(working, original_suffix, destination, session\)/);
+  assert.match(worker, /DEFAULT_FAST_MODEL = "u2netp"/);
+  assert.match(worker, /DEFAULT_QUALITY_MODEL = "isnet-general-use"/);
+  assert.match(worker, /post_process_mask=True/);
+  assert.match(worker, /compare_masks\(fast_mask, quality_mask\)/);
+  assert.match(worker, /WEBP_QUALITIES = \(82, 76, 70, 64, 58, 52\)/);
+  assert.match(worker, /MAX_FINAL_BYTES = 102_400/);
+  assert.match(worker, /MAX_FRAME = \(1200, 700\)/);
   assert.match(worker, /MAX_PIXELS = 36_000_000/);
   assert.match(worker, /opened\.width \* opened\.height > MAX_PIXELS/);
   assert.match(worker, /"JPEG", "MPO", "PNG", "WEBP"/);
-  assert.match(worker, /remove\(image, session=session\)/);
+  assert.match(worker, /only_mask=True/);
   assert.doesNotMatch(worker, /session\.remove\(/);
   assert.match(worker, /not path\.is_symlink\(\)/);
-  assert.match(worker, /failed_directory/);
+  assert.match(worker, /working\.unlink\(missing_ok=True\)/);
+  assert.match(worker, /source\.unlink\(missing_ok=True\)/);
+  assert.doesNotMatch(worker, /rename\(failed\)|failed_directory\.mkdir/);
   assert.match(worker, /args\.once or args\.drain/);
-  assert.doesNotMatch(worker, /process_one\(working, destination, session\)/);
+  assert.match(worker, /single_worker_lock/);
 });
 
 test('aucune galerie brouillon n’est publiée ni ajoutée au sitemap', async () => {
@@ -110,5 +130,8 @@ test('le flux de production exclut localStorage et exige une modération serveur
   assert.match(docs, /PDO/);
   assert.match(docs, /CSRF/);
   assert.match(docs, /hors de `httpdocs`/);
-  assert.match(docs, /status = 'published'/);
+  assert.match(docs, /image_status = 'queued'/);
+  assert.match(docs, /sortie `ready`/);
+  assert.match(docs, /102 400 octets/);
+  assert.match(docs, /ni meilleur effort, ni/);
 });
