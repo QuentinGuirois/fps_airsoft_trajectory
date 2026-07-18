@@ -429,7 +429,7 @@ document.querySelectorAll('[data-converter]').forEach((converter) => {
 });
 
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  const registerServiceWorker = () => navigator.serviceWorker.register('/service-worker.js?v=20260718-41').catch(() => null);
+  const registerServiceWorker = () => navigator.serviceWorker.register('/service-worker.js?v=20260718-42').catch(() => null);
   if (document.readyState === 'complete') registerServiceWorker();
   else window.addEventListener('load', registerServiceWorker, { once: true });
 }
