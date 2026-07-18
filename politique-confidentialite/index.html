@@ -1,0 +1,65 @@
+<!doctype html><html lang="fr"><head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10140c">
+  <title>Politique de confidentialité et données du compte | F.A.T.</title>
+  <meta name="description" content="Politique de confidentialité de F.A.T. : calculateur local, compte facultatif, cards, images, sécurité, Turnstile, durées et droits RGPD.">
+  <meta name="robots" content="index,follow"><link rel="canonical" href="https://fps-airsoft-trajectory.com/politique-confidentialite/">
+  <link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml"><script data-cfasync="false">(()=>{const e=document.documentElement;let m='system';try{m=localStorage.getItem('fat-theme')||m}catch{}if(!['system','dark','light'].includes(m))m='system';const d=m==='dark'||(m==='system'&&(!window.matchMedia||matchMedia('(prefers-color-scheme: dark)').matches));const t=d?'dark':'light';e.dataset.themeMode=m;e.dataset.theme=t;e.style.colorScheme=t;document.querySelector('meta[name="theme-color"]').content=d?'#10140c':'#eef0e2'})()</script><link rel="stylesheet" href="/assets/site.css?v=20260718-32">
+</head><body>
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <header class="site-header" data-site-shell="header"><div class="shell nav-row"><a class="brand" href="/" aria-label="F.A.T., accueil"><svg class="brand-mark" viewBox="0 0 120 76" aria-hidden="true" focusable="false"><path class="brand-curve" d="M6 62C30 30 62 22 78 26C96 31 106 44 112 62"/><circle class="brand-ball" cx="78" cy="26" r="13"/><path class="brand-spin" d="M60 30A20 20 0 0 1 71 15"/><line class="brand-ground" x1="2" y1="68" x2="118" y2="68"/></svg><span><strong>F.A.T<span class="brand-dot">.</span></strong><small>FPS Airsoft Trajectory</small></span></a><nav class="primary-nav" aria-label="Navigation principale"><a href="/#calculateur">Calculateur</a><a href="/outils/">Outils</a><a href="/guides/">Guides</a></nav><span class="mobile-setup-context" data-mobile-setup-context aria-live="polite"></span><button class="button button-primary button-small nav-install" type="button" data-install-app hidden>Installer l’app</button><button class="menu-toggle menu-button" type="button" data-menu-button aria-expanded="false" aria-controls="briefing-menu" aria-label="Ouvrir le menu"><span class="menu-toggle-label" data-menu-label>MENU</span><span class="menu-toggle-box" aria-hidden="true"><span></span><span></span><span></span></span></button></div></header>
+  <main id="contenu">
+    <header class="article-hero"><div class="shell"><ol class="breadcrumbs"><li><a href="/">Accueil</a></li><li>Confidentialité</li></ol><p class="eyebrow">Tes données, clairement</p><h1>Politique de confidentialité</h1><p class="article-lead">Le calculateur fonctionne sans compte et conserve ses réglages dans le navigateur. Les traitements serveur décrits ici concernent uniquement le compte facultatif, sa sécurité et les cards enregistrées.</p></div></header>
+    <section class="section-tight"><div class="shell content-grid"><article class="prose">
+      <div class="callout callout-warning"><strong>Ouverture du compte encore bloquée</strong><p>La boîte <a href="mailto:contact@fps-airsoft-trajectory.com">contact@fps-airsoft-trajectory.com</a>, l’adresse postale de l’éditeur et les durées de conservation des journaux techniques et d’audit doivent être confirmées avant de rendre l’inscription visible.</p></div>
+      <h2 id="responsable">Responsable du traitement</h2>
+      <p><strong>Quentin Guirois</strong>, éditeur personne physique de F.A.T.<br>Contact : <a href="mailto:contact@fps-airsoft-trajectory.com">contact@fps-airsoft-trajectory.com</a>.<br>Adresse postale : <strong>à compléter avant ouverture des comptes</strong>.</p>
+
+      <h2 id="local">Calculateur sans compte</h2>
+      <p>Les paramètres de tir, préférences de thème et derniers choix de l’outil gaz sont enregistrés localement dans le navigateur. Le calcul ATP s’exécute dans le navigateur et son Worker. Aucun compte n’est nécessaire, et ces réglages locaux ne sont pas envoyés à l’API de compte.</p>
+
+      <h2 id="donnees">Données du compte facultatif</h2>
+      <ul>
+        <li>identité de compte : pseudo, email, preuve datée de la version des conditions acceptées et mot de passe sous forme de hash irréversible ;</li>
+        <li>sécurité : identifiant de session haché, jeton CSRF, empreinte du navigateur, compteurs de débit sous forme d’empreinte HMAC et journal d’événements expurgé ;</li>
+        <li>cards : modèle de réplique, type, grammage, énergie, portées enregistrées, URL du setup F.A.T., miniature SVG, lien YouTube optionnel, états de traitement et de modération ;</li>
+        <li>photo : upload temporaire privé, résultat du traitement, unique image WebP finale de 102 400 octets maximum si le contrôle automatique réussit.</li>
+      </ul>
+      <p>Les originaux et intermédiaires de photo ne sont pas conservés après traitement. En cas d’échec ou de divergence des contrôles automatiques, ils sont supprimés et une nouvelle photo est demandée.</p>
+
+      <h2 id="finalites">Finalités et bases juridiques</h2>
+      <ul>
+        <li>fournir le compte, ses cards, l’export et la suppression : exécution du service demandé ;</li>
+        <li>sécuriser les accès, limiter les abus, modérer et conserver une traçabilité minimale : intérêt légitime de l’éditeur et des utilisateurs ;</li>
+        <li>traiter et publier une photo : exécution du service et confirmation par l’utilisateur qu’il dispose des droits nécessaires ;</li>
+        <li>répondre aux demandes et obligations légales : obligation légale ou intérêt légitime selon la demande.</li>
+      </ul>
+      <p>F.A.T. n’utilise pas les données du compte pour de la publicité ou du profilage commercial.</p>
+
+      <h2 id="turnstile">Cloudflare Turnstile</h2>
+      <p>Les formulaires d’inscription, de connexion et de récupération utilisent Cloudflare Turnstile pour distinguer une interaction légitime d’un abus automatisé. Le widget est chargé depuis <code>challenges.cloudflare.com</code> seulement sur la page de compte. Le jeton reçu est vérifié côté serveur, expire rapidement et n’est accepté qu’une fois. Cloudflare peut traiter des données techniques nécessaires au contrôle selon sa propre documentation de confidentialité et ses garanties de transfert.</p>
+
+      <h2 id="destinataires">Destinataires et hébergement</h2>
+      <p>Les données sont accessibles uniquement à l’éditeur et, selon leurs missions, aux administrateurs autorisés. L’hébergement est assuré par <strong>3GK Software</strong>, 6 allée Jean Gabin, 37100 Tours, France. Cloudflare reçoit les seules données techniques nécessaires à Turnstile. Aucun outil d’analytics ou réseau publicitaire n’est chargé.</p>
+
+      <h2 id="durees">Durées actuellement appliquées</h2>
+      <ul>
+        <li>session : jusqu’à 14 jours par défaut, puis suppression automatique ;</li>
+        <li>lien de vérification email : 24 heures ; lien de réinitialisation : 30 minutes ; les enregistrements expirés sont purgés après un délai technique maximal de 7 jours ;</li>
+        <li>compteurs de débit : durée de leur fenêtre, au maximum une heure dans les routes actuelles, plus une minute technique ;</li>
+        <li>ancienne image remplacée : rétention de restauration de 7 jours ; l’upload temporaire et les intermédiaires sont supprimés dès la fin ou l’échec du traitement ;</li>
+        <li>compte et cards : jusqu’à la demande de suppression ; la suppression est planifiée après un délai de restauration de 14 jours par défaut ;</li>
+        <li>journaux d’audit et journaux techniques : <strong>durée à arrêter avant l’ouverture des comptes</strong>.</li>
+      </ul>
+
+      <h2 id="droits">Tes droits</h2>
+      <p>Tu peux demander l’accès, la rectification, l’effacement, la limitation, la portabilité et, lorsque la base juridique le permet, t’opposer au traitement. Le compte propose aussi un export et une suppression différée. Toute demande peut être adressée à <a href="mailto:contact@fps-airsoft-trajectory.com">contact@fps-airsoft-trajectory.com</a>. Une vérification d’identité proportionnée peut être demandée.</p>
+      <p>Si la réponse ne te satisfait pas, tu peux saisir la <a href="https://www.cnil.fr/fr/plaintes" target="_blank" rel="noopener">CNIL</a>.</p>
+
+      <h2 id="stockage-local">Cookies et stockage local</h2>
+      <p>Le compte utilise un cookie de session strictement nécessaire, sécurisé, HttpOnly et SameSite=Lax. Le site utilise aussi le stockage local pour le thème, les réglages du calculateur et l’état du tutoriel. Ces données locales peuvent être effacées depuis les réglages du navigateur.</p>
+      <p>Dernière mise à jour : 18 juillet 2026.</p>
+    </article><aside class="toc"><strong>Sur cette page</strong><ol><li><a href="#responsable">Responsable</a></li><li><a href="#local">Sans compte</a></li><li><a href="#donnees">Données</a></li><li><a href="#finalites">Finalités</a></li><li><a href="#turnstile">Turnstile</a></li><li><a href="#durees">Durées</a></li><li><a href="#droits">Droits</a></li></ol></aside></div></section>
+  </main>
+  <footer class="site-footer"><div class="shell"><div class="footer-bottom"><span>© 2026 Quentin Guirois — F.A.T.</span><span><a href="/mentions-legales/">Mentions légales</a></span></div></div></footer>
+  <script type="module" data-cfasync="false" src="/site.js?v=20260718-32"></script>
+</body></html>

@@ -19,6 +19,8 @@ use PDOException;
 
 final class AuthController
 {
+    private const TERMS_VERSION = '2026-07-18';
+
     public function __construct(
         private readonly PDO $db,
         private readonly Config $config,
@@ -33,19 +35,20 @@ final class AuthController
     public function register(Request $request): never
     {
         $body = $request->json();
-        Validator::keys($body, ['pseudo','email','password','turnstileToken'], ['pseudo','email','password','turnstileToken']);
+        Validator::keys($body, ['pseudo','email','password','legalAccepted','turnstileToken'], ['pseudo','email','password','legalAccepted','turnstileToken']);
         $this->limits->hit('register', $request->ip(), 4, 3600);
         $this->turnstile->verify($body['turnstileToken'], 'register', $request);
         $pseudo = Validator::text($body['pseudo'], 'Le pseudo', 2, 32);
         $email = Validator::email($body['email']);
         $password = Validator::password($body['password']);
+        Validator::boolTrue($body['legalAccepted'], 'L’acceptation des conditions');
         $userId = Support::uuid();
         $token = Support::token();
         $algorithm = $this->passwordAlgorithm();
         try {
             $this->db->beginTransaction();
-            $insert = $this->db->prepare('INSERT INTO users (id,email,pseudo,password_hash) VALUES (?,?,?,?)');
-            $insert->execute([$userId, $email, $pseudo, password_hash($password, $algorithm)]);
+            $insert = $this->db->prepare('INSERT INTO users (id,email,pseudo,password_hash,terms_version,terms_accepted_at) VALUES (?,?,?,?,?,UTC_TIMESTAMP())');
+            $insert->execute([$userId, $email, $pseudo, password_hash($password, $algorithm), self::TERMS_VERSION]);
             $verify = $this->db->prepare('INSERT INTO email_verification_tokens (id,user_id,token_hash,expires_at) VALUES (?,?,?,UTC_TIMESTAMP()+INTERVAL 24 HOUR)');
             $verify->execute([Support::uuid(), $userId, Support::tokenHash($token)]);
             $this->db->commit();

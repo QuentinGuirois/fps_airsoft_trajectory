@@ -137,9 +137,10 @@ try {
   const health = await api('/health');
   assert.deepEqual(health, { status: 'ok' });
   await api('/auth/reset-password', { method: 'POST', expected: 403, origin: 'https://evil.example', body: { token: 'a'.repeat(64), password: 'MotDePasseRefuse123' } });
+  await api('/auth/register', { method: 'POST', expected: 422, body: { pseudo: 'Refus', email: 'refus@example.test', password: 'MotDePasseRefuse123', legalAccepted: false, turnstileToken: turnstileToken('register') } });
 
-  const registrationAlpha = await api('/auth/register', { method: 'POST', expected: 202, body: { pseudo: 'Alpha', email: 'alpha@example.test', password: 'MotDePasseAlpha123', turnstileToken: turnstileToken('register') } });
-  const duplicateRegistration = await api('/auth/register', { method: 'POST', expected: 202, body: { pseudo: 'AlphaBis', email: 'alpha@example.test', password: 'MotDePasseAlpha123', turnstileToken: turnstileToken('register') } });
+  const registrationAlpha = await api('/auth/register', { method: 'POST', expected: 202, body: { pseudo: 'Alpha', email: 'alpha@example.test', password: 'MotDePasseAlpha123', legalAccepted: true, turnstileToken: turnstileToken('register') } });
+  const duplicateRegistration = await api('/auth/register', { method: 'POST', expected: 202, body: { pseudo: 'AlphaBis', email: 'alpha@example.test', password: 'MotDePasseAlpha123', legalAccepted: true, turnstileToken: turnstileToken('register') } });
   assert.deepEqual(duplicateRegistration, registrationAlpha);
   const verifyAlpha = await latestMailToken('verify');
   await api('/auth/verify-email', { method: 'POST', body: { token: verifyAlpha } });
@@ -178,7 +179,7 @@ try {
   await api(`/replicas/${cardId}/photo`, { method: 'POST', auth: true, form: hostile, expected: 422 });
 
   cookie = ''; csrf = '';
-  await api('/auth/register', { method: 'POST', expected: 202, body: { pseudo: 'Bravo', email: 'bravo@example.test', password: 'MotDePasseBravo123', turnstileToken: turnstileToken('register') } });
+  await api('/auth/register', { method: 'POST', expected: 202, body: { pseudo: 'Bravo', email: 'bravo@example.test', password: 'MotDePasseBravo123', legalAccepted: true, turnstileToken: turnstileToken('register') } });
   const verifyBravo = await latestMailToken('verify');
   await api('/auth/verify-email', { method: 'POST', body: { token: verifyBravo } });
   await api('/auth/login', { method: 'POST', body: { identity: 'bravo@example.test', password: 'MotDePasseBravo123', turnstileToken: turnstileToken('login') } });

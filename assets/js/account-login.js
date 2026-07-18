@@ -69,6 +69,7 @@ export function initAccountLogin({
           pseudo: fieldValue(form, 'pseudo'),
           email: fieldValue(form, 'email'),
           password: fieldValue(form, 'password'),
+          legalAccepted: form.elements.legalAccepted?.checked === true,
           ...await protectedPayload('register'),
         }, { signal: controller.signal });
         announce(registration?.message || 'Si la demande est valide, un email de vérification a été envoyé.', 'success');

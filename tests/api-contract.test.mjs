@@ -27,7 +27,7 @@ test('les mutations privées combinent cookie serveur, CSRF, Origin strict et no
 });
 
 test('les migrations sont additives, indexées, sans BLOB et bornent le WebP à 102400 octets', async () => {
-  const sql = `${await read('database/migrations/000_schema.sql')}\n${await read('database/migrations/001_auth.sql')}\n${await read('database/migrations/002_replicas.sql')}`;
+  const sql = `${await read('database/migrations/000_schema.sql')}\n${await read('database/migrations/001_auth.sql')}\n${await read('database/migrations/002_replicas.sql')}\n${await read('database/migrations/003_legal_acceptance.sql')}`;
   assert.match(sql, /schema_migrations/);
   assert.match(sql, /ENGINE=InnoDB/g);
   assert.match(sql, /utf8mb4/g);
@@ -113,6 +113,7 @@ test('Cloudflare ne transforme ni le thème avant paint ni les modules F.A.T.', 
     'guides/portee-airsoft/index.html', 'guides/regler-hop-up-airsoft/index.html',
     'modele-physique-atp/index.html', 'outils/index.html',
     'outils/choisir-gaz-airsoft-pression-temperature/index.html',
+    'mentions-legales/index.html', 'politique-confidentialite/index.html',
     'simulateur-3d-airsoft/index.html', 'simulateur-trajectoire-airsoft/index.html',
   ];
   for (const page of pages) {

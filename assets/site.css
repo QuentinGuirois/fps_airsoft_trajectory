@@ -1298,6 +1298,9 @@ thead th { color: var(--muted); font-size: .66rem; text-transform: uppercase; }
 .account-form input { width: 100%; min-height: 46px; border: 1px solid var(--line); border-radius: .6rem; background: var(--ink-0); color: var(--paper); padding: .75rem .85rem; font: 500 .8rem/1 var(--font-mono); }
 .account-form input:not(:placeholder-shown), .account-form input:focus { border-color: var(--acid); }
 .account-submit { width: 100%; min-height: 48px; margin-top: .75rem; }
+.account-consent { min-height: 48px; display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: .45rem; color: var(--muted-strong) !important; font: 500 .7rem/1.45 var(--font-sans) !important; letter-spacing: 0 !important; }
+.account-consent input { width: 44px; min-height: 44px; margin: 0; padding: 0; accent-color: var(--acid); }
+.account-consent a { color: var(--acid-text); }
 .account-status { min-height: 1.5rem; margin: .8rem 0 0; color: var(--muted); font-size: .72rem; text-align: center; }
 .account-status[data-tone="error"] { color: var(--danger); }
 .account-status[data-tone="success"] { color: var(--acid-text); }

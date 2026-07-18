@@ -129,7 +129,7 @@ function normalizeFooter() {
       <div>${brandMarkup()}<p>La physique airsoft rendue lisible, du chrony à la trajectoire.</p></div>
       <div><h2>Outils</h2><ul><li><a href="/outils/">Tous les outils</a></li><li><a href="/#calculateur">Simulateur de trajectoire</a></li><li><a href="/simulateur-3d-airsoft/">Simulateur 3D avancé</a></li><li><a href="/convertisseur-joules-fps/">Convertisseur Joules/FPS</a></li><li><a href="${gasToolPath}">Gaz / température</a></li></ul></div>
       <div><h2>Guides</h2><ul><li><a href="/guides/">Tous les guides</a></li><li><a href="/guides/choisir-poids-bille-airsoft/">Poids de bille</a></li><li><a href="/guides/regler-hop-up-airsoft/">Réglage hop-up</a></li><li><a href="/guides/portee-airsoft/">Portée airsoft</a></li><li><a href="/guides/joule-creep-airsoft/">Joule Creep</a></li></ul></div>
-      <div><h2>Projet</h2><ul><li><a href="/modele-physique-atp/">Modèle ATP & Mackila</a></li><li><a href="/a-propos/">À propos de Keep</a></li><li><a href="/faq-airsoft-balistique/">FAQ</a></li></ul></div>
+      <div><h2>Projet</h2><ul><li><a href="/modele-physique-atp/">Modèle ATP & Mackila</a></li><li><a href="/a-propos/">À propos de Keep</a></li><li><a href="/faq-airsoft-balistique/">FAQ</a></li><li><a href="/mentions-legales/">Mentions légales</a></li><li><a href="/politique-confidentialite/">Confidentialité</a></li></ul></div>
     </div>
     <div class="footer-bottom"><span>© 2026 Quentin Guirois — F.A.T.</span><span>Mesure au chrony &gt; portée racontée.</span></div>
   </div>`;
