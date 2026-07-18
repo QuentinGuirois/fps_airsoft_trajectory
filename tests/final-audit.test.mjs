@@ -155,6 +155,7 @@ test('le pipeline fige Lighthouse, archive ses rapports et differe HSTS includeS
   assert.match(workflow, /npm run lighthouse:mobile/);
   assert.match(workflow, /npm run lighthouse:desktop/);
   assert.match(workflow, /actions\/upload-artifact@v7/);
+  assert.match(workflow, /include-hidden-files: true/);
   for (const config of [mobile]) {
     assert.match(config, /performance/);
     assert.match(config, /largest-contentful-paint/);

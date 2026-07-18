@@ -79,6 +79,7 @@ jobs:
           name: lighthouse-${{ github.sha }}
           path: .lighthouseci/
           if-no-files-found: warn
+          include-hidden-files: true
           retention-days: 14
 
   api:
