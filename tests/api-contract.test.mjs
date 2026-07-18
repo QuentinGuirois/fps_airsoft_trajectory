@@ -74,4 +74,25 @@ test('Apache protège les sources PHP, les shells privés et le site sans CDN', 
   assert.match(sourceRules, /Require all denied/);
   assert.match(accountRules, /no-store, private/);
   assert.match(accountRules, /noindex, nofollow/);
+  assert.match(accountRules, /ExpiresActive Off/);
+  assert.match(accountRules, /unset Expires/);
+});
+
+test('Cloudflare ne transforme ni le thème avant paint ni les modules F.A.T.', async () => {
+  const pages = [
+    'index.html', 'offline.html', 'a-propos/index.html', 'compte/index.html', 'compte/armurerie.html',
+    'convertisseur-joules-fps/index.html', 'faq-airsoft-balistique/index.html', 'guides/index.html',
+    'guides/choisir-poids-bille-airsoft/index.html', 'guides/joule-creep-airsoft/index.html',
+    'guides/portee-airsoft/index.html', 'guides/regler-hop-up-airsoft/index.html',
+    'modele-physique-atp/index.html', 'outils/index.html',
+    'outils/choisir-gaz-airsoft-pression-temperature/index.html',
+    'simulateur-3d-airsoft/index.html', 'simulateur-trajectoire-airsoft/index.html',
+  ];
+  for (const page of pages) {
+    const html = await read(page);
+    assert.match(html, /<script data-cfasync="false">\(\(\)=>/, `${page}: thème protégé`);
+    for (const tag of html.match(/<script[^>]+type="module"[^>]*>/g) || []) {
+      assert.match(tag, /data-cfasync="false"/, `${page}: module protégé`);
+    }
+  }
 });

@@ -212,7 +212,7 @@ await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await navigate(`${base}?visual-lot1=sw-control`);
 await waitFor(`Boolean(navigator.serviceWorker.controller)`);
 const cache = await evaluate(`caches.keys().then(keys=>({keys,controller:Boolean(navigator.serviceWorker.controller)}))`, true);
-if (!cache.keys.includes('fat-v3-2026-07-18-26') || !cache.controller) throw new Error(`PWA cache mismatch ${JSON.stringify(cache)}`);
+if (!cache.keys.includes('fat-v3-2026-07-18-27') || !cache.controller) throw new Error(`PWA cache mismatch ${JSON.stringify(cache)}`);
 await navigate(`${base}simulateur-trajectoire-airsoft/`);
 await navigate(`${base}outils/choisir-gaz-airsoft-pression-temperature/`);
 await waitFor(`document.documentElement.dataset.gasPressureReady === 'true'`);

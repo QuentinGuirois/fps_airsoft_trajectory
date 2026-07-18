@@ -205,7 +205,7 @@ test('les polices officielles, licences et modules visuels sont disponibles hors
   for (const resource of [...fontFiles.map((file) => `/assets/fonts/${file}`), '/theme.js', '/calculation-loader.js', '/assets/img/icon-maskable-512.png', '/assets/img/quentin-guirois.jpg']) {
     assert.ok(sw.includes(`'${resource}'`), resource);
   }
-  assert.match(sw, /const CACHE = 'fat-v3-2026-07-18-26'/);
+  assert.match(sw, /const CACHE = 'fat-v3-2026-07-18-27'/);
 
   const production = (await walk(root)).filter((path) => /\.(?:html|css|js|webmanifest|svg)$/.test(path));
   for (const path of production) {

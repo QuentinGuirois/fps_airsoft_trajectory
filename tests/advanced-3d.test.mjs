@@ -201,7 +201,7 @@ test('la scène occupe le viewport, reste locale et rejoint la PWA sans préchar
   assert.doesNotMatch(core, /three-r185|drone-3d\.js/);
   assert.match(lazy, /three-r185/);
   assert.match(lazy, /drone-3d\.js/);
-  assert.match(worker, /fat-v3-2026-07-18-26/);
+  assert.match(worker, /fat-v3-2026-07-18-27/);
 });
 
 test('WebGL, Worker et import cassé débouchent sur un panneau utile sans moteur bis', async () => {
