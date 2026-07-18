@@ -33,6 +33,7 @@ if (!currentServer) {
 
 const browser = spawn(chrome, [
   '--headless=new',
+  ...(process.env.CI ? ['--no-sandbox', '--disable-dev-shm-usage'] : []),
   `--remote-debugging-port=${cdpPort}`,
   `--user-data-dir=${profile}`,
   '--no-first-run',

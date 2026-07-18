@@ -9,6 +9,7 @@ const port = process.env.FAT_CDP_PORT || '9338';
 const profile = await mkdtemp(join(tmpdir(), 'fat-lot2-chrome-'));
 const browser = spawn(chrome, [
   '--headless=new',
+  ...(process.env.CI ? ['--no-sandbox', '--disable-dev-shm-usage'] : []),
   `--remote-debugging-port=${port}`,
   `--user-data-dir=${profile}`,
   '--disable-gpu',
