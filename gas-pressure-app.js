@@ -13,6 +13,7 @@ import {
   selectionSearchParams,
   siliconePresentation,
 } from './gas-pressure-tool.js?v=20260718-28';
+import { configureShareButton, shareLink } from './assets/js/share-link.js?v=20260718-29';
 
 const DATA_URL = '/data/green-gas-pressure-curves.json?v=20260718-28';
 const STORAGE_KEY = 'fat-green-gas-selection-v1';
@@ -50,6 +51,8 @@ const elements = {
   copy: document.querySelector('#gas-copy'),
   share: document.querySelector('#gas-share'),
   feedback: document.querySelector('#gas-share-feedback'),
+  shareOutput: document.querySelector('#gas-share-output'),
+  shareUrl: document.querySelector('#gas-share-url'),
   compare: document.querySelector('#gas-compare'),
   compareResult: document.querySelector('#gas-compare-result'),
   chartPrimary: document.querySelector('#gas-chart-primary'),
@@ -415,21 +418,18 @@ async function handleCopy() {
 async function handleShare() {
   const product = currentResult?.product;
   if (!product) return;
-  const shareData = {
+  await shareLink({
     title: `Pression théorique — ${fullProductName(product)}`,
     text: resultText(),
     url: location.href,
-  };
-  if (navigator.share) {
-    try {
-      await navigator.share(shareData);
-      showFeedback('Résultat partagé.');
-    } catch (error) {
-      if (error?.name !== 'AbortError') await handleCopy();
-    }
-    return;
-  }
-  await handleCopy();
+    output: elements.shareOutput,
+    input: elements.shareUrl,
+    feedback: elements.feedback,
+    messages: {
+      copied: 'Lien du résultat copié.',
+      shared: 'Résultat partagé.',
+    },
+  });
 }
 
 function bindEvents() {
@@ -458,6 +458,7 @@ function bindEvents() {
   });
   elements.compare.addEventListener('change', renderComparison);
   elements.copy.addEventListener('click', handleCopy);
+  configureShareButton(elements.share);
   elements.share.addEventListener('click', handleShare);
 }
 

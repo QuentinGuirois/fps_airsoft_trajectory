@@ -108,7 +108,7 @@ test('aucune page joueur mince n’est publiée sans profil autorisé', async ()
 });
 
 test('la page À propos utilise la photo réelle, le patch Keep et l’attribution réutilisable', async () => {
-  const [html, css] = await Promise.all([read('a-propos', 'index.html'), read('assets', 'site.css')]);
+  const [home, html, css] = await Promise.all([read('index.html'), read('a-propos', 'index.html'), read('assets', 'site.css')]);
   const portrait = await stat(join(root, 'assets', 'img', 'quentin-guirois.jpg'));
   assert.ok(portrait.size > 1_000_000);
   assert.match(html, /class="about-portrait"/);
@@ -118,13 +118,17 @@ test('la page À propos utilise la photo réelle, le patch Keep et l’attributi
   assert.match(html, /Keep · développeur & airsofteur/);
   assert.match(html, /attribution-block mackila-attribution/);
   assert.match(html, /data-trust="external">Attribution/);
+  assert.match(home, /class="shell about-profile"/);
+  assert.match(home, /class="about-portrait"/);
+  assert.doesNotMatch(home, /class="shell author-card"/);
+  assert.match(css, /\.about-portrait \{[^}]*max-width: 19rem;[^}]*aspect-ratio: 1/);
 });
 
 test('le cache et les ressources restent autonomes sans CDN', async () => {
   const [worker, css, site, gas] = await Promise.all([
     read('service-worker.js'), read('assets', 'site.css'), read('site.js'), read('gas-pressure-app.js'),
   ]);
-  assert.match(worker, /fat-v3-2026-07-18-28/);
+  assert.match(worker, /fat-v3-2026-07-18-29/);
   for (const source of [worker, css, site, gas]) {
     assert.doesNotMatch(source, /https?:\/\/(?:fonts\.|cdn\.|unpkg|jsdelivr)/i);
   }

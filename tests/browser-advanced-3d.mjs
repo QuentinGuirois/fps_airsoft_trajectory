@@ -146,10 +146,10 @@ const dedicatedRequests = [...new Set(requests.filter((url) => lazyPaths.some((p
 for (const path of lazyPaths) if (!dedicatedRequests.includes(path)) throw new Error(`Actif 3D dédié absent: ${path}`);
 
 console.log('[advanced] partage, stockage, reset et URL historique');
-await evaluate(`(()=>{window.__advancedShare=null;navigator.share=async payload=>{window.__advancedShare=payload};document.querySelector('[data-advanced-share]').click()})()`);
-await waitFor(`Boolean(window.__advancedShare)`);
-const shared = await evaluate(`({title:window.__advancedShare.title,params:Object.fromEntries(new URL(window.__advancedShare.url).searchParams)})`);
-if (shared.params.m !== '0.36' || shared.params.rpm !== '100000' || shared.params.wd !== '90') throw new Error(`Partage avancé: ${JSON.stringify(shared)}`);
+await evaluate(`(()=>{window.__advancedShare=null;window.__advancedCopied='';Object.defineProperty(navigator,'share',{configurable:true,value:async payload=>{window.__advancedShare=payload}});Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async value=>{window.__advancedCopied=value}}});document.querySelector('[data-advanced-share]').click()})()`);
+await waitFor(`Boolean(window.__advancedCopied)`);
+const shared = await evaluate(`({native:window.__advancedShare,label:document.querySelector('[data-advanced-share]').textContent,url:window.__advancedCopied,params:Object.fromEntries(new URL(window.__advancedCopied).searchParams),field:document.querySelector('[data-advanced-share-url]').value})`);
+if (shared.native !== null || shared.label !== 'Copier le lien' || shared.params.m !== '0.36' || shared.params.rpm !== '100000' || shared.params.wd !== '90' || shared.field !== shared.url) throw new Error(`Partage avancé desktop: ${JSON.stringify(shared)}`);
 const storedPrevious = await evaluate(`document.querySelector('[data-advanced-3d-app]').dataset.lastRequestId`);
 await evaluate(`(()=>{const input=document.querySelector('[data-advanced-field="massG"]');input.value='0.43';input.dispatchEvent(new Event('input',{bubbles:true}))})()`);
 await waitFor(`document.querySelector('[data-advanced-3d-app]').dataset.lastRequestId !== '${storedPrevious}'`);
@@ -280,7 +280,7 @@ await waitForScene();
 await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await waitFor(`navigator.serviceWorker.controller !== null`);
 await wait(800);
-const cached = await evaluate(`Promise.all(${JSON.stringify(lazyPaths)}.map(async path=>Boolean(await (await caches.open('fat-v3-2026-07-18-28')).match(path.endsWith('three.core.min.js')?path:path+'?v=20260718-28'))))`, true);
+const cached = await evaluate(`Promise.all(${JSON.stringify(lazyPaths)}.map(async path=>Boolean(await (await caches.open('fat-v3-2026-07-18-29')).match(path.endsWith('three.core.min.js')?path:path+'?v=20260718-28'))))`, true);
 if (cached.some((value) => !value)) throw new Error(`Cache 3D incomplet: ${JSON.stringify(cached)}`);
 await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0, connectionType: 'none' });
 await navigate(`${advancedUrl}?offline=1`);

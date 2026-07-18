@@ -2,6 +2,7 @@ import { DEFAULT_SHOT, normalizeShot } from './physics-core.js?v=20260718-28';
 import { detectWebGL } from './render-capabilities.js?v=20260718-28';
 import { advancedDeviceAdvice } from './advanced-device.js?v=20260718-28';
 import { consumeAdvancedTransition, createAdvancedTransition } from './advanced-transition.js?v=20260718-28';
+import { configureShareButton, shareLink } from './assets/js/share-link.js?v=20260718-29';
 
 const root = document.querySelector('[data-advanced-3d-app]');
 
@@ -24,6 +25,8 @@ if (root) {
   const legend = root.querySelector('[data-advanced-legend]');
   const metricContext = root.querySelector('[data-advanced-metric-context]');
   const feedback = root.querySelector('[data-advanced-feedback]');
+  const shareOutput = root.querySelector('[data-advanced-share-output]');
+  const shareUrlInput = root.querySelector('[data-advanced-share-url]');
   const cameraButtons = [...root.querySelectorAll('[data-advanced-camera]')];
   const pauseButton = root.querySelector('[data-advanced-pause]');
   const mobileNotice = root.querySelector('[data-advanced-mobile-notice]');
@@ -291,15 +294,15 @@ if (root) {
 
   async function shareShot() {
     const url = shareUrl();
-    try {
-      if (navigator.share) await navigator.share({ title: 'Mon setup F.A.T. 3D', text: 'Passe ce setup au simulateur 3D F.A.T.', url });
-      else {
-        await navigator.clipboard.writeText(url);
-        feedback.textContent = 'Lien copié.';
-      }
-    } catch (error) {
-      if (error?.name !== 'AbortError') feedback.textContent = `Lien : ${url}`;
-    }
+    history.replaceState(history.state, '', url);
+    await shareLink({
+      url,
+      title: 'Mon setup F.A.T. 3D',
+      text: 'Passe ce setup au simulateur 3D F.A.T.',
+      output: shareOutput,
+      input: shareUrlInput,
+      feedback,
+    });
   }
 
   function setCamera(name) {
@@ -349,7 +352,9 @@ if (root) {
     button.addEventListener('click', () => state.droneApi?.zoom(Number(button.dataset.advancedZoom)));
   });
   root.querySelector('[data-advanced-compare]').addEventListener('click', addComparison);
-  root.querySelector('[data-advanced-share]').addEventListener('click', shareShot);
+  const shareButton = root.querySelector('[data-advanced-share]');
+  configureShareButton(shareButton);
+  shareButton.addEventListener('click', shareShot);
   root.querySelector('[data-advanced-reset]').addEventListener('click', () => {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(SUMMARY_STORAGE_KEY);

@@ -10,7 +10,7 @@
   <link rel="canonical" href="https://fps-airsoft-trajectory.com/outils/choisir-gaz-airsoft-pression-temperature/">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
-  <script data-cfasync="false">(()=>{const e=document.documentElement;let m='system';try{m=localStorage.getItem('fat-theme')||m}catch{}if(!['system','dark','light'].includes(m))m='system';const d=m==='dark'||(m==='system'&&(!window.matchMedia||matchMedia('(prefers-color-scheme: dark)').matches));const t=d?'dark':'light';e.dataset.themeMode=m;e.dataset.theme=t;e.style.colorScheme=t;document.querySelector('meta[name="theme-color"]').content=d?'#10140c':'#eef0e2'})()</script><link rel="stylesheet" href="/assets/site.css?v=20260718-28">
+  <script data-cfasync="false">(()=>{const e=document.documentElement;let m='system';try{m=localStorage.getItem('fat-theme')||m}catch{}if(!['system','dark','light'].includes(m))m='system';const d=m==='dark'||(m==='system'&&(!window.matchMedia||matchMedia('(prefers-color-scheme: dark)').matches));const t=d?'dark':'light';e.dataset.themeMode=m;e.dataset.theme=t;e.style.colorScheme=t;document.querySelector('meta[name="theme-color"]').content=d?'#10140c':'#eef0e2'})()</script><link rel="stylesheet" href="/assets/site.css?v=20260718-29">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="fr_FR">
   <meta property="og:title" content="Quel gaz airsoft choisir selon la température ?">
@@ -139,9 +139,13 @@
 
               <div class="button-row gas-actions">
                 <button class="button button-primary" id="gas-copy" type="button">Copier le résultat</button>
-                <button class="button" id="gas-share" type="button">Partager</button>
+                <button class="button" id="gas-share" type="button">Copier le lien</button>
               </div>
               <p id="gas-share-feedback" class="gas-feedback" aria-live="polite"></p>
+              <div class="share-output" id="gas-share-output" hidden>
+                <label for="gas-share-url">Lien complet vers ce résultat</label>
+                <div class="share-url-row"><input id="gas-share-url" type="url" readonly aria-describedby="gas-share-feedback"></div>
+              </div>
               <p class="gas-disclaimer">La pression affichée est une estimation théorique calculée à partir des valeurs publiées par les fabricants ou distributeurs. Elle ne garantit ni la pression réelle dans un chargeur, ni la compatibilité avec une réplique, ni la puissance obtenue.</p>
             </section>
           </div>
@@ -261,6 +265,6 @@
   </footer>
   <a class="mobile-cta" href="#gas-tool-title">Choisir mon gaz</a>
   <script type="module" data-cfasync="false" src="/site.js?v=20260718-28"></script>
-  <script type="module" data-cfasync="false" src="/gas-pressure-app.js?v=20260718-28"></script>
+  <script type="module" data-cfasync="false" src="/gas-pressure-app.js?v=20260718-29"></script>
 </body>
 </html>

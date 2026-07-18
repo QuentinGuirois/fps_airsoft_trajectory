@@ -1,10 +1,10 @@
-const CACHE = 'fat-v3-2026-07-18-28';
+const CACHE = 'fat-v3-2026-07-18-29';
 const CORE = [
   '/',
   '/index.html',
   '/offline.html',
   '/manifest.webmanifest',
-  '/assets/site.css?v=20260718-28',
+  '/assets/site.css?v=20260718-29',
   '/assets/fonts/inter-var-latin.woff2',
   '/assets/fonts/saira-latin-400-900.woff2',
   '/assets/fonts/saira-stencil-one-latin-400.woff2',
@@ -20,8 +20,8 @@ const CORE = [
   '/assets/img/icon-maskable-512.png',
   '/assets/img/partage-fat.png',
   '/assets/img/quentin-guirois.jpg',
-  '/app.js?v=20260718-28',
-  '/advanced-3d-app.js?v=20260718-28',
+  '/app.js?v=20260718-29',
+  '/advanced-3d-app.js?v=20260718-29',
   '/advanced-device.js?v=20260718-28',
   '/advanced-transition.js?v=20260718-28',
   '/calculation-loader.js?v=20260718-28',
@@ -29,6 +29,7 @@ const CORE = [
   '/replica-utils.js?v=20260718-28',
   '/assets/js/community-repositories.js?v=20260718-28',
   '/assets/js/curve-thumbnail.js?v=20260718-28',
+  '/assets/js/share-link.js?v=20260718-29',
   '/assets/js/replica-card.js?v=20260718-28',
   '/assets/js/account-login.js?v=20260718-28',
   '/assets/js/account-login-entry.js?v=20260718-28',
@@ -47,7 +48,7 @@ const CORE = [
   '/outils/choisir-gaz-airsoft-pression-temperature/',
   '/data/green-gas-pressure-curves.json?v=20260718-28',
   '/gas-pressure-tool.js?v=20260718-28',
-  '/gas-pressure-app.js?v=20260718-28',
+  '/gas-pressure-app.js?v=20260718-29',
   '/modele-physique-atp/',
   '/compte/',
   '/compte/armurerie.html'

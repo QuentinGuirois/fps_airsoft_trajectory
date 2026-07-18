@@ -11,7 +11,7 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
   <script data-cfasync="false">(()=>{const e=document.documentElement;let m='system';try{m=localStorage.getItem('fat-theme')||m}catch{}if(!['system','dark','light'].includes(m))m='system';const d=m==='dark'||(m==='system'&&(!window.matchMedia||matchMedia('(prefers-color-scheme: dark)').matches));const t=d?'dark':'light';e.dataset.themeMode=m;e.dataset.theme=t;e.style.colorScheme=t;document.querySelector('meta[name="theme-color"]').content=d?'#10140c':'#eef0e2'})()</script>
-  <link rel="stylesheet" href="/assets/site.css?v=20260718-28">
+  <link rel="stylesheet" href="/assets/site.css?v=20260718-29">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="fr_FR">
   <meta property="og:site_name" content="F.A.T.">
@@ -207,7 +207,7 @@
 
             <div class="control-actions">
               <button class="button button-primary button-small" id="compare-shot" type="button" data-tuto="comparer">Ajouter à la comparaison</button>
-              <button class="button button-small" id="share-shot" type="button" data-tuto="partager">Partager le setup</button>
+              <button class="button button-small" id="share-shot" type="button" data-tuto="partager">Copier le lien</button>
               <button class="button button-ghost button-small" id="reset-shot" type="button">Réinitialiser</button>
             </div>
             <p id="share-feedback" aria-live="polite"></p>
@@ -277,8 +277,8 @@
     </section>
 
     <section class="section-tight">
-      <div class="shell author-card">
-        <img src="/assets/img/quentin-guirois.jpg" width="2051" height="2478" loading="lazy" decoding="async" alt="Keep en tenue d’airsoft sur le terrain">
+      <div class="shell about-profile">
+        <div class="about-portrait"><img src="/assets/img/quentin-guirois.jpg" width="2051" height="2478" loading="lazy" decoding="async" alt="Keep en tenue d’airsoft sur le terrain"><span class="stencil-patch">Keep · développeur & airsofteur</span></div>
         <div><h2>Keep, derrière le clavier et sur le terrain</h2><p>Quentin Guirois est développeur web et airsofteur. Il a créé F.A.T. pour rendre les travaux de Mackila manipulables sans ouvrir MATLAB entre deux parties — parce qu’un sac d’hydratation est déjà assez lourd.</p><a href="/a-propos/">Qui est Keep et pourquoi cet outil ? →</a></div>
       </div>
     </section>
@@ -333,7 +333,7 @@
   </footer>
   <a class="mobile-cta" href="#calculateur">Simuler mon setup</a>
   <script type="module" data-cfasync="false" src="/site.js?v=20260718-28"></script>
-  <script type="module" data-cfasync="false" src="/app.js?v=20260718-28"></script>
+  <script type="module" data-cfasync="false" src="/app.js?v=20260718-29"></script>
   <script type="module" data-cfasync="false" src="/calculator-tutorial.js?v=20260718-28"></script>
 </body>
 </html>

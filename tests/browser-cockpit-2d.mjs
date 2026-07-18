@@ -152,10 +152,15 @@ await navigate(base);
 await waitFor(`Boolean(document.querySelector('[data-trajectory-app]')?.dataset.lastRequestId)`);
 if (await evaluate(`document.querySelector('#mass').value !== '0.43'`)) throw new Error('Stored shot was not restored');
 
-await evaluate(`(()=>{window.__sharedShot=null;Object.defineProperty(navigator,'share',{configurable:true,value:async data=>{window.__sharedShot=data}});document.querySelector('#share-shot').click()})()`);
+await evaluate(`(()=>{window.__sharedShot=null;window.__desktopCopiedShot='';Object.defineProperty(navigator,'share',{configurable:true,value:async data=>{window.__sharedShot=data}});Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async value=>{window.__desktopCopiedShot=value}}});document.querySelector('#share-shot').click()})()`);
+await waitFor(`window.__desktopCopiedShot !== ''`);
+const desktopShare = await evaluate(`({native:window.__sharedShot,url:window.__desktopCopiedShot,label:document.querySelector('#share-shot').textContent,params:Object.fromEntries(new URL(window.__desktopCopiedShot).searchParams)})`);
+if (desktopShare.native !== null || desktopShare.label !== 'Copier le lien' || desktopShare.params.m !== '0.43' || !desktopShare.params.rpm || !desktopShare.params.wd || !desktopShare.params.sh || !desktopShare.params.oh || !desktopShare.params.lat || !desktopShare.params.d) throw new Error(`Desktop share: ${JSON.stringify(desktopShare)}`);
+
+await evaluate(`(()=>{window.__sharedShot=null;const originalMatchMedia=window.matchMedia.bind(window);window.matchMedia=query=>query==='(pointer: coarse)'?{matches:true,media:query,addEventListener(){},removeEventListener(){}}:originalMatchMedia(query);Object.defineProperty(navigator,'maxTouchPoints',{configurable:true,value:5});Object.defineProperty(navigator,'share',{configurable:true,value:async data=>{window.__sharedShot=data}});document.querySelector('#share-shot').click()})()`);
 await waitFor(`window.__sharedShot !== null`);
 const nativeShare = await evaluate(`({title:window.__sharedShot.title,params:Object.fromEntries(new URL(window.__sharedShot.url).searchParams)})`);
-if (nativeShare.title !== 'Mon setup F.A.T.' || nativeShare.params.m !== '0.43' || !nativeShare.params.rpm || !nativeShare.params.wd || !nativeShare.params.sh || !nativeShare.params.oh || !nativeShare.params.lat || !nativeShare.params.d) throw new Error(`Native share: ${JSON.stringify(nativeShare)}`);
+if (nativeShare.title !== 'Mon setup F.A.T.' || nativeShare.params.m !== '0.43') throw new Error(`Coarse touch share: ${JSON.stringify(nativeShare)}`);
 
 await evaluate(`(()=>{window.__copiedShot='';Object.defineProperty(navigator,'share',{configurable:true,value:undefined});Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async value=>{window.__copiedShot=value}}});document.querySelector('#share-shot').click()})()`);
 await waitFor(`window.__copiedShot !== ''`);
@@ -241,7 +246,7 @@ const result = {
   layouts,
   urls: { current: currentUrl, legacy: oldUrl },
   persistence: { storedMass: storedShot.massG, reset: resetShot },
-  sharing: { native: nativeShare, clipboard: clipboardShare.feedback, manual: manualShare.feedback },
+  sharing: { desktop: desktopShare.label, native: nativeShare, clipboard: clipboardShare.feedback, manual: manualShare.feedback },
   concurrency: concurrentAfter,
   calculationError: errorState,
   themeRedrawWithoutPhysics: themed.posts === 0,

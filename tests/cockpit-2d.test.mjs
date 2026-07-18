@@ -44,7 +44,7 @@ test('la géométrie et les traits du cockpit suivent la charte 2D', async () =>
 });
 
 test('le partage expose toujours une URL complète et restaure les paramètres avancés', async () => {
-  const [html, app] = await Promise.all([read('index.html'), read('app.js')]);
+  const [html, app, share] = await Promise.all([read('index.html'), read('app.js'), read('assets', 'js', 'share-link.js')]);
   assert.match(html, /id="share-output" hidden/);
   assert.match(html, /id="share-url" type="url" readonly/);
   assert.match(html, /id="copy-share-url"/);
@@ -52,13 +52,14 @@ test('le partage expose toujours une URL complète et restaure les paramètres a
     assert.match(app, new RegExp(`${parameter}: shot\.`));
   }
   assert.match(app, /history\.replaceState\(history\.state, '', url\)/);
-  assert.match(app, /document\.execCommand\?\.\('copy'\)/);
+  assert.match(app, /shareLink\(\{/);
+  assert.match(share, /documentRef\?\.execCommand\?\.\('copy'\)/);
 });
 
 test('le cache PWA contient les modules 2D avec une nouvelle version', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /fat-v3-2026-07-18-28/);
+  assert.match(worker, /fat-v3-2026-07-18-29/);
   assert.match(worker, /'\/chart-data\.js\?v=20260718-28'/);
-  assert.match(worker, /'\/app\.js\?v=20260718-28'/);
-  assert.match(worker, /'\/assets\/site\.css\?v=20260718-28'/);
+  assert.match(worker, /'\/app\.js\?v=20260718-29'/);
+  assert.match(worker, /'\/assets\/site\.css\?v=20260718-29'/);
 });

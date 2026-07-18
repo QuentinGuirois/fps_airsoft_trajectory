@@ -216,10 +216,10 @@ if (gasRestored.t !== String(gasStored.t) || gasRestored.brand !== gasStored.bra
 
 await navigate(`${base}outils/choisir-gaz-airsoft-pression-temperature/?t=12&brand=Nimrod%20Tactical&gas=nimrod-green-145`);
 await waitFor(`document.documentElement.dataset.gasPressureReady === 'true'`);
-await evaluate(`(()=>{window.__gasShare=null;Object.defineProperty(navigator,'share',{configurable:true,value:async data=>{window.__gasShare=data}});document.querySelector('#gas-share').click()})()`);
-await waitFor(`window.__gasShare !== null`);
-const gasNativeShare = await evaluate(`({title:window.__gasShare.title,url:window.__gasShare.url})`);
-if (!gasNativeShare.title.includes('Nimrod') || !gasNativeShare.url.includes('gas=nimrod-green-145')) throw new Error(`Gas native share: ${JSON.stringify(gasNativeShare)}`);
+await evaluate(`(()=>{window.__gasShare=null;window.__gasLink='';Object.defineProperty(navigator,'share',{configurable:true,value:async data=>{window.__gasShare=data}});Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async value=>{window.__gasLink=value}}});document.querySelector('#gas-share').click()})()`);
+await waitFor(`window.__gasLink !== ''`);
+const gasNativeShare = await evaluate(`({native:window.__gasShare,label:document.querySelector('#gas-share').textContent,url:window.__gasLink,field:document.querySelector('#gas-share-url').value})`);
+if (gasNativeShare.native !== null || gasNativeShare.label !== 'Copier le lien' || !gasNativeShare.url.includes('gas=nimrod-green-145') || gasNativeShare.field !== gasNativeShare.url) throw new Error(`Gas desktop share: ${JSON.stringify(gasNativeShare)}`);
 await evaluate(`(()=>{window.__gasCopy='';Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async value=>{window.__gasCopy=value}}});document.querySelector('#gas-copy').click()})()`);
 await waitFor(`window.__gasCopy !== ''`);
 const gasClipboard = await evaluate(`({copied:window.__gasCopy.includes('Nimrod Tactical'),feedback:document.querySelector('#gas-share-feedback').textContent})`);

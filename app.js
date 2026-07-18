@@ -13,6 +13,7 @@ import { fitChartDomain, prepareChartSeries } from './chart-data.js?v=20260718-2
 import { createCalculationLoader } from './calculation-loader.js?v=20260718-28';
 import { detectWebGL } from './render-capabilities.js?v=20260718-28';
 import { serializeCurveThumbnail } from './assets/js/curve-thumbnail.js?v=20260718-28';
+import { configureShareButton, shareLink } from './assets/js/share-link.js?v=20260718-29';
 
 const root = document.querySelector('[data-trajectory-app]');
 
@@ -647,45 +648,22 @@ if (root) {
     history.replaceState(history.state, '', url);
   }
 
-  async function copyShareUrl(url) {
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url);
-        return true;
-      }
-    } catch { /* Repli par sélection manuelle ci-dessous. */ }
-    if (!shareUrlInput) return false;
-    shareUrlInput.focus();
-    shareUrlInput.select();
-    try { return Boolean(document.execCommand?.('copy')); } catch { return false; }
-  }
-
   async function shareShot() {
     const url = buildShareUrl();
     revealShareUrl(url);
-    shareFeedback.textContent = 'Lien complet prêt. Tous les paramètres sont enregistrés dans l’URL.';
-    try {
-      const canUseNativeShare = typeof navigator.share === 'function'
-        && (typeof navigator.canShare !== 'function' || navigator.canShare({ url }));
-      if (canUseNativeShare) {
-        await navigator.share({ title: 'Mon setup F.A.T.', text: 'Passe mon setup airsoft au banc balistique.', url });
-        shareFeedback.textContent = 'Setup partagé. Le lien complet reste disponible ci-dessous.';
-      } else {
-        const copied = await copyShareUrl(url);
-        shareFeedback.textContent = copied
-          ? 'Lien copié. À envoyer au squad, ou à ton mécano préféré.'
-          : 'Copie automatique indisponible : sélectionne le lien complet ci-dessous.';
-      }
-    } catch (error) {
-      if (error?.name === 'AbortError') {
-        shareFeedback.textContent = 'Partage annulé. Le lien complet reste disponible ci-dessous.';
-      } else {
-        const copied = await copyShareUrl(url);
-        shareFeedback.textContent = copied
-          ? 'Le partage natif a échoué, mais le lien a été copié.'
-          : 'Partage automatique indisponible : sélectionne le lien complet ci-dessous.';
-      }
-    }
+    await shareLink({
+      url,
+      title: 'Mon setup F.A.T.',
+      text: 'Passe mon setup airsoft au banc balistique.',
+      output: shareOutput,
+      input: shareUrlInput,
+      feedback: shareFeedback,
+      messages: {
+        copied: 'Lien copié. Tous les paramètres du setup sont enregistrés dans l’URL.',
+        shared: 'Setup partagé. Le lien complet reste disponible ci-dessous.',
+        manual: 'Copie automatique indisponible : sélectionne le lien complet ci-dessous.',
+      },
+    });
   }
 
   const flatSpinInputs = new Set([
@@ -817,13 +795,18 @@ if (root) {
   });
 
   compareButton.addEventListener('click', addComparison);
+  configureShareButton(shareButton);
   shareButton.addEventListener('click', shareShot);
   copyShareUrlButton?.addEventListener('click', async () => {
     const url = shareUrlInput?.value || buildShareUrl();
-    const copied = await copyShareUrl(url);
-    shareFeedback.textContent = copied
-      ? 'Lien copié.'
-      : 'Sélectionne le lien puis utilise Ctrl+C.';
+    revealShareUrl(url);
+    await shareLink({
+      url,
+      output: shareOutput,
+      input: shareUrlInput,
+      feedback: shareFeedback,
+      allowNative: false,
+    });
   });
   resetButton.addEventListener('click', () => {
     localStorage.removeItem('fat-shot-v3');
