@@ -71,6 +71,8 @@ test('Apache protège les sources PHP, les shells privés et le site sans CDN', 
   assert.match(rootRules, /Strict-Transport-Security/);
   assert.match(rootRules, /Content-Security-Policy/);
   assert.match(rootRules, /default-src 'self'/);
+  assert.match(rootRules, /SetEnvIf Request_URI "\^\/compte/);
+  assert.match(rootRules, /Header merge Cache-Control "public, no-transform" env=!fat_private_shell/);
   assert.match(sourceRules, /Require all denied/);
   assert.match(accountRules, /no-store, private/);
   assert.match(accountRules, /noindex, nofollow/);
