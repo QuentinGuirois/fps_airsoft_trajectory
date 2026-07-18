@@ -41,7 +41,7 @@ final class AuthController
         $password = Validator::password($body['password']);
         $userId = Support::uuid();
         $token = Support::token();
-        $algorithm = defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_BCRYPT;
+        $algorithm = $this->passwordAlgorithm();
         try {
             $this->db->beginTransaction();
             $insert = $this->db->prepare('INSERT INTO users (id,email,pseudo,password_hash) VALUES (?,?,?,?)');
@@ -54,14 +54,20 @@ final class AuthController
                 $this->db->rollBack();
             }
             if (($error->errorInfo[1] ?? null) === 1062) {
-                throw new HttpException(409, 'account_exists', 'Ce pseudo ou cet email est déjà utilisé.');
+                Response::json([
+                    'accepted' => true,
+                    'message' => 'Si la demande est valide, un email de vérification a été envoyé.',
+                ], 202);
             }
             throw $error;
         }
         $link = $this->config->get('APP_ORIGIN') . '/compte/?verify=' . $token;
         $this->mailer->send($email, 'Vérifie ton compte F.A.T.', "Confirme ton adresse dans les 24 heures :\n{$link}\n");
         $this->audit->write($request->requestId, $userId, 'auth.register', 'user', $userId);
-        Response::json(['created' => true, 'message' => 'Compte créé. Vérifie maintenant ton email.'], 201);
+        Response::json([
+            'accepted' => true,
+            'message' => 'Si la demande est valide, un email de vérification a été envoyé.',
+        ], 202);
     }
 
     public function verifyEmail(Request $request): never
@@ -104,7 +110,7 @@ final class AuthController
         if ($user['email_verified_at'] === null) {
             throw new HttpException(403, 'email_unverified', 'Vérifie ton email avant de te connecter.');
         }
-        $algorithm = defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_BCRYPT;
+        $algorithm = $this->passwordAlgorithm();
         if (password_needs_rehash($user['password_hash'], $algorithm)) {
             $rehash = $this->db->prepare('UPDATE users SET password_hash=? WHERE id=?');
             $rehash->execute([password_hash((string) $body['password'], $algorithm), $user['id']]);
@@ -162,7 +168,7 @@ final class AuthController
             $this->db->rollBack();
             throw new HttpException(422, 'token', 'Jeton invalide ou expiré.');
         }
-        $algorithm = defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_BCRYPT;
+        $algorithm = $this->passwordAlgorithm();
         $this->db->prepare('UPDATE users SET password_hash=?,version=version+1 WHERE id=?')->execute([password_hash($password, $algorithm), $row['user_id']]);
         $this->db->prepare('UPDATE password_reset_tokens SET consumed_at=UTC_TIMESTAMP() WHERE id=?')->execute([$row['id']]);
         $this->db->prepare('DELETE FROM sessions WHERE user_id=?')->execute([$row['user_id']]);
@@ -174,6 +180,11 @@ final class AuthController
     public function turnstileConfig(): never
     {
         Response::json(['turnstile' => $this->turnstile->publicConfig()]);
+    }
+
+    private function passwordAlgorithm(): string|int
+    {
+        return defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_DEFAULT;
     }
 
     /** @param array<string,mixed> $user @return array<string,mixed> */

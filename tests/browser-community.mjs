@@ -307,7 +307,7 @@ await navigate(base);
 await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await navigate(`${base}compte/armurerie.html?recipe=sw`);
 await waitFor(`Boolean(navigator.serviceWorker.controller)`);
-const cache = await evaluate(`Promise.all([caches.open('fat-v3-2026-07-18-30').then(cache=>cache.match('/assets/js/replica-card.js?v=20260718-28')).then(Boolean),caches.match('/api/v1/me').then(Boolean)]).then(([component,api])=>({component,api}))`, true);
+const cache = await evaluate(`Promise.all([caches.open('fat-v3-2026-07-18-31').then(cache=>cache.match('/assets/js/replica-card.js?v=20260718-28')).then(Boolean),caches.match('/api/v1/me').then(Boolean)]).then(([component,api])=>({component,api}))`, true);
 if (!cache.component || cache.api) throw new Error(`Private cache mismatch ${JSON.stringify(cache)}`);
 
 await evaluate(`sessionStorage.setItem('__fatDisableCommunityApi','1')`);

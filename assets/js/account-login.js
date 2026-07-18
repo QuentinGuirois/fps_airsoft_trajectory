@@ -65,13 +65,13 @@ export function initAccountLogin({
         announce('Connexion réussie.', 'success');
         redirect('/compte/armurerie.html');
       } else {
-        await accountRepository.register({
+        const registration = await accountRepository.register({
           pseudo: fieldValue(form, 'pseudo'),
           email: fieldValue(form, 'email'),
           password: fieldValue(form, 'password'),
           ...await protectedPayload('register'),
         }, { signal: controller.signal });
-        announce('Compte créé. Vérifie maintenant l’email envoyé par F.A.T.', 'success');
+        announce(registration?.message || 'Si la demande est valide, un email de vérification a été envoyé.', 'success');
       }
     } catch (error) {
       const message = error instanceof RepositoryError || error instanceof Error

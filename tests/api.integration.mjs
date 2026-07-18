@@ -59,22 +59,39 @@ function resetDatabase() {
 
 let cookie = '';
 let csrf = '';
-async function api(path, { method = 'GET', body, form, auth = false, expected = 200 } = {}) {
+let lastSetCookie = '';
+async function api(path, { method = 'GET', body, form, auth = false, expected = 200, origin = ORIGIN } = {}) {
   const headers = { Accept: 'application/json' };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
-  if (!['GET', 'HEAD'].includes(method)) headers.Origin = ORIGIN;
+  if (!['GET', 'HEAD'].includes(method)) headers.Origin = origin;
   if (auth && cookie) headers.Cookie = cookie;
   if (auth && csrf && !['GET', 'HEAD'].includes(method)) headers['X-CSRF-Token'] = csrf;
   const response = await fetch(`${ORIGIN}/api/v1${path}`, {
     method, headers, body: form || (body === undefined ? undefined : JSON.stringify(body)), redirect: 'manual',
   });
   const setCookie = response.headers.get('set-cookie');
+  lastSetCookie = setCookie || '';
   if (setCookie) cookie = setCookie.split(';', 1)[0];
   const payload = response.status === 204 ? null : await response.json();
   assert.equal(response.status, expected, `${method} ${path}: ${JSON.stringify(payload)}`);
   if (payload?.csrfToken) csrf = payload.csrfToken;
   assert.match(response.headers.get('cache-control') || '', /no-store/);
   return payload;
+}
+
+async function concurrentPatch(path, body) {
+  const request = () => fetch(`${ORIGIN}/api/v1${path}`, {
+    method: 'PATCH',
+    headers: {
+      Accept: 'application/json', 'Content-Type': 'application/json', Origin: ORIGIN,
+      Cookie: cookie, 'X-CSRF-Token': csrf,
+    },
+    body: JSON.stringify(body),
+  });
+  const responses = await Promise.all([request(), request()]);
+  const results = await Promise.all(responses.map(async (response) => ({ status: response.status, payload: await response.json() })));
+  assert.deepEqual(results.map(({ status }) => status).sort((left, right) => left - right), [200, 409]);
+  return results.find(({ status }) => status === 200).payload.replica;
 }
 
 async function waitForServer() {
@@ -119,13 +136,21 @@ try {
   await waitForServer();
   const health = await api('/health');
   assert.deepEqual(health, { status: 'ok' });
+  await api('/auth/reset-password', { method: 'POST', expected: 403, origin: 'https://evil.example', body: { token: 'a'.repeat(64), password: 'MotDePasseRefuse123' } });
 
-  await api('/auth/register', { method: 'POST', expected: 201, body: { pseudo: 'Alpha', email: 'alpha@example.test', password: 'MotDePasseAlpha123', turnstileToken: turnstileToken('register') } });
+  const registrationAlpha = await api('/auth/register', { method: 'POST', expected: 202, body: { pseudo: 'Alpha', email: 'alpha@example.test', password: 'MotDePasseAlpha123', turnstileToken: turnstileToken('register') } });
+  const duplicateRegistration = await api('/auth/register', { method: 'POST', expected: 202, body: { pseudo: 'AlphaBis', email: 'alpha@example.test', password: 'MotDePasseAlpha123', turnstileToken: turnstileToken('register') } });
+  assert.deepEqual(duplicateRegistration, registrationAlpha);
   const verifyAlpha = await latestMailToken('verify');
   await api('/auth/verify-email', { method: 'POST', body: { token: verifyAlpha } });
   await api('/auth/verify-email', { method: 'POST', expected: 422, body: { token: verifyAlpha } });
+  const fixedCookie = `fat_session=${'a'.repeat(64)}`;
+  cookie = fixedCookie;
   const login = await api('/auth/login', { method: 'POST', body: { identity: 'alpha@example.test', password: 'MotDePasseAlpha123', turnstileToken: turnstileToken('login') } });
   assert.equal(login.user.role, 'user');
+  assert.notEqual(cookie, fixedCookie);
+  assert.match(lastSetCookie, /HttpOnly/i);
+  assert.match(lastSetCookie, /SameSite=Lax/i);
   const alphaCookie = cookie;
   const alphaCsrf = csrf;
 
@@ -135,6 +160,7 @@ try {
   csrf = deniedCsrf;
   const me = await api('/me', { auth: true });
   assert.equal(me.authenticated, true);
+  await api('/me', { method: 'PATCH', auth: true, expected: 422, body: { pseudo: 'Root', role: 'admin', version: me.user.version } });
 
   const card = await api('/replicas', { method: 'POST', auth: true, expected: 201, body: {
     modelName: 'Réplique Alpha', type: 'AEG', simulationUrl: `${ORIGIN}/?m=0.28&j=1.30`,
@@ -152,11 +178,15 @@ try {
   await api(`/replicas/${cardId}/photo`, { method: 'POST', auth: true, form: hostile, expected: 422 });
 
   cookie = ''; csrf = '';
-  await api('/auth/register', { method: 'POST', expected: 201, body: { pseudo: 'Bravo', email: 'bravo@example.test', password: 'MotDePasseBravo123', turnstileToken: turnstileToken('register') } });
+  await api('/auth/register', { method: 'POST', expected: 202, body: { pseudo: 'Bravo', email: 'bravo@example.test', password: 'MotDePasseBravo123', turnstileToken: turnstileToken('register') } });
   const verifyBravo = await latestMailToken('verify');
   await api('/auth/verify-email', { method: 'POST', body: { token: verifyBravo } });
   await api('/auth/login', { method: 'POST', body: { identity: 'bravo@example.test', password: 'MotDePasseBravo123', turnstileToken: turnstileToken('login') } });
   await api(`/replicas/${cardId}`, { auth: true, expected: 404 });
+  await api(`/replicas/${cardId}`, { method: 'PATCH', auth: true, expected: 404, body: { modelName: 'Vol', version: 1 } });
+  await api(`/replicas/${cardId}`, { method: 'DELETE', auth: true, expected: 404, body: { version: 1 } });
+  await api(`/replicas/${cardId}/processing-status`, { auth: true, expected: 404 });
+  await api(`/replicas/${cardId}/submit`, { method: 'POST', auth: true, expected: 409, body: { version: 1 } });
   await api('/admin/replicas', { auth: true, expected: 403 });
 
   command('docker', ['exec', 'fat-mariadb-test', 'mariadb', '-uroot', '-pfat_local_root_only', 'fat_test', '-e', "UPDATE users SET role='admin' WHERE email='bravo@example.test'"]);
@@ -167,12 +197,14 @@ try {
   await api('/admin/replicas', { auth: true });
 
   cookie = alphaCookie; csrf = alphaCsrf;
-  const updated = await api(`/replicas/${cardId}`, { method: 'PATCH', auth: true, body: { modelName: 'Réplique Alpha II', version: card.replica.version } });
+  const updated = await concurrentPatch(`/replicas/${cardId}`, { modelName: 'Réplique Alpha II', version: card.replica.version });
   await api(`/replicas/${cardId}`, { method: 'PATCH', auth: true, expected: 409, body: { modelName: 'Conflit', version: card.replica.version } });
-  const archived = await api(`/replicas/${cardId}`, { method: 'DELETE', auth: true, body: { version: updated.replica.version } });
+  const archived = await api(`/replicas/${cardId}`, { method: 'DELETE', auth: true, body: { version: updated.version } });
   assert.equal(archived.replica.state, 'archived');
 
-  await api('/auth/forgot-password', { method: 'POST', expected: 202, body: { email: 'alpha@example.test', turnstileToken: turnstileToken('forgot_password') } });
+  const forgotKnown = await api('/auth/forgot-password', { method: 'POST', expected: 202, body: { email: 'alpha@example.test', turnstileToken: turnstileToken('forgot_password') } });
+  const forgotUnknown = await api('/auth/forgot-password', { method: 'POST', expected: 202, body: { email: 'absent@example.test', turnstileToken: turnstileToken('forgot_password') } });
+  assert.deepEqual(forgotUnknown, forgotKnown);
   const reset = await latestMailToken('reset');
   await api('/auth/reset-password', { method: 'POST', body: { token: reset, password: 'NouveauMotDePasse123' } });
   cookie = ''; csrf = '';
@@ -181,7 +213,12 @@ try {
   await api('/auth/login', { method: 'POST', expected: 422, body: { identity: 'alpha@example.test', password: 'NouveauMotDePasse123', turnstileToken: replay } });
   await api('/auth/login', { method: 'POST', body: { identity: 'alpha@example.test', password: 'NouveauMotDePasse123', turnstileToken: turnstileToken('login') } });
 
-  console.log('API intégration: migrations, auth, CSRF, reset, rôles, IDOR, cards et upload hostile validés.');
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    await api('/auth/login', { method: 'POST', expected: 401, body: { identity: 'limit@example.test', password: 'MotDePasseInvalide123', turnstileToken: turnstileToken('login') } });
+  }
+  await api('/auth/login', { method: 'POST', expected: 429, body: { identity: 'limit@example.test', password: 'MotDePasseInvalide123', turnstileToken: turnstileToken('login') } });
+
+  console.log('API intégration: migrations, auth, Origin/CSRF, fixation, énumération, quotas, concurrence, rôles, IDOR, cards et upload hostile validés.');
 } finally {
   server.kill('SIGTERM');
   turnstileServer.close();
