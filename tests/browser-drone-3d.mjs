@@ -75,7 +75,7 @@ function once(method) {
 
 async function evaluate(expression, awaitPromise = false) {
   const result = await send('Runtime.evaluate', { expression, awaitPromise, returnByValue: true, userGesture: true });
-  if (result.exceptionDetails) throw new Error(result.exceptionDetails.text || 'Evaluation failed');
+  if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description || result.exceptionDetails.text || 'Evaluation failed');
   return result.result.value;
 }
 
@@ -194,7 +194,7 @@ if (replayStart !== 'playing') throw new Error(`Replay non lancé: ${replayStart
 
 await waitFor(`navigator.serviceWorker.controller !== null`);
 await wait(500);
-const cached = await evaluate(`Promise.all(${JSON.stringify(lazyPaths)}.map(async path=>Boolean(await (await caches.open('fat-v3-2026-07-18-42')).match(path.endsWith('three.core.min.js')?path:path+'?v=20260718-28'))))`, true);
+const cached = await evaluate(`Promise.all(${JSON.stringify(lazyPaths)}.map(async path=>Boolean(await (await caches.open('fat-v3-2026-07-18-43')).match(path.endsWith('three.core.min.js')?path:path+'?v=20260718-28'))))`, true);
 if (cached.some((value) => !value)) throw new Error(`Cache 3D incomplet: ${JSON.stringify(cached)}`);
 
 await evaluate(`document.querySelector('[data-view-mode="2d"]').click()`);
@@ -225,8 +225,28 @@ for (const width of [360, 390, 768, 1024, 1440]) {
   for (const theme of ['dark', 'light']) {
     await setViewport(width, width <= 390 ? 844 : 900);
     await evaluate(`localStorage.setItem('fat-theme','${theme}')`);
+    requests.length = 0;
     await navigate(`${base}?three-responsive=${width}-${theme}`);
     await waitForResult();
+    if (width <= 768) {
+      const disabled = await evaluate(`(() => {
+        const root = document.querySelector('[data-trajectory-app]');
+        const toggle = document.querySelector('[data-view-mode="3d"]');
+        return {
+          width: ${width},
+          theme: document.documentElement.dataset.theme,
+          webgl: root?.dataset.webgl,
+          toggleHidden: toggle?.hidden,
+          canvas: Boolean(document.querySelector('[data-drone-host] canvas')),
+          scroll: document.documentElement.scrollWidth,
+          viewport: innerWidth,
+        };
+      })()`);
+      const mobileRequests = requests.filter((url) => lazyPaths.some((path) => url.includes(path)));
+      if (disabled.webgl !== 'mobile-disabled' || !disabled.toggleHidden || disabled.canvas || mobileRequests.length || disabled.scroll > disabled.viewport) throw new Error(`3D mobile non désactivée: ${JSON.stringify({ disabled, mobileRequests })}`);
+      responsive3d.push({ ...disabled, disabled: true });
+      continue;
+    }
     await evaluate(`document.querySelector('[data-view-mode="3d"]').click()`);
     await waitFor(`Boolean(document.querySelector('[data-drone-host] canvas'))`);
     const layout = await evaluate(`(()=>{const view=document.querySelector('[data-drone-view]');const rect=view.getBoundingClientRect();const buttons=[...view.querySelectorAll('button')].filter(button=>button.offsetParent!==null);return{width:${width},theme:document.documentElement.dataset.theme,rect:[rect.width,rect.height],viewport:[innerWidth,innerHeight],scroll:document.documentElement.scrollWidth,fullscreen:document.fullscreenElement===view,small:buttons.filter(button=>button.getBoundingClientRect().height<43.5).map(button=>button.textContent.trim())}})()`);
@@ -263,13 +283,8 @@ await send('Emulation.setEmulatedMedia', { features: [
 await navigate(`${base}?three-mobile=1`);
 console.log('[drone] mobile');
 await waitForResult();
-await evaluate(`document.querySelector('[data-view-mode="3d"]').click()`);
-await waitFor(`Boolean(document.querySelector('[data-drone-host] canvas'))`);
-const mobile = await evaluate(`(()=>{const view=document.querySelector('[data-drone-view]');const exit=document.querySelector('[data-drone-exit]');return{width:view.getBoundingClientRect().width,height:view.getBoundingClientRect().height,viewport:[innerWidth,innerHeight],exitHeight:exit.getBoundingClientRect().height,exitVisible:exit.offsetParent!==null,fullscreen:document.fullscreenElement===view}})()`);
-if (mobile.width < 389 || mobile.height < 800 || mobile.exitHeight < 43.5 || !mobile.exitVisible) throw new Error(`Mobile 3D: ${JSON.stringify(mobile)}`);
-await capture('drone-3d-mobile-390.png');
-await evaluate(`document.querySelector('[data-drone-exit]').click()`);
-await waitFor(`document.querySelector('[data-drone-view]').hidden`);
+const mobile = await evaluate(`({webgl:document.querySelector('[data-trajectory-app]').dataset.webgl,toggleHidden:document.querySelector('[data-view-mode="3d"]').hidden,canvas:Boolean(document.querySelector('[data-drone-host] canvas')),profile:!document.querySelector('[data-profile-2d]').hidden})`);
+if (mobile.webgl !== 'mobile-disabled' || !mobile.toggleHidden || mobile.canvas || !mobile.profile) throw new Error(`Mobile 3D encore active: ${JSON.stringify(mobile)}`);
 
 const result = {
   initial,

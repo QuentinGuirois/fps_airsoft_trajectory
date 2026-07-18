@@ -243,19 +243,38 @@ for (const [width, height, label] of formats) {
     await setViewport(width, height);
     await setMedia(theme);
     await evaluate(`localStorage.setItem('fat-theme','${theme}');sessionStorage.removeItem('fat-advanced-mobile-dismissed')`);
+    requests.length = 0;
     await navigate(`${advancedUrl}?responsive=${label}-${theme}`);
-    await waitForScene();
-    const layout = await evaluate(`(()=>{const root=document.querySelector('[data-advanced-3d-app]');const scene=document.querySelector('[data-advanced-drone-host]').getBoundingClientRect();const buttons=[...root.querySelectorAll('button')].filter(item=>item.offsetParent!==null);return{theme:document.documentElement.dataset.theme,viewport:[innerWidth,innerHeight],scene:[scene.width,scene.height],scroll:document.documentElement.scrollWidth,small:buttons.filter(item=>item.getBoundingClientRect().height<43.5).map(item=>item.textContent.trim()),notice:!document.querySelector('[data-advanced-mobile-notice]').hidden,portrait:matchMedia('(orientation: portrait)').matches,coarse:matchMedia('(pointer: coarse)').matches}})()`);
+    if (touch) await waitFor(`document.querySelector('[data-advanced-3d-app]').dataset.webgl === 'mobile-disabled'`);
+    else await waitForScene();
+    const layout = await evaluate(`(() => {
+      const root = document.querySelector('[data-advanced-3d-app]');
+      const scene = document.querySelector('[data-advanced-drone-host]').getBoundingClientRect();
+      const buttons = [...root.querySelectorAll('button')].filter((item) => item.offsetParent !== null);
+      return {
+        theme: document.documentElement.dataset.theme,
+        viewport: [innerWidth, innerHeight],
+        scene: [scene.width, scene.height],
+        scroll: document.documentElement.scrollWidth,
+        small: buttons.filter((item) => item.getBoundingClientRect().height < 43.5).map((item) => item.textContent.trim()),
+        notice: !document.querySelector('[data-advanced-mobile-notice]').hidden,
+        coarse: matchMedia('(pointer: coarse)').matches,
+        webgl: root.dataset.webgl,
+        canvas: Boolean(document.querySelector('[data-advanced-drone-host] canvas')),
+        fallback: document.querySelector('[data-advanced-fallback-message]').textContent,
+      };
+    })()`);
     if (layout.theme !== theme || layout.scroll > layout.viewport[0] + 1 || layout.scene[0] > layout.viewport[0] + 1 || layout.small.length) throw new Error(`Responsive ${label}: ${JSON.stringify(layout)}`);
-    if (label === 'phone-portrait' && (!layout.coarse || !layout.notice)) throw new Error(`Conseil portrait absent: ${JSON.stringify(layout)}`);
-    if (label.startsWith('tablet') && layout.notice) throw new Error(`Conseil tablette indu: ${JSON.stringify(layout)}`);
+    const mobileRequests = requests.filter((url) => lazyPaths.some((path) => url.includes(path)));
+    if (touch && (layout.webgl !== 'mobile-disabled' || layout.canvas || layout.notice || !layout.fallback.includes('désactivée sur mobile') || mobileRequests.length)) throw new Error(`3D mobile non désactivée ${label}: ${JSON.stringify({ layout, mobileRequests })}`);
+    if (!touch && (layout.webgl !== 'available' || !layout.canvas)) throw new Error(`3D bureau absente ${label}: ${JSON.stringify(layout)}`);
     if (theme === 'dark' || label === 'desktop') await capture(`advanced-3d-${label}-${theme}.png`);
   }
 }
 await send('Emulation.setTouchEmulationEnabled', { enabled: false, maxTouchPoints: 1 });
 
 console.log('[advanced] reduced motion et clavier/zoom 200%');
-await setViewport(390, 844);
+await setViewport(1024, 768);
 await setMedia('dark', 'reduce');
 await navigate(base);
 const reducedLoaded = once('Page.loadEventFired');
@@ -280,7 +299,7 @@ await waitForScene();
 await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await waitFor(`navigator.serviceWorker.controller !== null`);
 await wait(800);
-const cached = await evaluate(`Promise.all(${JSON.stringify(lazyPaths)}.map(async path=>Boolean(await (await caches.open('fat-v3-2026-07-18-42')).match(path.endsWith('three.core.min.js')?path:path+'?v=20260718-28'))))`, true);
+const cached = await evaluate(`Promise.all(${JSON.stringify(lazyPaths)}.map(async path=>Boolean(await (await caches.open('fat-v3-2026-07-18-43')).match(path.endsWith('three.core.min.js')?path:path+'?v=20260718-28'))))`, true);
 if (cached.some((value) => !value)) throw new Error(`Cache 3D incomplet: ${JSON.stringify(cached)}`);
 await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0, connectionType: 'none' });
 await navigate(`${advancedUrl}?offline=1`);

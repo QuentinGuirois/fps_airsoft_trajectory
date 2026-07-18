@@ -121,8 +121,8 @@ test('Cloudflare ne transforme ni le thème avant paint ni les modules F.A.T.', 
   ];
   for (const page of pages) {
     const html = await read(page);
-    const bootstrap = html.indexOf('<script src="/theme-bootstrap.js?v=20260718-42" data-cfasync="false"></script>');
-    const stylesheet = html.indexOf('<link rel="stylesheet" href="/assets/site.css?v=20260718-42">');
+    const bootstrap = html.indexOf('<script src="/theme-bootstrap.js?v=20260718-43" data-cfasync="false"></script>');
+    const stylesheet = html.indexOf('<link rel="stylesheet" href="/assets/site.css?v=20260718-43">');
     assert.ok(bootstrap > 0 && stylesheet > bootstrap, `${page}: thème externe protégé avant CSS`);
     for (const tag of html.match(/<script[^>]+type="module"[^>]*>/g) || []) {
       assert.match(tag, /data-cfasync="false"/, `${page}: module protégé`);

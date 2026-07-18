@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { detectWebGL } from '../render-capabilities.js';
+import { detectWebGL, mobile3DDisabled } from '../render-capabilities.js';
 import { sceneMarkers, scenePointSignature } from '../drone-3d.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -23,6 +23,17 @@ test('la détection WebGL accepte un contexte valide et échoue sans exception',
   assert.equal(lost, true);
   assert.equal(detectWebGL({ documentRef: { createElement: () => ({ getContext: () => null, remove() {} }) } }), false);
   assert.equal(detectWebGL({ documentRef: { createElement: () => { throw new Error('bloqué'); } } }), false);
+});
+
+test('la 3D est désactivée sur mobile avant toute détection WebGL', async () => {
+  const media = (matches) => ({ matches });
+  assert.equal(mobile3DDisabled({ windowRef: { matchMedia: () => media(true) } }), true);
+  assert.equal(mobile3DDisabled({ windowRef: { matchMedia: () => media(false) } }), false);
+  assert.equal(mobile3DDisabled({ windowRef: { matchMedia: () => { throw new Error('indisponible'); } } }), true);
+  const [app, advanced, css] = await Promise.all([read('app.js'), read('advanced-3d-app.js'), read('assets', 'site.css')]);
+  assert.match(app, /const webglAvailable = !mobile3dDisabled && detectWebGL\(\)/);
+  assert.match(advanced, /3D est désactivée sur mobile/);
+  assert.match(css, /\[data-advanced-entry\] \{ display: none !important/);
 });
 
 test('les marqueurs et la signature 3D utilisent exactement les points Worker reçus', () => {
@@ -78,7 +89,7 @@ test('le cache différé référence tous les modules 3D sans les précacher', a
     read('app.js'),
     read('advanced-3d-app.js'),
   ]);
-  assert.match(worker, /fat-v3-2026-07-18-42/);
+  assert.match(worker, /fat-v3-2026-07-18-43/);
   for (const path of [
     '/drone-3d.js?v=20260718-28',
     '/assets/vendor/three-r185/build/three.module.min.js?v=20260718-28',

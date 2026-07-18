@@ -224,8 +224,8 @@ test('l’administration publiée est visible uniquement aux admins et archive s
 
 test('le service worker cache seulement les shells et contourne toutes les réponses API privées', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-42'/);
-  for (const path of ['/compte/', '/compte/verifier-email.html', '/compte/compte-active.html', '/compte/armurerie.html', '/tu-joues-avec-quoi/', '/assets/site.css?v=20260718-42', '/assets/js/replica-card.js?v=20260718-42', '/assets/js/armory.js?v=20260718-42', '/assets/js/armory-entry.js?v=20260718-42', '/assets/js/account-login.js?v=20260718-42', '/assets/js/account-login-entry.js?v=20260718-42', '/assets/js/community-repositories.js?v=20260718-42', '/assets/js/community-gallery.js?v=20260718-42', '/assets/js/turnstile-client.js?v=20260718-30']) {
+  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-43'/);
+  for (const path of ['/compte/', '/compte/verifier-email.html', '/compte/compte-active.html', '/compte/armurerie.html', '/tu-joues-avec-quoi/', '/assets/site.css?v=20260718-43', '/assets/js/replica-card.js?v=20260718-43', '/assets/js/armory.js?v=20260718-43', '/assets/js/armory-entry.js?v=20260718-43', '/assets/js/account-login.js?v=20260718-43', '/assets/js/account-login-entry.js?v=20260718-43', '/assets/js/community-repositories.js?v=20260718-43', '/assets/js/community-gallery.js?v=20260718-43', '/assets/js/turnstile-client.js?v=20260718-30']) {
     assert.ok(worker.includes(`'${path}'`), path);
   }
   assert.match(worker, /url\.pathname\.startsWith\('\/api\/'\)[\s\S]*event\.respondWith\(fetch\(event\.request\)\);[\s\S]*return;/);

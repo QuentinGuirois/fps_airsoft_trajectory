@@ -11,9 +11,9 @@ import {
 } from './physics-core.js?v=20260718-28';
 import { fitChartDomain, prepareChartSeries } from './chart-data.js?v=20260718-28';
 import { createCalculationLoader } from './calculation-loader.js?v=20260718-28';
-import { detectWebGL } from './render-capabilities.js?v=20260718-28';
+import { detectWebGL, mobile3DDisabled } from './render-capabilities.js?v=20260718-43';
 import { serializeCurveThumbnail } from './assets/js/curve-thumbnail.js?v=20260718-28';
-import { createProductionRepositories, RepositoryError } from './assets/js/community-repositories.js?v=20260718-42';
+import { createProductionRepositories, RepositoryError } from './assets/js/community-repositories.js?v=20260718-43';
 
 const root = document.querySelector('[data-trajectory-app]');
 
@@ -755,8 +755,9 @@ if (root) {
     });
   });
 
-  const webglAvailable = detectWebGL();
-  root.dataset.webgl = webglAvailable ? 'available' : 'unavailable';
+  const mobile3dDisabled = mobile3DDisabled();
+  const webglAvailable = !mobile3dDisabled && detectWebGL();
+  root.dataset.webgl = mobile3dDisabled ? 'mobile-disabled' : webglAvailable ? 'available' : 'unavailable';
   if (view3dButton) view3dButton.hidden = !webglAvailable;
   view3dButton?.addEventListener('click', openDrone);
   view2dButton?.addEventListener('click', () => closeDrone({ restoreFocus: false }));

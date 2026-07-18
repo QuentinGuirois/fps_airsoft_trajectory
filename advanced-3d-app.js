@@ -1,5 +1,5 @@
 import { DEFAULT_SHOT, normalizeShot } from './physics-core.js?v=20260718-28';
-import { detectWebGL } from './render-capabilities.js?v=20260718-28';
+import { detectWebGL, mobile3DDisabled } from './render-capabilities.js?v=20260718-43';
 import { advancedDeviceAdvice } from './advanced-device.js?v=20260718-28';
 import { consumeAdvancedTransition, createAdvancedTransition } from './advanced-transition.js?v=20260718-28';
 import { configureShareButton, shareLink } from './assets/js/share-link.js?v=20260718-29';
@@ -413,8 +413,13 @@ if (root) {
   applyDefaults();
   if (drawerDetails && matchMedia('(max-width: 900px)').matches) drawerDetails.open = false;
   updateMobileNotice();
-  root.dataset.webgl = detectWebGL() ? 'available' : 'unavailable';
-  if (root.dataset.webgl === 'unavailable') {
+  const mobile3dBlocked = mobile3DDisabled();
+  root.dataset.webgl = mobile3dBlocked ? 'mobile-disabled' : detectWebGL() ? 'available' : 'unavailable';
+  if (mobile3dBlocked) {
+    mobileNotice.hidden = true;
+    showFallback('La vue 3D est désactivée sur mobile. Le simulateur 2D reste entièrement disponible.');
+    transition.fail('3D désactivée sur mobile.');
+  } else if (root.dataset.webgl === 'unavailable') {
     showFallback('WebGL n’est pas disponible sur ce navigateur. Le simulateur compact reste accessible.');
     transition.fail('WebGL indisponible.');
   } else if (!('Worker' in window)) {

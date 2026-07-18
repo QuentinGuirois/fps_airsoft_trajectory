@@ -15,7 +15,7 @@ ServerSignature Off
   Header always unset X-Powered-By
   Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; manifest-src 'self'"
   <FilesMatch "\.html$">
-    Header add Link "</assets/site.css?v=20260718-42>; rel=preload; as=style"
+    Header add Link "</assets/site.css?v=20260718-43>; rel=preload; as=style"
     Header merge Cache-Control "public, no-transform" env=!fat_private_shell
   </FilesMatch>
 </IfModule>

@@ -14,3 +14,11 @@ export function detectWebGL({ documentRef = globalThis.document } = {}) {
     canvas?.remove?.();
   }
 }
+
+export function mobile3DDisabled({ windowRef = globalThis.window } = {}) {
+  try {
+    return Boolean(windowRef?.matchMedia?.('(max-width: 768px), (pointer: coarse)').matches);
+  } catch {
+    return true;
+  }
+}

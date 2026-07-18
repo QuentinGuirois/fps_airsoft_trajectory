@@ -82,6 +82,13 @@ test('la home garde son CTA compact et ajoute le lien 3D explicite exact', async
   assert.doesNotMatch(site, /href: '\/simulateur-3d-airsoft\/', label: 'Simulateur 3D'/);
 });
 
+test('la page 3D bascule vers la 2D sans Worker ni Three sur mobile', async () => {
+  const [app, css] = await Promise.all([read('advanced-3d-app.js'), read('assets', 'site.css')]);
+  assert.match(app, /root\.dataset\.webgl = mobile3dBlocked \? 'mobile-disabled'/);
+  assert.match(app, /if \(mobile3dBlocked\) \{[\s\S]*showFallback\('La vue 3D est désactivée sur mobile/);
+  assert.match(css, /\[data-webgl="mobile-disabled"\] \.advanced-scene-tools/);
+});
+
 test('la transition de cinq secondes ne s’active que pour une entrée explicite et peut être passée', async () => {
   assert.equal(ADVANCED_TRANSITION_MS, 5000);
   const storage = new Map();
@@ -195,18 +202,18 @@ test('la scène occupe le viewport, reste locale et rejoint la PWA sans préchar
   assert.doesNotMatch(html, /three\.module|OrbitControls|<script[^>]+(?:https?:)?\/\//i);
   const core = worker.match(/const OPTIONAL = \[[\s\S]*?\n\];/)?.[0] || '';
   const lazy = worker.match(/const LAZY_3D = \[[\s\S]*?\n\];/)?.[0] || '';
-  for (const resource of ['/simulateur-3d-airsoft/', '/advanced-3d-app.js?v=20260718-29', '/advanced-device.js?v=20260718-28', '/advanced-transition.js?v=20260718-28']) {
+  for (const resource of ['/simulateur-3d-airsoft/', '/advanced-3d-app.js?v=20260718-43', '/advanced-device.js?v=20260718-28', '/advanced-transition.js?v=20260718-28']) {
     assert.ok(core.includes(`'${resource}'`), resource);
   }
   assert.doesNotMatch(core, /three-r185|drone-3d\.js/);
   assert.match(lazy, /three-r185/);
   assert.match(lazy, /drone-3d\.js/);
-  assert.match(worker, /fat-v3-2026-07-18-42/);
+  assert.match(worker, /fat-v3-2026-07-18-43/);
 });
 
 test('WebGL, Worker et import cassé débouchent sur un panneau utile sans moteur bis', async () => {
   const [app, html] = await Promise.all([read('advanced-3d-app.js'), read('simulateur-3d-airsoft', 'index.html')]);
-  assert.match(app, /root\.dataset\.webgl = detectWebGL\(\) \? 'available' : 'unavailable'/);
+  assert.match(app, /root\.dataset\.webgl = mobile3dBlocked \? 'mobile-disabled' : detectWebGL\(\) \? 'available' : 'unavailable'/);
   assert.match(app, /WebGL n’est pas disponible/);
   assert.match(app, /Le module 3D n’a pas pu être chargé/);
   assert.match(app, /Aucun moteur de remplacement n’est chargé/);
