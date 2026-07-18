@@ -35,6 +35,14 @@ test('toutes les pages indexables gardent le même header progressif et trois li
   }
 });
 
+test('le header progressif expose un accès compte permanent et tactile', async () => {
+  const [site, css] = await Promise.all([read('site.js'), read('assets', 'site.css')]);
+  assert.match(site, /class="account-access" href="\/compte\/" aria-label="Mon compte"/);
+  assert.match(site, /<span>Mon compte<\/span>/);
+  assert.match(css, /\.account-access \{[^}]*min-height: 44px/);
+  assert.match(css, /@media \(max-width: 620px\)[\s\S]*\.account-access \{ width: 44px/);
+});
+
 test('les hubs Outils et Guides existent, sont indexables et ne pointent que vers des routes réelles', async () => {
   const [tools, guides] = await Promise.all([read('outils', 'index.html'), read('guides', 'index.html')]);
   for (const [html, canonical] of [[tools, '/outils/'], [guides, '/guides/']]) {
@@ -59,7 +67,7 @@ test('le briefing expose le dialogue, les routes réelles et les comportements a
   assert.match(site, /window\.scrollTo\(0, menuScrollY\)/);
   assert.match(site, /briefingMenu\.hidden = true/);
   assert.match(site, /briefingMenu\.hidden = false/);
-  for (const href of ['/#calculateur', '/convertisseur-joules-fps/', '/outils/choisir-gaz-airsoft-pression-temperature/', '/guides/', '/simulateur-3d-airsoft/', '/tu-joues-avec-quoi/']) assert.ok(site.includes(href), href);
+  for (const href of ['/#calculateur', '/compte/', '/convertisseur-joules-fps/', '/outils/choisir-gaz-airsoft-pression-temperature/', '/guides/', '/simulateur-3d-airsoft/', '/tu-joues-avec-quoi/']) assert.ok(site.includes(href), href);
 });
 
 test('le dernier setup reste honnête et ne déduit jamais une portée de l’énergie', async () => {
@@ -87,7 +95,7 @@ test('animations, reduced motion, PWA et fond CSS respectent la salle de briefin
   assert.doesNotMatch(`${site}\n${css}`, /three\.js|three-r185/i);
   assert.match(site, /SERVICE WORKER EN INITIALISATION/);
   assert.match(site, /HORS CONNEXION PRÊT/);
-  assert.match(worker, /fat-v3-2026-07-19-44/);
+  assert.match(worker, /fat-v3-2026-07-19-45/);
   assert.match(worker, /'\/outils\/'/);
   assert.match(worker, /'\/guides\/'/);
 });
@@ -101,7 +109,7 @@ test('l’installation mobile reste visible avec invite native ou instructions S
   assert.match(site, /Sur l’écran d’accueil/);
   assert.match(site, /Installer l’application/);
   assert.match(site, /refreshInstallButtons\(\);/);
-  assert.match(site, /service-worker\.js\?v=20260719-44/);
+  assert.match(site, /service-worker\.js\?v=20260719-45/);
   assert.match(css, /@media \(max-width: 760px\)[\s\S]*\.nav-install\[data-install-mode\] \{ display: inline-flex/);
   assert.match(css, /\.pwa-install-guide\[hidden\] \{ display: none/);
 });

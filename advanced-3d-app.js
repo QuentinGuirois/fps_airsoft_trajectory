@@ -1,9 +1,9 @@
 import { DEFAULT_SHOT, normalizeShot } from './physics-core.js?v=20260718-28';
-import { detectWebGL, mobile3DDisabled } from './render-capabilities.js?v=20260719-44';
+import { detectWebGL, mobile3DDisabled } from './render-capabilities.js?v=20260719-45';
 import { advancedDeviceAdvice } from './advanced-device.js?v=20260718-28';
 import { consumeAdvancedTransition, createAdvancedTransition } from './advanced-transition.js?v=20260718-28';
 import { serializeCurveThumbnail } from './assets/js/curve-thumbnail.js?v=20260718-28';
-import { createProductionRepositories, RepositoryError } from './assets/js/community-repositories.js?v=20260719-44';
+import { createProductionRepositories, RepositoryError } from './assets/js/community-repositories.js?v=20260719-45';
 
 const root = document.querySelector('[data-advanced-3d-app]');
 

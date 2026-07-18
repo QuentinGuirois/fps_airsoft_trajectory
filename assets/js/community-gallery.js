@@ -1,5 +1,5 @@
-import './replica-card.js?v=20260719-44';
-import { createProductionRepositories, RepositoryError } from './community-repositories.js?v=20260719-44';
+import './replica-card.js?v=20260719-45';
+import { createProductionRepositories, RepositoryError } from './community-repositories.js?v=20260719-45';
 
 export function initCommunityGallery({ root, accountRepository, replicaRepository } = {}) {
   if (!root || !accountRepository || !replicaRepository) return null;

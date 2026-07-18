@@ -1,6 +1,6 @@
 import { initTheme } from '../../theme.js?v=20260718-28';
-import { createProductionRepositories } from './community-repositories.js?v=20260719-44';
-import { consumeAccountTokenHash, initAccountLogin } from './account-login.js?v=20260719-44';
+import { createProductionRepositories } from './community-repositories.js?v=20260719-45';
+import { consumeAccountTokenHash, initAccountLogin } from './account-login.js?v=20260719-45';
 import { createTurnstileController } from './turnstile-client.js?v=20260718-30';
 
 initTheme();

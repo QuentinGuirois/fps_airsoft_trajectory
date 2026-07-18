@@ -142,8 +142,8 @@ await send('Emulation.setEmulatedMedia', { features: [
 await navigate(`${base}?visual-lot1=1`);
 await evaluate('document.fonts.ready', true);
 await waitFor(`Boolean(document.querySelector('[data-trajectory-app]')?.dataset.lastRequestId)`);
-const initial = await evaluate(`({theme:document.documentElement.dataset.theme,mode:document.documentElement.dataset.themeMode,controls:document.querySelectorAll('input[name="fat-theme"]').length,themeColor:document.querySelector('meta[name="theme-color"]').content})`);
-if (initial.theme !== 'dark' || initial.mode !== 'system' || initial.controls !== 3) {
+const initial = await evaluate(`(()=>{const account=document.querySelector('.account-access');const rect=account.getBoundingClientRect();return{theme:document.documentElement.dataset.theme,mode:document.documentElement.dataset.themeMode,controls:document.querySelectorAll('input[name="fat-theme"]').length,themeColor:document.querySelector('meta[name="theme-color"]').content,account:{label:account.textContent.trim(),href:account.pathname,height:rect.height}}})()`);
+if (initial.theme !== 'dark' || initial.mode !== 'system' || initial.controls !== 3 || initial.account.label !== 'Mon compte' || initial.account.href !== '/compte/' || initial.account.height < 43.5) {
   throw new Error(`Initial theme mismatch ${JSON.stringify(initial)}`);
 }
 const darkCanvas = await evaluate(`document.querySelector('#trajectory-chart').toDataURL()`);
@@ -202,6 +202,8 @@ await navigate(`${base}?visual-lot1=mobile`);
 await waitFor(`document.querySelectorAll('input[name="fat-theme"]').length === 3`);
 const mobile = await evaluate(`({innerWidth,scrollWidth:document.documentElement.scrollWidth,themeVisible:getComputedStyle(document.querySelector('[data-theme-control]')).display})`);
 if (mobile.innerWidth !== 390 || mobile.scrollWidth > mobile.innerWidth || mobile.themeVisible === 'none') throw new Error(`Mobile overflow ${JSON.stringify(mobile)}`);
+const mobileAccount = await evaluate(`(()=>{const account=document.querySelector('.account-access');const rect=account.getBoundingClientRect();return{href:account.pathname,label:account.getAttribute('aria-label'),width:rect.width,height:rect.height,visible:Boolean(account.getClientRects().length)}})()`);
+if (!mobileAccount.visible || mobileAccount.href !== '/compte/' || mobileAccount.label !== 'Mon compte' || mobileAccount.width < 43.5 || mobileAccount.height < 43.5) throw new Error(`Mobile account action missing ${JSON.stringify(mobileAccount)}`);
 const mobileInstall = await evaluate(`(()=>{const button=document.querySelector('.nav-install');const style=getComputedStyle(button);const rect=button.getBoundingClientRect();return{hidden:button.hidden,display:style.display,height:rect.height,mode:button.dataset.installMode}})()`);
 if (mobileInstall.hidden || mobileInstall.display === 'none' || mobileInstall.height < 43.5) throw new Error(`Mobile install action missing ${JSON.stringify(mobileInstall)}`);
 if (mobileInstall.mode === 'instructions') {
@@ -221,7 +223,7 @@ await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await navigate(`${base}?visual-lot1=sw-control`);
 await waitFor(`Boolean(navigator.serviceWorker.controller)`);
 const cache = await evaluate(`caches.keys().then(keys=>({keys,controller:Boolean(navigator.serviceWorker.controller)}))`, true);
-if (!cache.keys.includes('fat-v3-2026-07-19-44') || !cache.controller) throw new Error(`PWA cache mismatch ${JSON.stringify(cache)}`);
+if (!cache.keys.includes('fat-v3-2026-07-19-45') || !cache.controller) throw new Error(`PWA cache mismatch ${JSON.stringify(cache)}`);
 await navigate(`${base}simulateur-trajectoire-airsoft/`);
 await navigate(`${base}outils/choisir-gaz-airsoft-pression-temperature/`);
 await waitFor(`document.documentElement.dataset.gasPressureReady === 'true'`);
@@ -245,6 +247,7 @@ const result = {
   loaderPending,
   reducedMotion: reducedBefore,
   mobile,
+  mobileAccount,
   resources,
   manifest: { url: manifest.url, errors: manifest.errors?.length || 0 },
   cache,
