@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fps-airsoft-trajectory.com/data/operator-profile.schema.json",
+  "title": "Profil opérateur F.A.T.",
+  "description": "Contrat éditorial requis avant toute publication dans /tu-joues-avec-quoi/.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "displayName",
+    "photo",
+    "setup",
+    "quote",
+    "verification",
+    "authorization"
+  ],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "displayName": { "type": "string", "minLength": 2, "maxLength": 80 },
+    "photo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["src", "alt", "credit"],
+      "properties": {
+        "src": { "type": "string", "pattern": "^/assets/img/" },
+        "alt": { "type": "string", "minLength": 5 },
+        "credit": { "type": "string", "minLength": 2 }
+      }
+    },
+    "setup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bbMassG", "energyJ", "velocityFps", "replica", "measurementType"],
+      "properties": {
+        "bbMassG": { "type": "number", "exclusiveMinimum": 0 },
+        "energyJ": { "type": "number", "exclusiveMinimum": 0 },
+        "velocityFps": { "type": "number", "exclusiveMinimum": 0 },
+        "replica": { "type": "string", "minLength": 2 },
+        "measurementType": { "enum": ["chrony", "declared"] },
+        "measuredAt": { "type": ["string", "null"], "format": "date" }
+      }
+    },
+    "quote": { "type": "string", "minLength": 10, "maxLength": 360 },
+    "simulatorParams": {
+      "type": "object",
+      "additionalProperties": { "type": ["string", "number"] }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "checkedAt", "checkedBy"],
+      "properties": {
+        "status": { "const": "verified" },
+        "checkedAt": { "type": "string", "format": "date" },
+        "checkedBy": { "type": "string", "minLength": 2 }
+      }
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "photo", "quote", "grantedAt", "evidenceRef"],
+      "properties": {
+        "profile": { "const": true },
+        "photo": { "const": true },
+        "quote": { "const": true },
+        "grantedAt": { "type": "string", "format": "date" },
+        "evidenceRef": { "type": "string", "minLength": 3 }
+      }
+    }
+  }
+}

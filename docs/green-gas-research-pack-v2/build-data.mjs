@@ -1,0 +1,698 @@
+import { writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const GENERATED_AT = '2026-07-17';
+const MIN_TEMPERATURE_C = -15;
+const MAX_TEMPERATURE_C = 40;
+
+const sources = [
+  {
+    id: 'nist-propane-antoine',
+    publisher: 'NIST Chemistry WebBook',
+    type: 'scientific_reference',
+    url: 'https://webbook.nist.gov/cgi/cbook.cgi?ID=C74986&Mask=4&Type=ANTOINE&Plot=on',
+    accessedAt: GENERATED_AT,
+    supports: 'Équation d’Antoine du propane et coefficients valides de 230,6 à 320,7 K.',
+  },
+  {
+    id: 'asg-ultrair-135-official',
+    publisher: 'ActionSportGames',
+    type: 'manufacturer',
+    url: 'https://actionsportgames.com/ultrair-power-propellent-gas-with-silicone-570-ml-19893',
+    accessedAt: GENERATED_AT,
+    supports: 'ULTRAIR 135 PSI à 25 °C, 570 ml, silicone et tests de 5 à 30 °C.',
+  },
+  {
+    id: 'asg-ultrair-164-official',
+    publisher: 'ActionSportGames',
+    type: 'manufacturer',
+    url: 'https://actionsportgames.com/ultrair-medium-power-propellent-gas-570-ml-19894',
+    accessedAt: GENERATED_AT,
+    supports: 'ULTRAIR 164 PSI à 25 °C, 570 ml et tableau température-pression sur la bouteille.',
+  },
+  {
+    id: 'asg-ultrair-178-official',
+    publisher: 'ActionSportGames',
+    type: 'manufacturer',
+    url: 'https://actionsportgames.com/ultrair-high-power-propellent-gas-570-ml-19895',
+    accessedAt: GENERATED_AT,
+    supports: 'ULTRAIR 178 PSI à 25 °C, 570 ml et tests de 5 à 30 °C.',
+  },
+  {
+    id: 'asg-ultrair-135-grid',
+    publisher: 'Kotte & Zeller',
+    type: 'retailer_transcription',
+    url: 'https://www.kotte-zeller.de/ultrair-airsoft-power-gas-135-psi-power-green-gas-570ml-mit-silikon',
+    accessedAt: GENERATED_AT,
+    supports: 'Valeurs transcrites de la bouteille : 107/114/121/130/135/156 PSI à 5/10/15/20/25/30 °C.',
+  },
+  {
+    id: 'asg-ultrair-164-grid',
+    publisher: 'Kotte & Zeller',
+    type: 'retailer_transcription',
+    url: 'https://www.kotte-zeller.de/ultrair-airsoft-power-gas-164-psi-medium-power-orange-gas-570ml-ohne-silikon',
+    accessedAt: GENERATED_AT,
+    supports: 'Valeurs transcrites de la bouteille : 121/128/135/142/164/171 PSI à 5/10/15/20/25/30 °C.',
+  },
+  {
+    id: 'asg-ultrair-178-grid',
+    publisher: 'Kotte & Zeller',
+    type: 'retailer_transcription',
+    url: 'https://www.kotte-zeller.de/ultrair-airsoft-power-gas-178-psi-high-power-red-gas-570ml-ohne-silikon',
+    accessedAt: GENERATED_AT,
+    supports: 'Valeurs transcrites de la bouteille : 128/135/142/157/178/185 PSI à 5/10/15/20/25/30 °C.',
+  },
+  {
+    id: 'nimrod-range-20c',
+    publisher: 'Armasur Airsoft',
+    type: 'distributor',
+    url: 'https://www.armasairsoft.es/producto/botella-gas-nimrod-500ml/',
+    accessedAt: GENERATED_AT,
+    supports: 'Gamme Nimrod Blue 116, Green 145, Red 174 et Black 203 PSI à 20 °C.',
+  },
+  {
+    id: 'nimrod-operating-ranges',
+    publisher: 'Atom Airsoft',
+    type: 'distributor',
+    url: 'https://atom-airsoft.fi/en-fi/products/nimrod-black-gas-kaasu-203psi',
+    accessedAt: GENERATED_AT,
+    supports: 'Plages constructeur reportées : Blue 10–40, Green 10–35, Red 3–30, Black −15–20 °C.',
+  },
+  {
+    id: 'powair-range-20c',
+    publisher: 'AS-DF',
+    type: 'retailer',
+    url: 'https://as-df.fr/bouteille-de-gaz/32132-powair-gaz-500ml-2123456.html',
+    accessedAt: GENERATED_AT,
+    supports: 'Gamme Powair 116, 145, 175 et 203 PSI, chaque valeur mesurée à 20 °C.',
+  },
+  {
+    id: 'specna-vapor-range-25c',
+    publisher: 'Anareus',
+    type: 'distributor',
+    url: 'https://www.anareus.cz/gb/red-gas/19287-sa-vapor-red-airsoft-green-gas-188-psi-600-ml-red-5902543209962.html',
+    accessedAt: GENERATED_AT,
+    supports: 'Table VAPOR Blue 117, Green 145, Red 188, Black 217 PSI à 25 °C et minima d’utilisation.',
+  },
+  {
+    id: 'swiss-arms-110-20c',
+    publisher: 'EMG Arms',
+    type: 'official_distributor',
+    url: 'https://www.emgarms.com/110229/',
+    accessedAt: GENERATED_AT,
+    supports: 'Swiss Arms Light dry, 110 PSI à 20 °C.',
+  },
+  {
+    id: 'swiss-arms-130-20c',
+    publisher: 'EMG Arms',
+    type: 'official_distributor',
+    url: 'https://www.emgarms.com/110228/',
+    accessedAt: GENERATED_AT,
+    supports: 'Swiss Arms Green lubrifié, 130 PSI à 20 °C.',
+  },
+  {
+    id: 'swiss-arms-130-dry-20c',
+    publisher: 'EMG Arms',
+    type: 'official_distributor',
+    url: 'https://www.emgarms.com/110231/',
+    accessedAt: GENERATED_AT,
+    supports: 'Swiss Arms Green sec, 130 PSI à 20 °C.',
+  },
+  {
+    id: 'swiss-arms-150-20c',
+    publisher: 'EMG Arms',
+    type: 'official_distributor',
+    url: 'https://www.emgarms.com/110227/',
+    accessedAt: GENERATED_AT,
+    supports: 'Swiss Arms Heavy lubrifié, 150 PSI à 20 °C.',
+  },
+  {
+    id: 'swiss-arms-150-dry-20c',
+    publisher: 'EMG Arms',
+    type: 'official_distributor',
+    url: 'https://www.emgarms.com/96362/',
+    accessedAt: GENERATED_AT,
+    supports: 'Swiss Arms Heavy sec, 150 PSI à 20 °C.',
+  },
+  {
+    id: 'atm-range-overview-20c',
+    publisher: 'Ama Tsu Maru',
+    type: 'brand',
+    url: 'https://amatsumaru.com/it/gaz-atm/',
+    accessedAt: GENERATED_AT,
+    supports: 'Gamme ATM et ancres 135/203 PSI à 20 °C.',
+  },
+  {
+    id: 'atm-dry-range-20c',
+    publisher: 'Rabboshopsoftair',
+    type: 'retailer',
+    url: 'https://www.rabboshopsoftair.it/prodotto/green-gas-psi175-secco-atm-ama-tsu-maru?lang=en',
+    accessedAt: GENERATED_AT,
+    supports: 'ATM PSI175 sec : 175 PSI à 20 °C, 550 ml.',
+  },
+  {
+    id: 'atm-110-dry-20c',
+    publisher: 'Rabboshopsoftair',
+    type: 'retailer',
+    url: 'https://www.rabboshopsoftair.it/prodotto/green-gas-psi110-secco-atm-ama-tsu-maru',
+    accessedAt: GENERATED_AT,
+    supports: 'ATM PSI110 sec : valeur réelle annoncée 113 PSI à 20 °C.',
+  },
+  {
+    id: 'atm-130-dry-20c',
+    publisher: 'Rabboshopsoftair',
+    type: 'retailer',
+    url: 'https://www.rabboshopsoftair.it/prodotto/green-gas-psi130-secco-atm-ama-tsu-maru-2/',
+    accessedAt: GENERATED_AT,
+    supports: 'ATM PSI130 sec : valeur réelle annoncée 135 PSI à 20 °C.',
+  },
+  {
+    id: 'atm-150-dry-20c',
+    publisher: 'Rabboshopsoftair',
+    type: 'retailer',
+    url: 'https://www.rabboshopsoftair.it/prodotto/green-gas-psi130-secco-atm-ama-tsu-maru/',
+    accessedAt: GENERATED_AT,
+    supports: 'ATM PSI150 sec : valeur réelle annoncée 156 PSI à 20 °C.',
+  },
+  {
+    id: 'atm-165-dry-20c',
+    publisher: 'Rabboshopsoftair',
+    type: 'retailer',
+    url: 'https://www.rabboshopsoftair.it/prodotto/green-gas-psi165-secco-atm-ama-tsu-maru',
+    accessedAt: GENERATED_AT,
+    supports: 'ATM PSI165 sec : 165 PSI à 20 °C.',
+  },
+  {
+    id: 'atm-203-dry-20c',
+    publisher: 'Rabboshopsoftair',
+    type: 'retailer',
+    url: 'https://www.rabboshopsoftair.it/prodotto/green-gas-psi203-secco-atm-ama-tsu-maru',
+    accessedAt: GENERATED_AT,
+    supports: 'ATM PSI203 sec : 203 PSI à 20 °C.',
+  },
+  {
+    id: 'nuprol-2-25c',
+    publisher: 'Anareus',
+    type: 'distributor',
+    url: 'https://www.anareus.cz/gb/gas-co2/6126-green-gas-nuprol-20-700315573410.html',
+    accessedAt: GENERATED_AT,
+    supports: 'NUPROL Premium 2.0 : 145 PSI à 25 °C et plage conseillée 10–25 °C.',
+  },
+  {
+    id: 'protech-official',
+    publisher: 'ProTech Guns',
+    type: 'manufacturer',
+    url: 'https://protechguns.com/produkt/protechgas-green-gas-600-800ml/',
+    accessedAt: GENERATED_AT,
+    supports: 'Formule ProtechGas, silicone et formats disponibles ; aucune pression chiffrée sur la page officielle.',
+  },
+  {
+    id: 'protech-1mpa-25c',
+    publisher: 'Airsoft-gun.eu',
+    type: 'distributor',
+    url: 'https://www.airsoft-gun.eu/en/gas-co2/-protechguns-green-gas-bottle-800ml-5904730925167-5252.html',
+    accessedAt: GENERATED_AT,
+    supports: 'ProTechGuns Green Gas : environ 1 MPa à 25 °C.',
+  },
+  {
+    id: 'abbey-144a-25c',
+    publisher: 'MCL Interglobal',
+    type: 'official_distributor',
+    url: 'https://www.mclinterglobal.com/en/abbey-predator-gun-gas-144a-700ml',
+    accessedAt: GENERATED_AT,
+    supports: 'Abbey Predator 144a : 6,6 bar à 25 °C, 700 ml et lubrifiant UPL.',
+  },
+  {
+    id: 'puff-dino-12kg-30c',
+    publisher: 'KDK Airsoft',
+    type: 'retailer',
+    url: 'https://www.kdkairsoft.com/product-page/puff-dino-green-gas',
+    accessedAt: GENERATED_AT,
+    supports: 'Puff Dino 12 kg : 171 PSI à 30 °C, 600 ml et silicone.',
+  },
+  {
+    id: 'puff-dino-14kg-30c',
+    publisher: 'Airsoft Z One',
+    type: 'retailer',
+    url: 'https://airsoftzone.com.mx/productos-de-airsoft/green-gas-puff-dino14kg/',
+    accessedAt: GENERATED_AT,
+    supports: 'Puff Dino 14 kg : 199,12 PSI à 30 °C, 560 ml.',
+  },
+  {
+    id: 'abbey-range-official',
+    publisher: 'Abbey Supply',
+    type: 'manufacturer',
+    url: 'https://www.abbeysupply.com/resources/which-airsoft-gas-is-best',
+    accessedAt: GENERATED_AT,
+    supports: 'La gamme comprend 144a, Predator Ultra, Vertex, Brut Sniper sans lubrifiant et Maintenance Gas réservé au stockage.',
+  },
+  {
+    id: 'abbey-ultra-25c',
+    publisher: 'MCL Interglobal',
+    type: 'official_distributor',
+    url: 'https://www.mclinterglobal.com/en/abbey-predator-ultra-gun-gas-700ml',
+    accessedAt: GENERATED_AT,
+    supports: 'Abbey Predator Ultra : 8,5 bar à 25 °C, 700 ml.',
+  },
+  {
+    id: 'abbey-brut-25c',
+    publisher: 'Airsoft Galicia',
+    type: 'retailer',
+    url: 'https://airsoft-galicia.com/gas/3445-abbey-all-new-brut-sniper-gas-300g.html',
+    accessedAt: GENERATED_AT,
+    supports: 'Abbey Brut Sniper : 8,6 bar à 25 °C, 300 g et formule sèche.',
+  },
+  {
+    id: 'abbey-vertex-conflicting-psi',
+    publisher: 'Scoppiattoli',
+    type: 'community_reference_table',
+    url: 'https://www.scoppiattoli.it/lista-green-gas-e-co2',
+    accessedAt: GENERATED_AT,
+    supports: 'Table comparative : Abbey Vertex 171 PSI, sans température de référence ; d’autres tableaux historiques annoncent environ 199 PSI.',
+  },
+  {
+    id: 'asg-ultrair-135-dry',
+    publisher: 'ActionSportGames / distributeurs',
+    type: 'manufacturer_and_distributor',
+    url: 'https://actionsportgames.com/ultrair-power-propellent-gas-without-silicone-570-ml-14571',
+    accessedAt: GENERATED_AT,
+    supports: 'ULTRAIR réf. 14571 sans silicone, 570 ml ; les distributeurs actuels annoncent 135 PSI et l’équivalence avec la version verte.',
+  },
+  {
+    id: 'atm-range-dry-lubricated',
+    publisher: 'Ama Tsu Maru',
+    type: 'brand',
+    url: 'https://amatsumaru.com/it/gaz-atm/',
+    accessedAt: GENERATED_AT,
+    supports: 'La marque annonce les niveaux 110/130/150/165/175/203 et une gamme disponible en versions lubrifiée et sèche ; le 203 documenté reste sec.',
+  },
+  {
+    id: 'atm-110-lubricated-20c',
+    publisher: 'NaturaBuy / AE Distribution',
+    type: 'professional_retailer',
+    url: 'https://www.naturabuy.fr/ATM-Gaz-PSI110-Lubrifie-item-13227153.html',
+    accessedAt: GENERATED_AT,
+    supports: 'ATM PSI110 lubrifié : 113 PSI à 20 °C, 550 ml.',
+  },
+  {
+    id: 'atm-150-lubricated-20c',
+    publisher: 'NaturaBuy / AE Distribution',
+    type: 'professional_retailer',
+    url: 'https://www.naturabuy.fr/ATM-Gaz-PSI150-Lubrifie-item-13340550.html',
+    accessedAt: GENERATED_AT,
+    supports: 'ATM PSI150 lubrifié : 156 PSI à 20 °C, 550 ml.',
+  },
+  {
+    id: 'nuprol-range-official',
+    publisher: 'NUPROL',
+    type: 'manufacturer',
+    url: 'https://nuprol.com/nuprol-2-0-gas.html',
+    accessedAt: GENERATED_AT,
+    supports: 'Gamme officielle 1.0/2.0/3.0/4.0, variantes ZERO sans silicone et format MINI 85 g.',
+  },
+  {
+    id: 'nuprol-pressure-table-25c',
+    publisher: 'Anareus',
+    type: 'distributor',
+    url: 'https://www.anareus.cz/gb/red-gas/6127-nuprol-premium-red-gas-30-650-ml-red-700315573182.html',
+    accessedAt: GENERATED_AT,
+    supports: 'Table actuelle : 1.0 115, 2.0 145, 3.0 175 et 4.0 200 PSI ; fiches individuelles ancrées à 25 °C.',
+  },
+  {
+    id: 'nuprol-2zero-official',
+    publisher: 'NUPROL',
+    type: 'manufacturer',
+    url: 'https://nuprol.com/nuprol-nuprol-airsoft-gas-2-0-silicone-free-300g.html',
+    accessedAt: GENERATED_AT,
+    supports: 'NUPROL 2.ZERO, SKU 9059, EAN 5056444737267, version sans silicone du profil 2.0.',
+  },
+  {
+    id: 'nuprol-3zero-official',
+    publisher: 'NUPROL',
+    type: 'manufacturer',
+    url: 'https://nuprol.com/nuprol-airsoft-gas-3-zero.html',
+    accessedAt: GENERATED_AT,
+    supports: 'NUPROL 3.ZERO, SKU 9060, EAN 5056444744203, même profil de pression que 3.0 sans silicone.',
+  },
+  {
+    id: 'nuprol-4zero-official',
+    publisher: 'NUPROL',
+    type: 'manufacturer',
+    url: 'https://nuprol.com/nuprol-airsoft-gas-4-zero.html',
+    accessedAt: GENERATED_AT,
+    supports: 'NUPROL 4.ZERO, SKU 9061, EAN 5056444744210, même profil de pression que 4.0 sans silicone.',
+  },
+  {
+    id: 'protech-packaging-official',
+    publisher: 'ProTech Guns',
+    type: 'manufacturer',
+    url: 'https://protechguns.com/produkt/protechgas-750-1000ml/',
+    accessedAt: GENERATED_AT,
+    supports: 'Une formule ProTechGas siliconée proposée en conditionnements 120, 520, 800 et 1000 ml selon le fabricant.',
+  },
+  {
+    id: 'puff-dino-range-official',
+    publisher: 'Puff Dino',
+    type: 'manufacturer',
+    url: 'https://www.puffdino.com/en/product/PUFF-DINO-Green-Gas-Powerup-14KG/e0104.html',
+    accessedAt: GENERATED_AT,
+    supports: 'Gammes 9 kg, 12 kg et 14 kg, chacune documentée avec versions lubrifiée et/ou Oil Free ; format Easy Carry 12 kg.',
+  },
+  {
+    id: 'puff-dino-9kg-26c',
+    publisher: 'Hobby Expert',
+    type: 'retailer',
+    url: 'https://www.hobbyexpert.es/en/gas-puff-dino-green-gas-light-power-134a-9kg-oil-free-600ml',
+    accessedAt: GENERATED_AT,
+    supports: 'Puff Dino Light Power 9 kg, lubrifié ou Oil Free, 600 ml ; pression 9 kgf/cm² à 26 °C.',
+  },
+  {
+    id: 'swiss-arms-range-skus',
+    publisher: 'Armi Antiche San Marino',
+    type: 'retailer',
+    url: 'https://www.armiantichesanmarino.eu/green-gas-110-psi-sec-600ml-c12-swiss-arms-603515.html',
+    accessedAt: GENERATED_AT,
+    supports: 'Références Swiss Arms 603515 (110 sec), 603511/603512 (130 sec/lubrifié), 603513/603514 (150 sec/lubrifié).',
+  },
+  {
+    id: 'vorsk-range-no-ref',
+    publisher: 'Patrol Base',
+    type: 'retailer',
+    url: 'https://www.patrolbase.co.uk/featured-airsoft-news/features-and-reviews/vorsk-green-gas-comparison-v6-v8-v12-how-do-they-stack-up',
+    accessedAt: GENERATED_AT,
+    supports: 'VORSK V6/V8/V12 et valeurs nominales, sans température de référence explicite exploitable.',
+  },
+  {
+    id: 'novritsch-range-no-ref',
+    publisher: 'Novritsch',
+    type: 'manufacturer',
+    url: 'https://eu.novritsch.com/fr/product/airsoft-gas/',
+    accessedAt: GENERATED_AT,
+    supports: 'Niveaux Low/Medium/High/Super High et conseils par réplique, sans référence thermique complète des pressions.',
+  },
+  {
+    id: 'elite-force-range-no-ref',
+    publisher: 'Softairwelt',
+    type: 'retailer',
+    url: 'https://www.softairwelt.de/Elite-Force-Airsoft-Green-Gas-130-PSI-mit-Silikon-600-ml',
+    accessedAt: GENERATED_AT,
+    supports: 'Elite Force 110/130/150 PSI et plages d’emploi, sans température de référence explicite.',
+  },
+];
+
+const PRODUCTS = [];
+
+function addProduct(product) {
+  const normalized = {
+    category: 'green_gas',
+    status: 'publishable_estimate',
+    confidence: 'high',
+    silicone: 'unknown',
+    containerMl: null,
+    fillMl: null,
+    sku: null,
+    ean: null,
+    curveGroupId: product.id,
+    packagingOptions: null,
+    operatingRangeC: null,
+    notesFr: [],
+    ...product,
+  };
+  if (!normalized.packagingOptions && normalized.containerMl != null) {
+    normalized.packagingOptions = [{ containerMl: normalized.containerMl, fillMl: normalized.fillMl, sku: normalized.sku, ean: normalized.ean }];
+  }
+  PRODUCTS.push(normalized);
+}
+
+const asgPoints = {
+  green135: { 5: 107, 10: 114, 15: 121, 20: 130, 25: 135, 30: 156 },
+  orange164: { 5: 121, 10: 128, 15: 135, 20: 142, 25: 164, 30: 171 },
+  red178: { 5: 128, 10: 135, 15: 142, 20: 157, 25: 178, 30: 185 },
+};
+
+addProduct({ id: 'asg-ultrair-green-135-silicone', brand: 'ASG Ultrair', model: 'Green Power Gas 135 PSI — siliconé', labelPsi: 135, referencePsi: 135, referenceTemperatureC: 25, containerMl: 570, sku: '19893', ean: '5707843091152', silicone: 'yes', operatingRangeC: { min: 10, max: null }, measuredPoints: asgPoints.green135, curveGroupId: 'asg-ultrair-135', modelId: 'manufacturer_grid_piecewise_linear', sourceIds: ['asg-ultrair-135-official', 'asg-ultrair-135-grid'], notesFr: ['Interpolation linéaire entre les points imprimés sur la bouteille ; extrapolation hors 5–30 °C.'] });
+addProduct({ id: 'asg-ultrair-green-135-dry', brand: 'ASG Ultrair', model: 'Standard Power Gas 135 PSI — sec', labelPsi: 135, referencePsi: 135, referenceTemperatureC: 25, containerMl: 570, sku: '14571', ean: '5707843145718', silicone: 'no', confidence: 'medium', operatingRangeC: { min: 10, max: null }, measuredPoints: asgPoints.green135, curveGroupId: 'asg-ultrair-135', modelId: 'manufacturer_grid_piecewise_linear', sourceIds: ['asg-ultrair-135-dry', 'asg-ultrair-135-grid'], notesFr: ['ASG et les distributeurs décrivent cette ancienne référence comme l’équivalent sec du 135 PSI ; elle partage donc la grille mesurée du Green 135.'] });
+addProduct({ id: 'asg-ultrair-orange-164-dry', brand: 'ASG Ultrair', model: 'Orange Medium Power 164 PSI — sec', labelPsi: 164, referencePsi: 164, referenceTemperatureC: 25, containerMl: 570, silicone: 'no', operatingRangeC: { min: 7, max: null }, measuredPoints: asgPoints.orange164, modelId: 'manufacturer_grid_piecewise_linear', sourceIds: ['asg-ultrair-164-official', 'asg-ultrair-164-grid'], notesFr: ['Interpolation linéaire entre les points imprimés sur la bouteille ; extrapolation hors 5–30 °C.'] });
+addProduct({ id: 'asg-ultrair-red-178-dry', brand: 'ASG Ultrair', model: 'Red High Power 178 PSI — sec', labelPsi: 178, referencePsi: 178, referenceTemperatureC: 25, containerMl: 570, silicone: 'no', operatingRangeC: { min: 4, max: null }, measuredPoints: asgPoints.red178, modelId: 'manufacturer_grid_piecewise_linear', sourceIds: ['asg-ultrair-178-official', 'asg-ultrair-178-grid'], notesFr: ['Interpolation linéaire entre les points imprimés sur la bouteille ; extrapolation hors 5–30 °C.'] });
+
+for (const item of [
+  ['nimrod-blue-116', 'Blue Light Performance 116 PSI', 116, { min: 10, max: 40 }],
+  ['nimrod-green-145', 'Green Standard Performance 145 PSI', 145, { min: 10, max: 35 }],
+  ['nimrod-red-174', 'Red Professional Performance 174 PSI', 174, { min: 3, max: 30 }],
+  ['nimrod-black-203', 'Black Extreme Performance 203 PSI', 203, { min: -15, max: 20 }],
+]) addProduct({ id: item[0], brand: 'Nimrod Tactical', model: item[1], labelPsi: item[2], referencePsi: item[2], referenceTemperatureC: 20, containerMl: 500, silicone: 'yes', operatingRangeC: item[3], modelId: 'anchor_scaled_propane_antoine_nist', sourceIds: ['nimrod-range-20c', 'nimrod-operating-ranges'] });
+
+for (const item of [
+  ['powair-116', 'Premium Quality 116 PSI', 116],
+  ['powair-145', 'Premium Quality 145 PSI', 145],
+  ['powair-175', 'Premium Quality 175 PSI', 175],
+  ['powair-203', 'Premium Quality 203 PSI', 203],
+]) addProduct({ id: item[0], brand: 'Powair', model: item[1], labelPsi: item[2], referencePsi: item[2], referenceTemperatureC: 20, containerMl: 500, silicone: 'yes', modelId: 'anchor_scaled_propane_antoine_nist', sourceIds: ['powair-range-20c'] });
+
+for (const item of [
+  ['specna-vapor-blue-117', 'VAPOR Blue 117 PSI — sec', 117, 15, '5902543209948'],
+  ['specna-vapor-green-145', 'VAPOR Green 145 PSI — sec', 145, 10, '5902543209955'],
+  ['specna-vapor-red-188', 'VAPOR Red 188 PSI — sec', 188, 5, '5902543209962'],
+  ['specna-vapor-black-217', 'VAPOR Black 217 PSI — sec', 217, 0, '5902543209979'],
+]) addProduct({ id: item[0], brand: 'Specna Arms', model: item[1], labelPsi: item[2], referencePsi: item[2], referenceTemperatureC: 25, containerMl: 600, ean: item[4], packagingOptions: [{ containerMl: 600, fillGrams: 300, ean: item[4] }], silicone: 'no', operatingRangeC: { min: item[3], max: null }, modelId: 'anchor_scaled_propane_antoine_nist', sourceIds: ['specna-vapor-range-25c'] });
+
+for (const item of [
+  ['swiss-arms-light-110-dry', 'Light 110 PSI — sec', 110, 600, 'no', 'swiss-arms-110-20c', '603515'],
+  ['swiss-arms-green-130-dry', 'Green 130 PSI — sec', 130, 760, 'no', 'swiss-arms-130-dry-20c', '603511'],
+  ['swiss-arms-green-130-silicone', 'Green 130 PSI — siliconé', 130, 760, 'yes', 'swiss-arms-130-20c', '603512'],
+  ['swiss-arms-heavy-150-dry', 'Heavy 150 PSI — sec', 150, 760, 'no', 'swiss-arms-150-dry-20c', '603513'],
+  ['swiss-arms-heavy-150-silicone', 'Heavy 150 PSI — siliconé', 150, 760, 'yes', 'swiss-arms-150-20c', '603514'],
+]) addProduct({ id: item[0], brand: 'Swiss Arms', model: item[1], labelPsi: item[2], referencePsi: item[2], referenceTemperatureC: 20, containerMl: item[3], fillMl: item[2] === 110 ? 450 : 600, silicone: item[4], sku: item[6], curveGroupId: `swiss-arms-${item[2]}`, modelId: 'anchor_scaled_propane_antoine_nist', sourceIds: [item[5], 'swiss-arms-range-skus'] });
+
+for (const item of [
+  ['atm-psi110-dry', 'PSI110 — sec', 110, 113, 450, 'no', 'atm-110-dry-20c'],
+  ['atm-psi110-silicone', 'PSI110 — lubrifié', 110, 113, 550, 'yes', 'atm-110-lubricated-20c'],
+  ['atm-psi130-dry', 'PSI130 — sec', 130, 135, 550, 'no', 'atm-130-dry-20c'],
+  ['atm-psi130-silicone', 'PSI130 — lubrifié', 130, 135, 550, 'yes', 'atm-range-overview-20c'],
+  ['atm-psi150-dry', 'PSI150 — sec', 150, 156, 550, 'no', 'atm-150-dry-20c'],
+  ['atm-psi150-silicone', 'PSI150 — lubrifié', 150, 156, 550, 'yes', 'atm-150-lubricated-20c'],
+  ['atm-psi165-dry', 'PSI165 — sec', 165, 165, 550, 'no', 'atm-165-dry-20c'],
+  ['atm-psi165-silicone', 'PSI165 — lubrifié', 165, 165, 550, 'yes', 'atm-range-dry-lubricated'],
+  ['atm-psi175-dry', 'PSI175 — sec', 175, 175, 550, 'no', 'atm-dry-range-20c'],
+  ['atm-psi175-silicone', 'PSI175 — lubrifié', 175, 175, 550, 'yes', 'atm-range-dry-lubricated'],
+  ['atm-psi203-dry', 'PSI203 — sec', 203, 203, 550, 'no', 'atm-203-dry-20c'],
+]) addProduct({ id: item[0], brand: 'ATM / Ama Tsu Maru', model: item[1], labelPsi: item[2], referencePsi: item[3], referenceTemperatureC: 20, containerMl: item[4], silicone: item[5], confidence: ['atm-psi165-silicone', 'atm-psi175-silicone'].includes(item[0]) ? 'medium' : 'high', curveGroupId: `atm-${item[2]}-at-20c`, modelId: 'anchor_scaled_propane_antoine_nist', sourceIds: [item[6], 'atm-range-dry-lubricated'], notesFr: item[2] !== item[3] ? [`Le nom commercial ${item[2]} PSI diffère de la valeur annoncée à 20 °C : ${item[3]} PSI.`] : [] });
+
+for (const item of [
+  ['nuprol-premium-1-115', 'Premium 1.0 Low Power 115 PSI — siliconé', 115, 'yes', 'nuprol-1', 9044, '754220671709', 10, 25],
+  ['nuprol-premium-2-145', 'Premium 2.0 Standard 145 PSI — siliconé', 145, 'yes', 'nuprol-2', 9031, '700315573410', 10, 25],
+  ['nuprol-2zero-145', '2.ZERO Standard 145 PSI — sec', 145, 'no', 'nuprol-2', 9059, '5056444737267', 10, 25],
+  ['nuprol-premium-3-175', 'Premium 3.0 Cold Weather 175 PSI — siliconé', 175, 'yes', 'nuprol-3', 9035, '700315573182', 3, 10],
+  ['nuprol-3zero-175', '3.ZERO Cold Weather 175 PSI — sec', 175, 'no', 'nuprol-3', 9060, '5056444744203', 3, 10],
+  ['nuprol-premium-4-200', 'Premium 4.0 Heavy Bolt 200 PSI — siliconé', 200, 'yes', 'nuprol-4', 9036, '700315573137', 3, 20],
+  ['nuprol-4zero-200', '4.ZERO Heavy Bolt 200 PSI — sec', 200, 'no', 'nuprol-4', 9061, '5056444744210', 3, 20],
+]) addProduct({
+  id: item[0], brand: 'NUPROL', model: item[1], labelPsi: item[2], referencePsi: item[2], referenceTemperatureC: 25,
+  containerMl: 650, fillMl: 500, silicone: item[3], curveGroupId: item[4], sku: String(item[5]), ean: item[6],
+  packagingOptions: item[0] === 'nuprol-premium-2-145'
+    ? [{ containerMl: 650, fillMl: 500, fillGrams: 300, sku: '9031', ean: item[6], label: 'Full size' }, { fillGrams: 85, label: '2.MINI — formule identique' }]
+    : [{ containerMl: 650, fillMl: 500, fillGrams: 300, sku: String(item[5]), ean: item[6], label: 'Full size' }],
+  operatingRangeC: { min: item[7], max: item[8] }, confidence: 'medium', modelId: 'anchor_scaled_propane_antoine_nist',
+  sourceIds: ['nuprol-range-official', 'nuprol-pressure-table-25c', ...(item[0].includes('2zero') ? ['nuprol-2zero-official'] : item[0].includes('3zero') ? ['nuprol-3zero-official'] : item[0].includes('4zero') ? ['nuprol-4zero-official'] : [])],
+  notesFr: ['Les pressions 1.0/2.0/3.0/4.0 sont la nomenclature actuelle retenue. Les anciennes fiches à 180/200+/210 PSI sont conservées comme conflits de génération, pas comme ancres actives.'],
+});
+
+addProduct({ id: 'protechguns-green-gas', brand: 'ProTechGuns', model: 'ProtechGas Green Gas — siliconé', labelPsi: 145, referencePsi: 145.04, referenceTemperatureC: 25, containerMl: 800, silicone: 'yes', operatingRangeC: { min: 5, max: null }, confidence: 'medium', packagingOptions: [{ containerMl: 120, label: 'Bullet' }, { containerMl: 520 }, { containerMl: 800 }, { containerMl: 1000 }], modelId: 'anchor_scaled_propane_antoine_nist', sourceIds: ['protech-official', 'protech-packaging-official', 'protech-1mpa-25c'], notesFr: ['La page fabricant ne chiffre pas la pression ; l’ancre de 1 MPa à 25 °C vient d’un distributeur. Les conditionnements partagent la même formule et ne créent pas quatre courbes.'] });
+
+addProduct({ id: 'abbey-predator-144a', brand: 'Abbey', model: 'Predator Gun Gas 144a', category: 'low_pressure_airsoft_gas', labelPsi: 96, referencePsi: 95.72, referenceTemperatureC: 25, containerMl: 700, silicone: 'yes', confidence: 'medium', modelId: 'anchor_scaled_propane_antoine_nist', sourceIds: ['abbey-144a-25c', 'abbey-range-official'], notesFr: ['6,6 bar convertis en 95,72 PSI. La composition n’étant pas du propane pur, le modèle relatif reste une approximation.'] });
+addProduct({ id: 'abbey-predator-ultra', brand: 'Abbey', model: 'Predator Ultra 123 PSI — lubrifié', labelPsi: 123, referencePsi: 123.28, referenceTemperatureC: 25, containerMl: 700, silicone: 'yes', packagingOptions: [{ containerMl: 270, label: 'Mini' }, { containerMl: 700, label: 'Standard' }], confidence: 'medium', curveGroupId: 'abbey-ultra', modelId: 'anchor_scaled_propane_antoine_nist', sourceIds: ['abbey-ultra-25c', 'abbey-range-official'], notesFr: ['8,5 bar convertis en 123,28 PSI. Les formats 270 et 700 ml partagent la formule.'] });
+addProduct({ id: 'abbey-brut-sniper', brand: 'Abbey', model: 'Brut Sniper 125 PSI — sec', labelPsi: 125, referencePsi: 124.73, referenceTemperatureC: 25, containerMl: 700, silicone: 'no', confidence: 'medium', curveGroupId: 'abbey-brut', modelId: 'anchor_scaled_propane_antoine_nist', sourceIds: ['abbey-brut-25c', 'abbey-range-official'], notesFr: ['8,6 bar convertis en 124,73 PSI ; la fiche constructeur confirme une formule sans lubrifiant.'] });
+
+for (const item of [
+  ['puff-dino-9kg-silicone', 'Light Power 9 kg — lubrifié', 128.01, 26, 600, 'yes', 'puff-dino-9kg'],
+  ['puff-dino-9kg-dry', 'Light Power 9 kg — Oil Free', 128.01, 26, 600, 'no', 'puff-dino-9kg'],
+  ['puff-dino-12kg-silicone', 'Standard Power 12 kg — lubrifié', 171, 30, 600, 'yes', 'puff-dino-12kg'],
+  ['puff-dino-12kg-dry', 'Standard Power 12 kg — Oil Free', 171, 30, 600, 'no', 'puff-dino-12kg'],
+  ['puff-dino-14kg-silicone', 'Power Up 14 kg — lubrifié', 199.12, 30, 560, 'yes', 'puff-dino-14kg'],
+  ['puff-dino-14kg-dry', 'Power Up 14 kg — Oil Free', 199.12, 30, 560, 'no', 'puff-dino-14kg'],
+]) addProduct({
+  id: item[0], brand: 'Puff Dino', model: item[1], labelPsi: Math.round(item[2]), referencePsi: item[2], referenceTemperatureC: item[3],
+  containerMl: item[4], silicone: item[5], confidence: 'medium', curveGroupId: item[6],
+  packagingOptions: item[6] === 'puff-dino-12kg' && item[5] === 'yes' ? [{ containerMl: 250, label: 'Easy Carry' }, { containerMl: 600, label: 'Standard' }] : [{ containerMl: item[4] }],
+  modelId: 'anchor_scaled_propane_antoine_nist', sourceIds: ['puff-dino-range-official', item[6] === 'puff-dino-9kg' ? 'puff-dino-9kg-26c' : item[6] === 'puff-dino-12kg' ? 'puff-dino-12kg-30c' : 'puff-dino-14kg-30c'],
+  notesFr: item[6] === 'puff-dino-9kg' ? ['9 kgf/cm² convertis en 128,01 PSI à 26 °C. Certains revendeurs nomment cette bouteille « 115 PSI » sans protocole : cette valeur n’est pas utilisée comme ancre.'] : [],
+});
+
+const excludedCandidates = [
+  { brand: 'VORSK', models: ['V6 175 PSI', 'V8 190 PSI', 'V12 220 PSI'], reasonFr: 'Les valeurs nominales et plages d’usage sont trouvées, mais aucune température de référence explicite et fiable n’a été publiée dans les sources consultées.', sourceIds: ['vorsk-range-no-ref'] },
+  { brand: 'Novritsch', models: ['Low ≈110 PSI', 'Medium ≈130 PSI', 'High', 'Super High'], reasonFr: 'La page fabricant donne des niveaux approximatifs et des tableaux par réplique, sans ancre pression/température complète pour chaque bouteille.', sourceIds: ['novritsch-range-no-ref'] },
+  { brand: 'Elite Force / Umarex', models: ['Light 110', 'Green 130', 'Heavy 150'], reasonFr: 'Pressions et plages d’usage disponibles, mais la température de référence n’est pas explicitée dans les pages retenues. Ne pas supposer qu’elle est identique à Swiss Arms malgré la proximité de gamme.', sourceIds: ['elite-force-range-no-ref'] },
+  { brand: 'Abbey', models: ['Predator Vertex'], reasonFr: 'Le fabricant confirme la référence et son positionnement haute pression, mais les tableaux tiers divergent (171 à 199 PSI) et aucun couple pression/température actuel n’a pu être validé. Ne pas calculer de courbe tant que la photo d’étiquette ou une fiche officielle chiffrée n’est pas obtenue.', sourceIds: ['abbey-range-official', 'abbey-vertex-conflicting-psi'] },
+  { brand: 'Abbey', models: ['Maintenance Gas'], reasonFr: 'Produit de stockage fortement lubrifié : le fabricant demande explicitement de ne pas l’utiliser pour jouer ou tirer. À lister dans le guide d’entretien, jamais dans le calculateur de partie.', sourceIds: ['abbey-range-official'] },
+  { brand: 'NUPROL', models: ['Anciennes bouteilles 3.0/4.0 annoncées 180, 200, 210 ou 215 PSI'], reasonFr: 'Conflits de génération. La V2 retient la nomenclature actuelle 115/145/175/200 PSI à 25 °C et exige que l’UI affiche le SKU/EAN lorsque disponible.', sourceIds: ['nuprol-range-official', 'nuprol-pressure-table-25c'] },
+];
+
+function propaneVaporPressureBar(temperatureC) {
+  const temperatureK = temperatureC + 273.15;
+  const A = 3.98292;
+  const B = 819.296;
+  const C = -24.417;
+  return 10 ** (A - B / (temperatureK + C));
+}
+
+function scaledAnchorPressure(product, temperatureC) {
+  const ratio = propaneVaporPressureBar(temperatureC)
+    / propaneVaporPressureBar(product.referenceTemperatureC);
+  return product.referencePsi * ratio;
+}
+
+function interpolateGrid(points, temperatureC) {
+  const temperatures = Object.keys(points).map(Number).sort((a, b) => a - b);
+  if (Object.hasOwn(points, temperatureC)) {
+    return { psi: points[temperatureC], status: 'manufacturer_test_point' };
+  }
+
+  const min = temperatures[0];
+  const max = temperatures.at(-1);
+  if (temperatureC < min) {
+    const psi = points[min] * propaneVaporPressureBar(temperatureC) / propaneVaporPressureBar(min);
+    return { psi, status: 'extrapolated_propane_ratio' };
+  }
+  if (temperatureC > max) {
+    const psi = points[max] * propaneVaporPressureBar(temperatureC) / propaneVaporPressureBar(max);
+    return { psi, status: 'extrapolated_propane_ratio' };
+  }
+
+  let low = min;
+  let high = max;
+  for (const candidate of temperatures) {
+    if (candidate < temperatureC) low = candidate;
+    if (candidate > temperatureC) {
+      high = candidate;
+      break;
+    }
+  }
+  const fraction = (temperatureC - low) / (high - low);
+  return {
+    psi: points[low] + (points[high] - points[low]) * fraction,
+    status: 'interpolated_manufacturer_grid',
+  };
+}
+
+function curveFor(product) {
+  const curve = [];
+  for (let temperatureC = MIN_TEMPERATURE_C; temperatureC <= MAX_TEMPERATURE_C; temperatureC += 1) {
+    const result = product.measuredPoints
+      ? interpolateGrid(product.measuredPoints, temperatureC)
+      : {
+          psi: scaledAnchorPressure(product, temperatureC),
+          status: temperatureC === product.referenceTemperatureC
+            ? 'manufacturer_or_distributor_anchor'
+            : 'estimated_propane_ratio',
+        };
+    curve.push({
+      temperatureC,
+      estimatedPsi: Number(result.psi.toFixed(2)),
+      pointStatus: result.status,
+      insidePublishedOperatingRange: product.operatingRangeC
+        ? (product.operatingRangeC.min == null || temperatureC >= product.operatingRangeC.min)
+          && (product.operatingRangeC.max == null || temperatureC <= product.operatingRangeC.max)
+        : null,
+    });
+  }
+  return curve;
+}
+
+const products = PRODUCTS.map((product) => {
+  const { measuredPoints, ...publicProduct } = product;
+  return {
+    ...publicProduct,
+    pressureBasis: 'manufacturer_claimed_psi_basis_not_always_specified',
+    measuredPoints: measuredPoints
+      ? Object.entries(measuredPoints).map(([temperatureC, psi]) => ({ temperatureC: Number(temperatureC), psi }))
+      : [],
+    curve: curveFor(product),
+  };
+});
+
+const brands = [...new Set(products.map((product) => product.brand))]
+  .sort((a, b) => a.localeCompare(b, 'fr'))
+  .map((brand) => ({ brand, productIds: products.filter((product) => product.brand === brand).map((product) => product.id) }));
+
+const payload = {
+  schemaVersion: '2.0.0',
+  generatedAt: GENERATED_AT,
+  language: 'fr-FR',
+  temperatureGrid: { minC: MIN_TEMPERATURE_C, maxC: MAX_TEMPERATURE_C, stepC: 1 },
+  scope: {
+    publishableProductCount: products.length,
+    uniquePressureCurveCount: new Set(products.map((product) => product.curveGroupId)).size,
+    brandCount: brands.length,
+    statementFr: 'Normalisation exploratoire de bouteilles de gaz airsoft à partir de données fabricants et distributeurs, avec séparation entre formule de pression et conditionnement commercial.',
+  },
+  disclaimerFr: 'La pression affichée est une estimation théorique calculée à partir des valeurs publiées par les fabricants ou distributeurs. Elle ne garantit ni la pression réelle dans un chargeur, ni la compatibilité avec une réplique, ni la puissance obtenue. La température réelle du chargeur, le cooldown, la formulation du gaz, le taux de remplissage et l’état mécanique modifient le résultat.',
+  calculation: {
+    defaultModelId: 'anchor_scaled_propane_antoine_nist',
+    formula: 'P_est(T) = P_source(T_ref) × P_sat_propane_NIST(T) / P_sat_propane_NIST(T_ref)',
+    propaneAntoine: {
+      formula: 'log10(P_bar) = A - B / (T_K + C)',
+      A: 3.98292,
+      B: 819.296,
+      C: -24.417,
+      validityK: [230.6, 320.7],
+      sourceId: 'nist-propane-antoine',
+    },
+    gridModel: 'Pour ASG ULTRAIR, interpolation linéaire entre points publiés ; hors 5–30 °C, extrapolation par ratio de pression de vapeur du propane depuis le point limite.',
+    limitationsFr: [
+      'Les mélanges commerciaux sont propriétaires : le ratio propane sert de courbe relative, pas d’analyse de composition.',
+      'Les PSI commerciaux ne précisent pas toujours s’il s’agit d’une pression absolue, manométrique ou d’un protocole interne.',
+      'Une pression statique de bouteille n’est pas la pression dynamique disponible pendant une rafale.',
+      'Le modèle ne simule ni cooldown, ni transfert thermique, ni niveau de remplissage, ni fuite.',
+    ],
+  },
+  selectionModel: {
+    order: ['temperatureC', 'brand', 'product', 'packagingOption'],
+    explanationFr: 'Le modèle sélectionné désigne une formule (pression + lubrification). Le conditionnement 250/600 ml ou 85/300 g est un attribut commercial et réutilise la même courbe.',
+    uiRulesFr: [
+      'Afficher le PSI estimé à la température exacte choisie, sans pas de 5 °C.',
+      'Afficher la valeur source et sa température de référence juste sous le résultat.',
+      'Afficher SEC ou LUBRIFIÉ : deux produits partageant une courbe restent deux choix distincts.',
+      'Ne jamais proposer les excludedCandidates dans le calculateur ; les montrer seulement dans une section « données à confirmer ».',
+      'Le choix d’un volume de bouteille ne doit jamais modifier le PSI calculé.',
+    ],
+  },
+  sources,
+  brands,
+  products,
+  excludedCandidates,
+};
+
+writeFileSync(join(HERE, 'green-gas-pressure-curves.json'), `${JSON.stringify(payload, null, 2)}\n`);
+
+const csvHeader = [
+  'brand', 'model', 'product_id', 'temperature_c', 'estimated_psi', 'point_status',
+  'reference_psi', 'reference_temperature_c', 'model_id', 'curve_group_id', 'silicone', 'sku', 'ean', 'confidence', 'inside_published_operating_range',
+];
+const escapeCsv = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+const csvRows = [csvHeader.map(escapeCsv).join(',')];
+for (const product of products) {
+  for (const point of product.curve) {
+    csvRows.push([
+      product.brand,
+      product.model,
+      product.id,
+      point.temperatureC,
+      point.estimatedPsi,
+      point.pointStatus,
+      product.referencePsi,
+      product.referenceTemperatureC,
+      product.modelId,
+      product.curveGroupId,
+      product.silicone,
+      product.sku,
+      product.ean,
+      product.confidence,
+      point.insidePublishedOperatingRange,
+    ].map(escapeCsv).join(','));
+  }
+}
+writeFileSync(join(HERE, 'green-gas-pressure-curves.csv'), `${csvRows.join('\n')}\n`);
+
+console.log(`Generated ${products.length} products, ${brands.length} brands and ${products.length * (MAX_TEMPERATURE_C - MIN_TEMPERATURE_C + 1)} curve points.`);

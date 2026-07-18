@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#10140c">
+  <title>Simulateur 3D de trajectoire airsoft | F.A.T.</title>
+  <meta name="description" content="Visualisez en 3D la hauteur, la portée, l’énergie, le temps de vol et la dérive d’une bille airsoft avec le modèle théorique ATP.">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <link rel="canonical" href="https://fps-airsoft-trajectory.com/simulateur-3d-airsoft/">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <script>(()=>{const e=document.documentElement;let m='system';try{m=localStorage.getItem('fat-theme')||m}catch{}if(!['system','dark','light'].includes(m))m='system';const d=m==='dark'||(m==='system'&&(!window.matchMedia||matchMedia('(prefers-color-scheme: dark)').matches));const t=d?'dark':'light';e.dataset.themeMode=m;e.dataset.theme=t;e.style.colorScheme=t;document.querySelector('meta[name="theme-color"]').content=d?'#10140c':'#eef0e2'})()</script>
+  <link rel="stylesheet" href="/assets/site.css">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:site_name" content="F.A.T.">
+  <meta property="og:title" content="Simulateur 3D de trajectoire airsoft | F.A.T.">
+  <meta property="og:description" content="Explorez une trajectoire ATP en 3D et comparez jusqu’à quatre configurations airsoft.">
+  <meta property="og:url" content="https://fps-airsoft-trajectory.com/simulateur-3d-airsoft/">
+  <meta property="og:image" content="https://fps-airsoft-trajectory.com/assets/img/partage-fat.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Simulateur 3D de trajectoire airsoft | F.A.T.">
+  <meta name="twitter:description" content="Hauteur, portée, énergie, temps de vol et dérive dans une scène 3D fondée sur le modèle ATP.">
+  <meta name="twitter:image" content="https://fps-airsoft-trajectory.com/assets/img/partage-fat.png">
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@graph":[
+      {
+        "@type":"SoftwareApplication",
+        "name":"Simulateur 3D de trajectoire airsoft F.A.T.",
+        "url":"https://fps-airsoft-trajectory.com/simulateur-3d-airsoft/",
+        "applicationCategory":"SportsApplication",
+        "operatingSystem":"Web",
+        "browserRequirements":"Navigateur moderne avec JavaScript, Web Worker et WebGL",
+        "description":"Visualisation tridimensionnelle de trajectoires théoriques de billes airsoft calculées avec le modèle ATP.",
+        "isAccessibleForFree":true,
+        "offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"}
+      },
+      {
+        "@type":"BreadcrumbList",
+        "itemListElement":[
+          {"@type":"ListItem","position":1,"name":"Accueil","item":"https://fps-airsoft-trajectory.com/"},
+          {"@type":"ListItem","position":2,"name":"Simulateur 3D airsoft","item":"https://fps-airsoft-trajectory.com/simulateur-3d-airsoft/"}
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body class="advanced-page-shell">
+  <a class="skip-link" href="#simulateur-3d">Aller au simulateur 3D</a>
+  <header class="site-header"><div class="shell nav-row"></div></header>
+  <main id="contenu" class="advanced-page">
+    <section id="simulateur-3d" class="advanced-stage" data-advanced-stage tabindex="-1">
+      <div class="advanced-chrome">
+        <div>
+          <ol class="breadcrumbs" aria-label="Fil d’Ariane"><li><a href="/">Accueil</a></li><li>Simulateur 3D</li></ol>
+          <p class="eyebrow">Vue immersive · modèle ATP</p>
+          <h1>Simulateur 3D de trajectoire airsoft</h1>
+        </div>
+        <a class="button button-ghost button-small" href="/#calculateur">Retour au simulateur compact</a>
+      </div>
+
+      <div class="advanced-workspace" data-advanced-3d-app aria-busy="true" data-ready="false">
+        <aside class="advanced-control-drawer" aria-label="Paramètres du tir">
+          <details open>
+            <summary>PARAMÈTRES DU SETUP</summary>
+            <div class="advanced-presets" aria-label="Préréglages">
+              <button type="button" data-advanced-preset='{"massG":0.2,"energyJ":0.98,"initialRpm":120000}'>RÉF. MACKILA</button>
+              <button type="button" data-advanced-preset='{"massG":0.28,"energyJ":1.5}'>AEG · 1,5 J</button>
+              <button type="button" data-advanced-preset='{"massG":0.36,"energyJ":1.9}'>DMR · 1,9 J</button>
+            </div>
+            <div class="advanced-fields">
+              <label>Masse de bille <span>g</span><input data-advanced-field="massG" type="number" inputmode="decimal" min="0.12" max="0.88" step="0.01" value="0.28"></label>
+              <label>Énergie mesurée <span>J</span><input data-advanced-field="energyJ" type="number" inputmode="decimal" min="0.01" max="10" step="0.01" value="1.5"></label>
+              <label class="advanced-field-wide">Rotation initiale (effet hop-up) <span>tr/min</span><span class="advanced-spin-field"><button type="button" data-advanced-spin="-250" aria-label="Retirer 250 tours par minute">−</button><input data-advanced-field="initialRpm" type="number" min="0" step="250" value="88000"><button type="button" data-advanced-spin="250" aria-label="Ajouter 250 tours par minute">+</button></span></label>
+              <label>Zéro optique <span>m</span><input data-advanced-field="zeroDistanceM" type="number" min="5" max="150" step="1" value="35"></label>
+              <label>Angle du canon <span>°</span><input data-advanced-field="angleDeg" type="number" min="-10" max="35" step="0.1" value="0"></label>
+              <label>Vent <span>km/h</span><input data-advanced-field="windSpeedKmh" type="number" min="0" max="100" step="1" value="0"></label>
+              <label>Direction du vent <span>°</span><select data-advanced-field="windAngleDeg"><option value="0">0° · face</option><option value="45">45°</option><option value="90">90° · droite</option><option value="135">135°</option><option value="180">180° · dos</option><option value="225">225°</option><option value="270">270° · gauche</option><option value="315">315°</option></select></label>
+              <label>Température <span>°C</span><input data-advanced-field="temperatureC" type="number" min="-30" max="55" step="1" value="20"></label>
+              <label>Pression <span>hPa</span><input data-advanced-field="pressureHpa" type="number" min="700" max="1100" step="1" value="1013.25"></label>
+              <label>Inclinaison latérale <span>°</span><input data-advanced-field="cantDeg" type="number" min="-90" max="90" step="1" value="0"></label>
+              <input data-advanced-field="shootingHeightM" type="hidden" value="1.5">
+              <input data-advanced-field="scopeHeightM" type="hidden" value="0.05">
+              <input data-advanced-field="latitudeDeg" type="hidden" value="47">
+              <input data-advanced-field="diameterMm" type="hidden" value="6">
+            </div>
+            <div class="advanced-actions">
+              <button class="button button-primary" type="button" data-advanced-compare>Ajouter à la comparaison</button>
+              <button class="button button-ghost" type="button" data-advanced-share>Partager</button>
+              <button class="button button-ghost" type="button" data-advanced-reset>Réinitialiser</button>
+            </div>
+            <p class="advanced-feedback" data-advanced-feedback aria-live="polite"></p>
+          </details>
+        </aside>
+
+        <div class="advanced-scene-panel">
+          <div class="advanced-mobile-notice" data-advanced-mobile-notice role="dialog" aria-labelledby="advanced-mobile-title" hidden>
+            <strong id="advanced-mobile-title">Conseil d’affichage</strong>
+            <p data-mobile-portrait-copy>Pour profiter de la vue 3D, passe ton téléphone en paysage.</p>
+            <p data-mobile-comfort-copy>Pour cette scène, une tablette ou un ordinateur offrira une lecture plus confortable.</p>
+            <div class="button-row">
+              <button class="button button-primary button-small" type="button" data-advanced-mobile-fullscreen>Passer en plein écran paysage</button>
+              <button class="button button-ghost button-small" type="button" data-advanced-mobile-continue>Continuer en portrait</button>
+            </div>
+          </div>
+
+          <div class="advanced-drone-host" data-advanced-drone-host>
+            <div class="advanced-fallback" data-advanced-fallback role="status" hidden>
+              <span class="stencil-patch">3D INDISPONIBLE</span>
+              <h2>La trajectoire reste calculable.</h2>
+              <p data-advanced-fallback-message>Cette vue nécessite WebGL et un Web Worker.</p>
+              <a class="button button-primary" href="/#calculateur">Ouvrir le simulateur compact</a>
+            </div>
+          </div>
+
+          <div class="advanced-scene-tools" aria-label="Contrôles de la scène 3D">
+            <div class="advanced-cameras" role="group" aria-label="Caméra">
+              <button type="button" data-advanced-camera="drone" aria-pressed="true">DRONE</button>
+              <button type="button" data-advanced-camera="shooter" aria-pressed="false">TIREUR</button>
+              <button type="button" data-advanced-camera="profile" aria-pressed="false">PROFIL</button>
+            </div>
+            <button type="button" data-advanced-frame>RECADRER</button>
+            <button type="button" data-advanced-zoom="0.8" aria-label="Zoomer dans la scène">ZOOM +</button>
+            <button type="button" data-advanced-zoom="1.25" aria-label="Dézoomer dans la scène">ZOOM −</button>
+            <button type="button" data-advanced-pause aria-pressed="false">PAUSE</button>
+            <button type="button" data-advanced-replay>▶ REJOUER LE TIR</button>
+            <button type="button" data-advanced-exit-fullscreen>QUITTER LE PLEIN ÉCRAN</button>
+          </div>
+
+          <section class="advanced-metrics" aria-labelledby="advanced-metrics-title">
+            <div class="advanced-metric-heading"><h2 id="advanced-metrics-title">Métriques de la courbe sélectionnée</h2><p data-advanced-metric-context>Calcul en cours…</p></div>
+            <div class="advanced-metric-grid">
+              <div><span>PORTÉE UTILE</span><strong data-advanced-metric="useful">—</strong></div>
+              <div><span>IMPACT</span><strong data-advanced-metric="impact">—</strong></div>
+              <div><span>TEMPS 50 M</span><strong data-advanced-metric="time">—</strong></div>
+              <div><span>ÉNERGIE 50 M</span><strong data-advanced-metric="energy">—</strong></div>
+              <div><span>DÉRIVE 50 M</span><strong data-advanced-metric="drift">—</strong></div>
+            </div>
+            <span class="trust-tag" data-trust="calculated">Calculé · ATP</span>
+          </section>
+
+          <section class="advanced-comparisons" aria-labelledby="advanced-comparisons-title">
+            <h2 id="advanced-comparisons-title">Courbes dans la scène</h2>
+            <ol data-advanced-legend aria-live="polite"></ol>
+          </section>
+          <p class="advanced-status" data-advanced-status aria-live="polite">Préparation du Worker ATP…</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section advanced-explainer">
+      <div class="shell content-grid">
+        <article class="prose">
+          <h2>Lire une trajectoire airsoft en trois dimensions</h2>
+          <p>La hauteur montre le déplacement vertical de la bille au-dessus du sol. La portée utile indique la première sortie de l’enveloppe ATP autour de la visée, tandis que l’impact correspond au dernier point calculé au niveau du sol.</p>
+          <p>L’énergie à distance et le temps de vol aident à comparer deux configurations sans réduire le tir à sa portée finale. La projection pointillée au sol rend la dérive latérale visible lorsque le vent ou l’inclinaison de la réplique déplacent la bille.</p>
+          <div class="callout callout-warning"><strong>Simulation théorique</strong> Le chronographe, les impacts sur cible et les règles de l’organisateur restent prioritaires. Cette scène ne constitue ni une mesure réelle, ni une validation de sécurité.</div>
+        </article>
+        <aside class="attribution-block mackila-attribution">
+          <span class="stencil-patch">ATTRIBUTION</span>
+          <h2>Mackila · Airsoft Trajectory Project</h2>
+          <p>F.A.T. implémente les relations documentées dans l’Airsoft Trajectory Project et affiche ici les points produits par le même Worker que le simulateur compact.</p>
+          <a href="/modele-physique-atp/">Consulter le modèle ATP</a>
+        </aside>
+      </div>
+      <div class="shell advanced-cta-row">
+        <a class="button button-primary" href="/#calculateur">Simulateur compact</a>
+        <a class="button button-ghost" href="/guides/portee-airsoft/">Comprendre la portée</a>
+        <a class="button button-ghost" href="/guides/regler-hop-up-airsoft/">Régler le hop-up</a>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer"></footer>
+
+  <div class="advanced-transition" data-advanced-transition role="status" aria-live="polite" aria-atomic="true" hidden>
+    <div class="calculation-loader-panel card">
+      <div class="calculation-loader-visual" aria-hidden="true">
+        <div class="calculation-loader-mark"><svg viewBox="0 0 120 76"><path class="loader-curve-base" d="M6 62C30 30 62 22 78 26C96 31 106 44 112 62"/><path class="loader-curve-active" d="M6 62C30 30 62 22 78 26C96 31 106 44 112 62"/><line class="loader-ground" x1="2" y1="68" x2="118" y2="68"/></svg><span class="calculation-loader-ball"></span></div>
+      </div>
+      <div class="calculation-loader-lockup"><div class="calculation-loader-name">F.A.T<span>.</span></div><div class="calculation-loader-subtitle">SIMULATEUR 3D AVANCÉ</div></div>
+      <div class="calculation-loader-progress" data-advanced-loader-progress role="progressbar" aria-label="Transition vers le simulateur 3D" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span data-advanced-loader-bar></span></div>
+      <p class="calculation-loader-status"><span data-advanced-loader-phrase>Réveil du Web Worker…</span><span data-advanced-loader-percent>0 %</span></p>
+      <button class="button button-ghost button-small" type="button" data-advanced-loader-skip>Passer le chargement</button>
+    </div>
+  </div>
+
+  <script type="module" src="/site.js"></script>
+  <script type="module" src="/advanced-3d-app.js"></script>
+</body>
+</html>

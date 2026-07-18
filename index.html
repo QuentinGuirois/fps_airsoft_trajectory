@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#10140c">
+  <meta name="description" content="Convertissez Joules et FPS puis simulez la trajectoire, la portée, l'énergie et la dérive d'une bille airsoft avec le modèle ATP de Mackila.">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <title>Calculateur Airsoft : Joules, FPS et trajectoire | F.A.T.</title>
+  <link rel="canonical" href="https://fps-airsoft-trajectory.com/">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <script>(()=>{const e=document.documentElement;let m='system';try{m=localStorage.getItem('fat-theme')||m}catch{}if(!['system','dark','light'].includes(m))m='system';const d=m==='dark'||(m==='system'&&(!window.matchMedia||matchMedia('(prefers-color-scheme: dark)').matches));const t=d?'dark':'light';e.dataset.themeMode=m;e.dataset.theme=t;e.style.colorScheme=t;document.querySelector('meta[name="theme-color"]').content=d?'#10140c':'#eef0e2'})()</script>
+  <link rel="stylesheet" href="/assets/site.css">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:site_name" content="F.A.T.">
+  <meta property="og:title" content="Le calculateur balistique des airsofteurs">
+  <meta property="og:description" content="Joules, FPS, hop-up, portée, énergie résiduelle et vent : passe ton setup au banc ATP.">
+  <meta property="og:url" content="https://fps-airsoft-trajectory.com/">
+  <meta property="og:image" content="https://fps-airsoft-trajectory.com/assets/img/partage-fat.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@graph":[
+      {
+        "@type":"WebSite",
+        "@id":"https://fps-airsoft-trajectory.com/#website",
+        "url":"https://fps-airsoft-trajectory.com/",
+        "name":"F.A.T. — FPS Airsoft Trajectory",
+        "inLanguage":"fr-FR"
+      },
+      {
+        "@type":"SoftwareApplication",
+        "@id":"https://fps-airsoft-trajectory.com/#app",
+        "name":"F.A.T. — Calculateur balistique Airsoft",
+        "url":"https://fps-airsoft-trajectory.com/",
+        "applicationCategory":"SportsApplication",
+        "operatingSystem":"Web, Android, iOS, Windows, macOS",
+        "browserRequirements":"Navigateur moderne avec JavaScript",
+        "description":"Convertisseur Joules/FPS et simulateur de trajectoire de bille airsoft fondé sur le modèle ATP de Mackila.",
+        "isAccessibleForFree":true,
+        "offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},
+        "author":{"@type":"Person","name":"Quentin Guirois","alternateName":"Keep"}
+      },
+      {
+        "@type":"FAQPage",
+        "mainEntity":[
+          {"@type":"Question","name":"Comment convertir des Joules en FPS en airsoft ?","acceptedAnswer":{"@type":"Answer","text":"Il faut connaître la masse réelle de la bille. La vitesse est obtenue à partir de l'énergie cinétique E = 1/2 × m × v², puis convertie de mètres par seconde en feet per second."}},
+          {"@type":"Question","name":"Le simulateur prédit-il exactement la portée d'une réplique ?","acceptedAnswer":{"@type":"Answer","text":"Non. Il calcule un tir théorique à partir des paramètres saisis. La régularité de la réplique, le joint hop-up, les billes, le vent variable et le tireur créent des écarts sur le terrain."}},
+          {"@type":"Question","name":"Quel modèle physique est utilisé ?","acceptedAnswer":{"@type":"Answer","text":"F.A.T. applique le modèle documenté par l'Airsoft Trajectory Project de Mackila : traînée d'une sphère, effet Magnus, spin decay, gravité, densité de l'air et vent."}}
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <header class="site-header">
+    <div class="shell nav-row">
+      <a class="brand" href="/" aria-label="F.A.T., accueil">
+        <svg class="brand-mark" viewBox="0 0 120 76" aria-hidden="true" focusable="false"><path class="brand-curve" d="M6 62C30 30 62 22 78 26C96 31 106 44 112 62"/><circle class="brand-ball" cx="78" cy="26" r="13"/><path class="brand-spin" d="M60 30A20 20 0 0 1 71 15"/><line class="brand-ground" x1="2" y1="68" x2="118" y2="68"/></svg>
+        <span><strong>F.A.T<span class="brand-dot">.</span></strong><small>FPS Airsoft Trajectory</small></span>
+      </a>
+      <button class="button button-small menu-button" type="button" data-menu-button aria-expanded="false" aria-controls="menu">Menu</button>
+      <nav class="menu" id="menu" data-menu aria-label="Navigation principale">
+        <a href="/#calculateur">Calculateur</a>
+        <a href="/convertisseur-joules-fps/">Joules ↔ FPS</a>
+        <a href="/outils/choisir-gaz-airsoft-pression-temperature/">Gaz / température</a>
+        <a href="/guides/choisir-poids-bille-airsoft/">Guides</a>
+        <a href="/modele-physique-atp/">Le modèle ATP</a>
+        <a href="/a-propos/">Keep</a>
+      </nav>
+      <button class="button button-primary button-small nav-install" type="button" data-install-app hidden>Installer l’app</button>
+    </div>
+  </header>
+
+  <main id="contenu">
+    <section class="hero">
+      <div class="shell hero-grid">
+        <div>
+          <p class="eyebrow">Calculateur balistique airsoft</p>
+          <h1>Ta bille ne ment pas.<br><span>Les maths non plus.</span></h1>
+          <p class="hero-lead">Convertis Joules et FPS, règle le hop-up, ajoute le vent et visualise la trajectoire réelle de ta bille. F.A.T. transforme le modèle ATP de Mackila en outil de terrain gratuit et installable.</p>
+          <div class="button-row">
+            <a class="button button-primary" href="#calculateur">Passer mon setup au banc</a>
+            <a class="button button-ghost" href="/simulateur-3d-airsoft/" data-advanced-entry>Passer au simulateur 3D avancé</a>
+            <a class="button button-ghost" href="/modele-physique-atp/">Voir ce qu’il y a sous le capot</a>
+          </div>
+          <p class="hero-note">Pas de “+10 mètres parce que ton canon est très joli”. Seulement les paramètres que tu donnes.</p>
+        </div>
+        <div class="hero-console" aria-hidden="true">
+          <div class="console-top"><span>Simulation / ATP</span><span class="trust-tag" data-trust="estimated">Théorique</span></div>
+          <div class="console-number">1,50<small>J</small></div>
+          <div class="console-line">
+            <svg viewBox="0 0 400 90" preserveAspectRatio="none"><path d="M5 66C70 62 118 51 170 43S255 40 304 47 360 67 395 83" fill="none" stroke="var(--chart-active)" stroke-width="4"/><path d="M5 66H395" stroke="var(--ranger)" stroke-dasharray="8 8"/></svg>
+          </div>
+          <div class="console-stats"><div><small>Bille</small><strong>0,28 g</strong></div><div><small>Vitesse</small><strong>340 fps</strong></div><div><small>Hop ATP</small><strong>V/U 0,267</strong></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="trust-strip" aria-label="Caractéristiques principales">
+      <div class="shell trust-grid">
+        <div><strong>Modèle ATP</strong><span>Traînée, Magnus et rotation documentés par Mackila.</span></div>
+        <div><strong>Calcul 3D</strong><span>Hauteur, énergie, temps de vol et dérive au vent.</span></div>
+        <div><strong>100 % gratuit</strong><span>Aucun compte. Ton setup reste dans ton navigateur.</span></div>
+        <div><strong>Mode terrain</strong><span>PWA installable et calculateur disponible hors connexion.</span></div>
+      </div>
+    </section>
+
+    <section class="calculator-wrap section" id="calculateur" data-trajectory-app>
+      <div class="shell">
+        <div class="section-head">
+          <div><p class="eyebrow">Banc balistique</p><h2>Simule ton tir</h2></div>
+          <p>Entre une mesure de chronographe faite avec le grammage réellement joué. Compare ensuite plusieurs billes ou plusieurs réglages de hop-up.</p>
+        </div>
+
+        <section class="cockpit-scene" aria-labelledby="scene-title">
+          <div class="cockpit-scene-head">
+            <div class="cockpit-scene-heading">
+              <div><p class="eyebrow">Scène balistique</p><h3 id="scene-title">Trajectoire ATP</h3></div>
+              <div class="view-mode-switch" role="group" aria-label="Mode de visualisation">
+                <button type="button" aria-pressed="true" data-view-mode="2d">PROFIL 2D</button>
+                <button type="button" aria-pressed="false" data-view-mode="3d" hidden disabled><span class="view-label-desktop">VUE DRONE 3D</span><span class="view-label-mobile">OUVRIR LA 3D</span></button>
+              </div>
+            </div>
+            <div class="cockpit-scene-state">
+              <span class="trust-tag" data-trust="calculated">Calculé · ATP</span>
+              <span class="scale-chip" id="vertical-scale-chip" hidden>HAUTEUR ×10</span>
+              <span class="status-pill" id="result-status" aria-live="polite">Initialisation…</span>
+            </div>
+          </div>
+          <div class="profile-2d-view" data-profile-2d>
+            <div class="chart-tabs" role="tablist" aria-label="Donnée affichée">
+              <button type="button" role="tab" aria-selected="true" tabindex="0" data-chart-mode="trajectory">Trajectoire</button>
+              <button type="button" role="tab" aria-selected="false" tabindex="-1" data-chart-mode="sight">Écart visée</button>
+              <button type="button" role="tab" aria-selected="false" tabindex="-1" data-chart-mode="energy">Énergie</button>
+              <button type="button" role="tab" aria-selected="false" tabindex="-1" data-chart-mode="drift">Dérive</button>
+              <button type="button" role="tab" aria-selected="false" tabindex="-1" data-chart-mode="spin">Rotation</button>
+            </div>
+            <div class="chart-frame">
+              <div class="chart-viewport">
+                <canvas id="trajectory-chart" role="img" aria-label="Hauteur de la bille au-dessus du sol selon la distance" aria-describedby="chart-caption chart-reference-legend"></canvas>
+              </div>
+              <p id="chart-caption">Hauteur de la bille au-dessus du sol selon la distance.</p>
+            </div>
+            <div class="mobile-metric-dock" aria-label="Résultats essentiels">
+              <div><small>Utile</small><strong data-mobile-metric="usefulRange">—</strong></div>
+              <div><small>Impact</small><strong data-mobile-metric="maximumRange">—</strong></div>
+              <div><small>Temps 50 m</small><strong data-mobile-metric="time50">—</strong></div>
+              <div><small>Énergie 50 m</small><strong data-mobile-metric="energy50">—</strong></div>
+            </div>
+            <div class="chart-legends">
+              <ul class="comparison-list" id="comparison-list" aria-label="Courbes comparées"></ul>
+              <ul class="chart-reference-legend" id="chart-reference-legend" aria-label="Repères du graphe"></ul>
+            </div>
+          </div>
+          <div class="drone-view" data-drone-view hidden>
+            <div class="drone-host" data-drone-host></div>
+            <p class="drone-help">Glisser = orbiter · molette ou pincement = zoom · double appui = recadrer</p>
+            <div class="drone-controls" aria-label="Contrôles de la vue 3D">
+              <div class="drone-cameras" role="group" aria-label="Caméra">
+                <button type="button" aria-pressed="true" data-drone-camera="drone">DRONE</button>
+                <button type="button" aria-pressed="false" data-drone-camera="shooter">TIREUR</button>
+                <button type="button" aria-pressed="false" data-drone-camera="profile">PROFIL</button>
+              </div>
+              <button type="button" data-drone-frame>RECADRER</button>
+              <button type="button" data-drone-replay>▶ REJOUER LE TIR</button>
+              <button class="drone-exit" type="button" data-drone-exit>QUITTER LA 3D</button>
+            </div>
+            <p class="visually-hidden" data-drone-status aria-live="polite"></p>
+          </div>
+        </section>
+
+        <div class="calculator-grid">
+          <form class="control-panel" onsubmit="return false">
+            <div class="panel-title"><div><h3>Paramètres du setup</h3><p>Les valeurs sont recalculées en direct.</p></div></div>
+            <div class="preset-row" aria-label="Préréglages">
+              <button type="button" data-shot-preset='{"massG":0.2,"energyJ":0.98,"initialRpm":120000}'>Réf. Mackila · 120k</button>
+              <button type="button" data-shot-preset='{"massG":0.25,"energyJ":1}'>CQB · 1 J</button>
+              <button type="button" data-shot-preset='{"massG":0.28,"energyJ":1.5}'>AEG · 1,5 J</button>
+              <button type="button" data-shot-preset='{"massG":0.36,"energyJ":1.9}'>DMR · 1,9 J</button>
+              <button type="button" data-shot-preset='{"massG":0.45,"energyJ":2}'>Bolt · 2 J</button>
+            </div>
+
+            <div class="field-grid">
+              <div class="field"><label for="mass">Masse de bille <span>g</span></label><input id="mass" data-shot-field="massG" type="number" inputmode="decimal" min="0.12" max="0.88" step="0.01" value="0.28"></div>
+              <div class="field"><label for="energy">Énergie mesurée <span>J</span></label><input id="energy" data-shot-field="energyJ" type="number" inputmode="decimal" min="0.01" max="10" step="0.01" value="1.50"></div>
+              <div class="field"><label for="fps">Vitesse <span>FPS</span></label><input id="fps" data-shot-field="velocityFps" type="number" inputmode="numeric" min="1" max="1000" step="1"></div>
+              <div class="field"><label for="mps">Vitesse <span>m/s</span></label><input id="mps" data-shot-field="velocityMps" type="number" tabindex="-1" readonly aria-readonly="true"></div>
+              <div class="field field-wide">
+                <span class="field-label"><span>Hop-up</span><span>auto + réglage fin</span></span>
+                <div class="spin-stepper" role="group" aria-label="Réglage fin du hop-up">
+                  <button type="button" data-spin-delta="-250" aria-label="Réduire le hop-up de 250 tours par minute">−</button>
+                  <button class="spin-auto" id="spin-auto" type="button" aria-label="Revenir au hop-up automatique conseillé">
+                    <strong id="spin-setting">HOP UP AUTO</strong><span id="spin-adjustment">tir tendu conseillé</span>
+                  </button>
+                  <button type="button" data-spin-delta="250" aria-label="Augmenter le hop-up de 250 tours par minute">+</button>
+                </div>
+                <input id="rpm" data-shot-field="initialRpm" type="hidden" value="88000">
+                <small class="field-hint" id="rpm-output">Recherche du réglage tendu…</small>
+              </div>
+              <div class="field"><label for="zero">Zéro optique <span>m</span></label><input id="zero" data-shot-field="zeroDistanceM" type="number" min="5" max="150" step="1" value="35"><small class="field-hint">Ajuste la visée, pas la trajectoire</small></div>
+              <div class="field"><label for="angle">Angle du canon <span>°</span></label><input id="angle" data-shot-field="angleDeg" type="number" min="-10" max="35" step="0.1" value="0"><small class="field-hint">0° = canon horizontal</small></div>
+              <div class="field"><label for="wind">Vitesse du vent <span>km/h</span></label><input id="wind" data-shot-field="windSpeedKmh" type="number" min="0" max="100" step="1" value="0"></div>
+              <div class="field"><label for="wind-angle">Direction du vent <span>°</span></label><select id="wind-angle" data-shot-field="windAngleDeg"><option value="0">0° · de face</option><option value="45">45° · face/droite</option><option value="90">90° · de droite</option><option value="135">135° · dos/droite</option><option value="180">180° · de dos</option><option value="225">225° · dos/gauche</option><option value="270">270° · de gauche</option><option value="315">315° · face/gauche</option></select></div>
+
+              <details class="advanced">
+                <summary>Atmosphère, optique et paramètres avancés</summary>
+                <div class="field-grid">
+                  <div class="field"><label for="temperature">Température <span>°C</span></label><input id="temperature" data-shot-field="temperatureC" type="number" min="-30" max="55" step="1" value="20"></div>
+                  <div class="field"><label for="pressure">Pression <span>hPa</span></label><input id="pressure" data-shot-field="pressureHpa" type="number" min="700" max="1100" step="1" value="1013.25"></div>
+                  <div class="field"><label for="height">Hauteur de tir <span>m</span></label><input id="height" data-shot-field="shootingHeightM" type="number" min="0.1" max="3" step="0.05" value="1.5"></div>
+                  <div class="field"><label for="scope-height">Hauteur de l’optique <span>m</span></label><input id="scope-height" data-shot-field="scopeHeightM" type="number" min="0" max="0.2" step="0.005" value="0.05"></div>
+                  <div class="field"><label for="cant">Inclinaison latérale <span>°</span></label><input id="cant" data-shot-field="cantDeg" type="number" min="-90" max="90" step="1" value="0"></div>
+                  <div class="field"><label for="latitude">Latitude <span>°</span></label><input id="latitude" data-shot-field="latitudeDeg" type="number" min="-90" max="90" step="1" value="47"></div>
+                  <div class="field"><label for="diameter">Diamètre bille <span>mm</span></label><input id="diameter" data-shot-field="diameterMm" type="number" min="5.85" max="6.1" step="0.01" value="6"></div>
+                </div>
+              </details>
+            </div>
+
+            <div class="control-actions">
+              <button class="button button-primary button-small" id="compare-shot" type="button">Ajouter à la comparaison</button>
+              <button class="button button-small" id="share-shot" type="button">Partager le setup</button>
+              <button class="button button-ghost button-small" id="reset-shot" type="button">Réinitialiser</button>
+            </div>
+            <p id="share-feedback" aria-live="polite"></p>
+          </form>
+
+          <section class="result-panel" aria-labelledby="results-title">
+            <div class="panel-title"><div><h3 id="results-title">Résultats du tir</h3><p>La portée utile suit l’enveloppe ATP de ±15,24 cm autour de la visée.</p></div><span class="trust-tag result-trust" data-trust="calculated">Calculé · ATP</span></div>
+            <div class="metric-grid">
+              <div class="metric metric-primary"><small>Portée utile ATP</small><strong data-metric="usefulRange">—</strong></div>
+              <div class="metric"><small>Portée maximale</small><strong data-metric="maximumRange">—</strong></div>
+              <div class="metric"><small>Temps à 50 m</small><strong data-metric="time50">—</strong></div>
+              <div class="metric"><small>Énergie à 50 m</small><strong data-metric="energy50">—</strong></div>
+              <div class="metric"><small>Énergie bouche</small><strong data-metric="muzzleEnergy">—</strong></div>
+              <div class="metric"><small>Dérive à 50 m</small><strong data-metric="drift50">—</strong></div>
+              <div class="metric"><small>Rotation initiale de la bille (effet hop-up)</small><strong data-metric="rpm">—</strong></div>
+              <div class="metric"><small>Angle du canon</small><strong data-metric="cannonAngle">—</strong></div>
+            </div>
+
+            <details class="data-block">
+              <summary>Afficher la table de contre-visée</summary>
+              <div class="table-scroll">
+                <table>
+                  <thead><tr><th>Distance</th><th>Écart visée</th><th>Correction</th><th>Énergie</th><th>Temps</th><th>Dérive</th></tr></thead>
+                  <tbody id="holdover-body"></tbody>
+                </table>
+              </div>
+            </details>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="shell">
+        <div class="section-head"><div><p class="eyebrow">Pas qu’un convertisseur</p><h2>Comprendre avant d’upgrader</h2></div><p>F.A.T. relie la mesure au chrony à ce qui se passe après la sortie du canon. C’est là que la masse, le spin et l’air commencent leur petite négociation musclée.</p></div>
+        <div class="card-grid">
+          <article class="card"><span class="card-number">07 / Gaz</span><h3>Choisir son gaz selon la température</h3><p>Compare 49 références au même degré, retrouve leur pression source et distingue mesure, interpolation, estimation et extrapolation.</p><a class="card-link" href="/outils/choisir-gaz-airsoft-pression-temperature/">Estimer la pression →</a></article>
+          <article class="card"><span class="card-number">01 / Énergie</span><h3>Joules, FPS et m/s</h3><p>Convertis une mesure avec le bon grammage et évite le grand classique : comparer des FPS obtenus avec deux billes différentes.</p><a class="card-link" href="/convertisseur-joules-fps/">Ouvrir le convertisseur →</a></article>
+          <article class="card"><span class="card-number">02 / Grammage</span><h3>Choisir son poids de bille</h3><p>Une bille lourde part moins vite à énergie égale, mais garde mieux sa vitesse et son énergie dans la deuxième moitié du trajet.</p><a class="card-link" href="/guides/choisir-poids-bille-airsoft/">Comparer les grammages →</a></article>
+          <article class="card"><span class="card-number">03 / Hop-up</span><h3>Régler sans invoquer les esprits</h3><p>Le bon réglage ne cherche pas la plus grande cloche. Il cherche une trajectoire exploitable, régulière et cohérente avec ta distance de jeu.</p><a class="card-link" href="/guides/regler-hop-up-airsoft/">Régler le hop-up →</a></article>
+          <article class="card"><span class="card-number">04 / Portée</span><h3>Portée utile ou bille touristique ?</h3><p>La portée maximale dit où la bille touche le sol. La portée utile dit jusqu’où elle reste proche de ta ligne de visée.</p><a class="card-link" href="/guides/portee-airsoft/">Comprendre la portée →</a></article>
+          <article class="card"><span class="card-number">05 / Chrony</span><h3>Joule Creep</h3><p>Une conversion mathématique conserve l’énergie. Une vraie réplique à gaz, HPA ou gros volume peut en produire davantage avec une bille lourde.</p><a class="card-link" href="/guides/joule-creep-airsoft/">Éviter le piège →</a></article>
+          <article class="card"><span class="card-number">06 / Physique</span><h3>Le modèle ATP de Mackila</h3><p>Les équations, les hypothèses, les limites et les choix d’implémentation sont documentés. La magie reste réservée aux moteurs qui gagnent 20 m au marketing.</p><a class="card-link" href="/modele-physique-atp/">Lire la documentation →</a></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-tight">
+      <div class="shell content-grid">
+        <div class="prose">
+          <p class="eyebrow">Ce que calcule F.A.T.</p>
+          <h2>De la bouche au dernier mètre</h2>
+          <p>La conversion Joules/FPS n’est que le point de départ. Une fois dans l’air, la bille perd de la vitesse sous l’effet de la traînée. Le backspin appliqué par le hop-up crée une portance par effet Magnus. La rotation diminue elle aussi, tandis que le vent change la vitesse de l’air rencontrée et pousse la bille latéralement.</p>
+          <p>Le calculateur intègre ces forces par petits pas de temps. Il estime la position, la vitesse, l’énergie, le temps de vol et la rotation tout au long du tir. L’angle du canon est exactement celui que tu saisis : 0° produit un départ horizontal et le zéro optique ne modifie que la ligne de visée. Le résultat n’est pas une promesse commerciale : c’est une expérience numérique reproductible.</p>
+          <h3>Ce que le simulateur ne connaît pas</h3>
+          <p>Il ne voit ni la qualité de ton joint, ni une bille ovalisée, ni un canon sale, ni la rafale de vent entre deux palettes. Il ne sait pas non plus si tu penches la réplique sans t’en rendre compte. Utilise-le pour comparer des hypothèses et préparer un réglage, puis valide toujours au chronographe et sur une zone de tir adaptée.</p>
+        </div>
+        <aside class="toc" aria-label="Repères du modèle"><strong>Repères ATP</strong><ol><li><a href="/modele-physique-atp/#trainee">Traînée aérodynamique</a></li><li><a href="/modele-physique-atp/#magnus">Effet Magnus</a></li><li><a href="/modele-physique-atp/#spin">Décroissance du spin</a></li><li><a href="/modele-physique-atp/#vent">Vent et dérive</a></li><li><a href="/modele-physique-atp/#limites">Limites du modèle</a></li></ol></aside>
+      </div>
+    </section>
+
+    <section class="section-tight">
+      <div class="shell author-card">
+        <img src="/assets/img/quentin-guirois.jpg" width="2051" height="2478" loading="lazy" decoding="async" alt="Keep en tenue d’airsoft sur le terrain">
+        <div><h2>Keep, derrière le clavier et sur le terrain</h2><p>Quentin Guirois est développeur web et airsofteur. Il a créé F.A.T. pour rendre les travaux de Mackila manipulables sans ouvrir MATLAB entre deux parties — parce qu’un sac d’hydratation est déjà assez lourd.</p><a href="/a-propos/">Qui est Keep et pourquoi cet outil ? →</a></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="shell">
+        <div class="section-head"><div><p class="eyebrow">Questions fréquentes</p><h2>Avant de sortir le chrony</h2></div><a href="/faq-airsoft-balistique/">Voir toute la FAQ</a></div>
+        <div class="faq-list">
+          <details><summary>Comment convertir des Joules en FPS en airsoft ?</summary><p>Il faut saisir la masse de la bille. F.A.T. applique l’énergie cinétique <strong>E = ½mv²</strong>, puis convertit la vitesse en FPS. Sans grammage, une valeur en FPS ne dit pas toute la puissance du tir.</p></details>
+          <details><summary>La portée calculée est-elle garantie sur le terrain ?</summary><p>Non. Le résultat décrit le tir théorique saisi. Le vent irrégulier, la dispersion, le montage hop-up, la qualité des billes et le tireur ajoutent des écarts. Le simulateur est un banc de comparaison, pas un certificat de portée.</p></details>
+          <details><summary>Pourquoi un faible hop-up peut-il faire plonger la bille ?</summary><p>Le polynôme ATP prévoit une zone de portance négative lorsque le ratio entre vitesse de surface et vitesse linéaire est trop faible. C’est le Reverse Magnus : un peu de spin mal placé peut être moins favorable que pas de spin.</p></details>
+          <details><summary>Pourquoi mesurer avec le grammage joué ?</summary><p>Parce qu’une réplique réelle peut présenter du Joule Creep. La conversion suppose une énergie constante ; elle ne remplace donc pas une mesure au chronographe avec la bille utilisée en partie.</p></details>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-tight">
+      <div class="shell cta-panel">
+        <p class="eyebrow">PWA / mode terrain</p>
+        <h2>Installe F.A.T. avant que le réseau ne disparaisse derrière le bunker.</h2>
+        <p>L’application s’ajoute à l’écran d’accueil et conserve le moteur principal hors connexion. Aucun store, aucun compte, aucun “mot de passe oublié” à 8 h 12 au briefing.</p>
+        <div class="button-row"><button class="button button-primary" type="button" data-install-app>Installer F.A.T.</button><a class="button" href="#calculateur">Continuer dans le navigateur</a></div>
+        <p data-install-help hidden>Sur iPhone : bouton Partager, puis « Sur l’écran d’accueil ». Sur Android : menu du navigateur, puis « Installer l’application ».</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="calculation-loader" data-calculation-loader data-mode="fullscreen" data-state="idle" role="status" aria-live="polite" aria-atomic="true" hidden>
+    <div class="calculation-loader-panel">
+      <div class="calculation-loader-visual" aria-hidden="true">
+        <div class="calculation-loader-mark">
+          <svg viewBox="0 0 120 76"><path class="loader-curve-base" d="M6 62C30 30 62 22 78 26C96 31 106 44 112 62"/><path class="loader-curve-active" pathLength="100" d="M6 62C30 30 62 22 78 26C96 31 106 44 112 62"/><line class="loader-ground" x1="2" y1="70" x2="118" y2="70"/></svg>
+          <span class="calculation-loader-ball"></span>
+        </div>
+      </div>
+      <div class="calculation-loader-lockup"><div class="calculation-loader-name">F.A.T<span>.</span></div><div class="calculation-loader-subtitle">FPS Airsoft Trajectory</div></div>
+      <div class="calculation-loader-progress" data-loader-progress role="progressbar" aria-label="Progression du calcul" aria-valuemin="0" aria-valuemax="100" aria-valuenow="4"><span data-loader-bar></span></div>
+      <p class="calculation-loader-status"><span data-loader-phrase>Réveil du Web Worker…</span><span data-loader-percent>4 %</span></p>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="shell">
+      <div class="footer-grid">
+        <div><a class="brand" href="/"><strong>F.A.T.</strong></a><p>Le calculateur balistique airsoft qui préfère une hypothèse annoncée à une portée racontée.</p></div>
+        <div><h2>Outils</h2><ul><li><a href="/#calculateur">Simulateur de trajectoire</a></li><li><a href="/convertisseur-joules-fps/">Convertisseur Joules/FPS</a></li><li><a href="/simulateur-trajectoire-airsoft/">Mode d’emploi</a></li></ul></div>
+        <div><h2>Guides</h2><ul><li><a href="/guides/choisir-poids-bille-airsoft/">Poids de bille</a></li><li><a href="/guides/regler-hop-up-airsoft/">Réglage hop-up</a></li><li><a href="/guides/portee-airsoft/">Portée airsoft</a></li><li><a href="/guides/joule-creep-airsoft/">Joule Creep</a></li></ul></div>
+        <div><h2>Projet</h2><ul><li><a href="/modele-physique-atp/">Modèle ATP & Mackila</a></li><li><a href="/a-propos/">À propos de Keep</a></li><li><a href="/faq-airsoft-balistique/">FAQ</a></li></ul></div>
+      </div>
+      <div class="footer-bottom"><span>© 2026 Quentin Guirois — F.A.T.</span><span>Mesure au chrony et règles de l’organisateur toujours prioritaires.</span></div>
+    </div>
+  </footer>
+  <a class="mobile-cta" href="#calculateur">Simuler mon setup</a>
+  <script type="module" src="/site.js"></script>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10140c">
+  <title>Convertisseur Joules FPS Airsoft gratuit | F.A.T.</title>
+  <meta name="description" content="Convertissez instantanément Joules, FPS et m/s selon le poids réel de votre bille airsoft. Formule, tableau et précautions contre le Joule Creep.">
+  <meta name="robots" content="index,follow,max-image-preview:large"><link rel="canonical" href="https://fps-airsoft-trajectory.com/convertisseur-joules-fps/">
+  <link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml"><script>(()=>{const e=document.documentElement;let m='system';try{m=localStorage.getItem('fat-theme')||m}catch{}if(!['system','dark','light'].includes(m))m='system';const d=m==='dark'||(m==='system'&&(!window.matchMedia||matchMedia('(prefers-color-scheme: dark)').matches));const t=d?'dark':'light';e.dataset.themeMode=m;e.dataset.theme=t;e.style.colorScheme=t;document.querySelector('meta[name="theme-color"]').content=d?'#10140c':'#eef0e2'})()</script><link rel="stylesheet" href="/assets/site.css">
+  <meta property="og:type" content="article"><meta property="og:title" content="Convertisseur Joules FPS Airsoft"><meta property="og:description" content="Une conversion propre, avec le vrai grammage. Le chrony te dira merci."><meta property="og:url" content="https://fps-airsoft-trajectory.com/convertisseur-joules-fps/"><meta property="og:image" content="https://fps-airsoft-trajectory.com/assets/img/partage-fat.png">
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Convertisseur Joules FPS Airsoft F.A.T.","url":"https://fps-airsoft-trajectory.com/convertisseur-joules-fps/","applicationCategory":"SportsApplication","isAccessibleForFree":true,"inLanguage":"fr-FR"},{"@type":"Article","headline":"Convertisseur Joules FPS Airsoft","author":{"@type":"Person","name":"Quentin Guirois","alternateName":"Keep"},"dateModified":"2026-07-17","mainEntityOfPage":"https://fps-airsoft-trajectory.com/convertisseur-joules-fps/"}]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <header class="site-header"><div class="shell nav-row"><a class="brand" href="/"><svg class="brand-mark" viewBox="0 0 120 76" aria-hidden="true" focusable="false"><path class="brand-curve" d="M6 62C30 30 62 22 78 26C96 31 106 44 112 62"/><circle class="brand-ball" cx="78" cy="26" r="13"/><path class="brand-spin" d="M60 30A20 20 0 0 1 71 15"/><line class="brand-ground" x1="2" y1="68" x2="118" y2="68"/></svg><span><strong>F.A.T<span class="brand-dot">.</span></strong><small>FPS Airsoft Trajectory</small></span></a><button class="button button-small menu-button" type="button" data-menu-button aria-expanded="false">Menu</button><nav class="menu" data-menu aria-label="Navigation principale"><a href="/#calculateur">Calculateur</a><a aria-current="page" href="/convertisseur-joules-fps/">Joules ↔ FPS</a><a href="/guides/choisir-poids-bille-airsoft/">Guides</a><a href="/modele-physique-atp/">Le modèle ATP</a><a href="/a-propos/">Keep</a></nav></div></header>
+  <main id="contenu">
+    <header class="article-hero"><div class="shell"><ol class="breadcrumbs"><li><a href="/">Accueil</a></li><li>Convertisseur Joules FPS</li></ol><p class="eyebrow">Outil airsoft gratuit</p><h1>Convertisseur Joules ↔ FPS</h1><p class="article-lead">Entre le poids réel de ta bille, puis une énergie ou une vitesse. Le calcul part dans les deux sens, sans tableau illisible et sans supposer que tout le monde joue en 0,20 g.</p><div class="article-meta"><span>Calcul instantané</span><span>FPS · m/s · Joules</span><span>Aucune donnée envoyée</span></div></div></header>
+
+    <section class="section-tight"><div class="shell">
+      <div class="converter" data-converter>
+        <div class="field"><label for="convert-mass">Poids de bille <span>g</span></label><input id="convert-mass" data-convert-mass type="number" min="0.12" max="0.88" step="0.01" value="0.28"></div>
+        <div class="field"><label for="convert-energy">Énergie <span>J</span></label><input class="converter-result" id="convert-energy" data-convert-energy type="number" min="0" max="10" step="0.01" value="1.50"></div>
+        <div class="field"><label for="convert-fps">Vitesse <span>FPS</span></label><input class="converter-result" id="convert-fps" data-convert-fps type="number" min="0" max="1000" step="1"></div>
+        <div class="field"><label for="convert-mps">Vitesse <span>m/s</span></label><input id="convert-mps" data-convert-mps readonly tabindex="-1"></div>
+      </div>
+      <div class="callout callout-warning"><strong>La conversion n’est pas un passage au chrony.</strong> Elle suppose que l’énergie reste identique lorsque le grammage change. Une vraie réplique peut présenter du Joule Creep : mesure toujours avec la bille utilisée en jeu.</div>
+    </div></section>
+
+    <section class="section-tight"><div class="shell content-grid"><article class="prose">
+      <h2 id="formule">Comment convertir les Joules en FPS ?</h2>
+      <p>En airsoft, les Joules expriment l’énergie cinétique de la bille et les FPS sa vitesse en pieds par seconde. Les deux valeurs sont liées, mais il manque une donnée indispensable pour passer de l’une à l’autre : <strong>la masse de la bille</strong>. À 1 Joule, une bille de 0,20 g et une bille de 0,40 g n’ont pas la même vitesse. La seconde est plus lente, puisque deux fois plus lourde.</p>
+      <p class="formula">E = ½ × m × v²<br>v = √(2E ÷ m)<br>1 m/s = 3,28084 FPS</p>
+      <p>La masse doit être convertie en kilogrammes avant le calcul : 0,28 g devient 0,00028 kg. F.A.T. effectue ces conversions automatiquement. Si tu saisis 1,50 J avec une bille de 0,28 g, l’outil calcule d’abord la vitesse en mètres par seconde, puis la convertit en FPS.</p>
+
+      <h2 id="chrony">Quelle valeur entrer après un passage au chronographe ?</h2>
+      <p>Entre la mesure obtenue <strong>avec le grammage réellement utilisé</strong>. Si ton chronographe affiche 310 FPS avec de la 0,32 g, ne sélectionne pas 0,20 g sous prétexte que les tableaux de puissance historiques utilisent cette référence. Tu créerais artificiellement une énergie qui ne correspond pas au tir mesuré.</p>
+      <p>Pour comparer plusieurs répliques, les Joules sont plus pratiques que les FPS car ils intègrent la masse. Pour simuler une trajectoire, conserve les deux informations d’origine : la masse et l’énergie — ou la vitesse — mesurées ensemble.</p>
+
+      <h2 id="tableau">Pourquoi les tableaux FPS/Joules peuvent-ils tromper ?</h2>
+      <p>Un tableau n’est pas faux s’il indique clairement le grammage utilisé. Le problème apparaît lorsqu’une colonne “FPS” circule sans contexte. Par exemple, 350 FPS en 0,20 g correspondent à environ 1,14 J. Les mêmes 350 FPS en 0,32 g correspondent à environ 1,82 J. Le nombre est identique ; le tir ne l’est vraiment pas.</p>
+      <p>Un second piège consiste à utiliser un tableau pour prédire ce que fera une réplique après un changement de bille. La formule peut calculer la vitesse théorique à énergie constante, mais la mécanique réelle de la réplique peut modifier cette énergie. C’est précisément le terrain du <a href="/guides/joule-creep-airsoft/">Joule Creep</a>.</p>
+
+      <h2 id="limites">Conversion théorique et mesure réelle</h2>
+      <p>Le convertisseur répond à une question mathématique : “quelle vitesse correspond à cette énergie pour cette masse ?”. Il ne répond pas à la question mécanique : “quelle énergie ma réplique délivrera-t-elle avec cette bille ?”. Cette deuxième réponse dépend notamment du volume d’air, du système propulsif, du canon, de l’étanchéité, du réglage hop-up et du temps pendant lequel la bille reste accélérée.</p>
+      <p>La bonne méthode est simple : mesure d’abord, convertis ensuite si tu as besoin d’une autre unité, puis utilise le <a href="/#calculateur">simulateur de trajectoire</a> pour comparer les performances extérieures.</p>
+    </article><aside class="toc"><strong>Dans ce guide</strong><ol><li><a href="#formule">La formule</a></li><li><a href="#chrony">Mesure au chrony</a></li><li><a href="#tableau">Pièges des tableaux</a></li><li><a href="#limites">Limites de la conversion</a></li></ol></aside></div></section>
+
+    <section class="section-tight"><div class="shell cta-panel"><p class="eyebrow">Étape suivante</p><h2>La vitesse de bouche est connue. Voyons ce qu’il en reste à 50 mètres.</h2><p>Envoie la masse, l’énergie et ton réglage hop-up au moteur ATP pour visualiser la trajectoire, le temps de vol et l’énergie résiduelle.</p><a class="button button-primary" href="/#calculateur">Simuler la trajectoire</a></div></section>
+  </main>
+  <footer class="site-footer"><div class="shell"><div class="footer-grid"><div><a class="brand" href="/"><strong>F.A.T<span class="brand-dot">.</span></strong></a><p>Calculateur balistique airsoft gratuit par Keep.</p></div><div><h2>Outils</h2><ul><li><a href="/#calculateur">Simulateur</a></li><li><a href="/convertisseur-joules-fps/">Joules/FPS</a></li></ul></div><div><h2>Guides</h2><ul><li><a href="/guides/choisir-poids-bille-airsoft/">Poids de bille</a></li><li><a href="/guides/regler-hop-up-airsoft/">Hop-up</a></li></ul></div><div><h2>Projet</h2><ul><li><a href="/modele-physique-atp/">Modèle ATP</a></li><li><a href="/a-propos/">À propos</a></li></ul></div></div><div class="footer-bottom"><span>© 2026 Quentin Guirois</span><span>La mesure au chronographe reste la référence.</span></div></div></footer>
+  <a class="mobile-cta" href="/#calculateur">Simuler mon setup</a><script type="module" src="/site.js"></script>
+</body></html>
+
