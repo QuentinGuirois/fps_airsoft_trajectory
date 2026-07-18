@@ -51,6 +51,16 @@ function command(executable, args, options = {}) {
   return result.stdout;
 }
 
+function promoteTestAdmin(email) {
+  const script = [
+    '$pdo = new PDO(getenv("DB_DSN"), getenv("DB_USER"), getenv("DB_PASSWORD"));',
+    '$statement = $pdo->prepare("UPDATE users SET role = \'admin\' WHERE email = :email");',
+    '$statement->execute([":email" => $argv[1]]);',
+    'if ($statement->rowCount() !== 1) { fwrite(STDERR, "Compte de test admin introuvable.\\n"); exit(1); }',
+  ].join(' ');
+  command(PHP, ['-r', script, email]);
+}
+
 function resetDatabase() {
   if (process.env.FAT_TEST_SKIP_DB_RESET !== 'true') {
     command('docker', ['exec', 'fat-mariadb-test', 'mariadb', '-uroot', '-pfat_local_root_only', '-e',
@@ -194,7 +204,7 @@ try {
   await api(`/replicas/${cardId}/submit`, { method: 'POST', auth: true, expected: 409, body: { version: 1 } });
   await api('/admin/replicas', { auth: true, expected: 403 });
 
-  command('docker', ['exec', 'fat-mariadb-test', 'mariadb', '-uroot', '-pfat_local_root_only', 'fat_test', '-e', "UPDATE users SET role='admin' WHERE email='bravo@example.test'"]);
+  promoteTestAdmin('bravo@example.test');
   await api('/auth/logout', { method: 'POST', auth: true, expected: 204 });
   cookie = ''; csrf = '';
   const adminLogin = await api('/auth/login', { method: 'POST', body: { identity: 'bravo@example.test', password: 'MotDePasseBravo123', turnstileToken: turnstileToken('login') } });

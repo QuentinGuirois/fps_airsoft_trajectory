@@ -67,4 +67,6 @@ test('les tests API restent portables entre Windows local et Linux CI', async ()
   assert.match(api, /FAT_TEST_DB_DSN/);
   assert.match(api, /FAT_TEST_SKIP_DB_RESET/);
   assert.match(api, /join\(ROOT, 'storage', 'logs', 'mail-test\.jsonl'\)/);
+  assert.doesNotMatch(api, /docker[^\n]+fat-mariadb-test[^\n]+UPDATE users/);
+  assert.match(api, /new PDO\(getenv\("DB_DSN"\)/);
 });
