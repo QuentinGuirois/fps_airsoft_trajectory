@@ -18,3 +18,5 @@ venv/
 *.failed
 server/background-removal/queue/
 server/background-removal/public/
+storage/*
+!storage/README.md

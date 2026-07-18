@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 import sys
 import tempfile
@@ -100,6 +101,15 @@ class BackgroundRemovalTests(unittest.TestCase):
     def test_threads_are_bounded(self):
         self.assertEqual(worker.configure_threads(0), 1)
         self.assertEqual(worker.configure_threads(99), 4)
+
+    def test_worker_event_is_atomic_and_contains_no_intermediate(self):
+        with tempfile.TemporaryDirectory() as directory_name:
+            directory = Path(directory_name)
+            job_id = "11111111-1111-4111-8111-111111111111"
+            worker.write_event(directory, job_id, {"jobId": job_id, "status": "rejected", "code": "fixture"})
+            payload = json.loads((directory / f"{job_id}.json").read_text(encoding="utf-8"))
+            self.assertEqual(payload["status"], "rejected")
+            self.assertFalse(list(directory.glob("*.tmp")))
 
     def test_mpo_suffix_is_accepted_as_a_real_decoded_format(self):
         self.assertIn(".mpo", worker.ALLOWED_EXTENSIONS)

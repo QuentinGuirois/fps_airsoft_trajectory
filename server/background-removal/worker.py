@@ -9,6 +9,8 @@ import io
 import json
 import math
 import os
+import re
+import secrets
 import signal
 import sys
 import tempfile
@@ -457,7 +459,7 @@ def encode_webp(image) -> EncodedImage:
 
 def atomic_write(public_directory: Path, encoded: EncodedImage) -> Path:
     public_directory.mkdir(parents=True, exist_ok=True)
-    destination = public_directory / f"{encoded.sha256[:24]}.webp"
+    destination = public_directory / f"{secrets.token_hex(12)}.webp"
     with tempfile.NamedTemporaryFile(dir=public_directory, suffix=".tmp", delete=False) as handle:
         temporary = Path(handle.name)
         handle.write(encoded.data)
@@ -582,6 +584,24 @@ def public_result(result: ProcessedImage) -> dict:
     return payload
 
 
+def write_event(events_directory: Path | None, job_id: str, payload: dict) -> None:
+    """Écrit un résultat de worker atomique, privé et rejouable par le réconciliateur PHP."""
+    if events_directory is None:
+        return
+    if not re.fullmatch(r"[a-f0-9-]{36}", job_id):
+        raise ProcessingRejected("job_id", "identifiant de job invalide")
+    events_directory.mkdir(parents=True, exist_ok=True)
+    destination = events_directory / f"{job_id}.json"
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=events_directory, suffix=".tmp", delete=False) as handle:
+        temporary = Path(handle.name)
+        json.dump(payload, handle, ensure_ascii=False, separators=(",", ":"))
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(temporary, destination)
+    with contextlib.suppress(OSError):
+        os.chmod(destination, 0o600)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--queue", type=Path, required=True)
@@ -591,6 +611,7 @@ def main() -> int:
     parser.add_argument("--drain", action="store_true")
     parser.add_argument("--sleep", type=float, default=10)
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT_SECONDS)
+    parser.add_argument("--events", type=Path)
     args = parser.parse_args()
 
     configure_threads()
@@ -606,6 +627,8 @@ def main() -> int:
     quality_session = new_session(quality_model)
     args.queue.mkdir(parents=True, exist_ok=True)
     args.public.mkdir(parents=True, exist_ok=True)
+    if args.events is not None:
+        args.events.mkdir(parents=True, exist_ok=True)
 
     with single_worker_lock(args.queue):
         while True:
@@ -621,6 +644,7 @@ def main() -> int:
                 continue
 
             source = candidates[0]
+            job_id = source.stem
             working = source
             started = time.monotonic()
             try:
@@ -633,21 +657,30 @@ def main() -> int:
                     quality_session,
                     timeout_seconds=args.timeout,
                 )
-                print(json.dumps({**public_result(result), "seconds": round(time.monotonic() - started, 3)}), flush=True)
+                payload = {**public_result(result), "jobId": job_id, "seconds": round(time.monotonic() - started, 3)}
+                write_event(args.events, job_id, payload)
+                print(json.dumps(payload), flush=True)
             except ProcessingRejected as error:
-                print(json.dumps({
+                payload = {
                     "status": "rejected",
+                    "jobId": job_id,
                     "code": error.code,
                     "message": str(error),
                     "seconds": round(time.monotonic() - started, 3),
-                }), file=sys.stderr, flush=True)
+                }
+                write_event(args.events, job_id, payload)
+                print(json.dumps(payload), file=sys.stderr, flush=True)
             except Exception as error:  # aucun fichier fautif ne doit tuer la file
-                print(json.dumps({
+                payload = {
                     "status": "rejected",
+                    "jobId": job_id,
                     "code": "internal",
                     "message": type(error).__name__,
                     "seconds": round(time.monotonic() - started, 3),
-                }), file=sys.stderr, flush=True)
+                }
+                with contextlib.suppress(Exception):
+                    write_event(args.events, job_id, payload)
+                print(json.dumps(payload), file=sys.stderr, flush=True)
             finally:
                 # Succès ou refus : l'upload et le fichier .processing disparaissent.
                 working.unlink(missing_ok=True)

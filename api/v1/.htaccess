@@ -1,0 +1,9 @@
+Options -Indexes
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [QSA,L]
+
+<IfModule mod_headers.c>
+  Header always set Cache-Control "no-store, private, max-age=0"
+  Header always set X-Robots-Tag "noindex, nofollow, noarchive"
+</IfModule>
