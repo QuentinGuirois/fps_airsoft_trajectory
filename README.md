@@ -1,63 +1,63 @@
-# FPS Airsoft Trajectory Calculator
+# F.A.T. v3 — FPS Airsoft Trajectory
 
-This project provides a web-based tool to simulate the trajectory of an airsoft BB. The calculation is performed in `trajectory.worker.js` using a simplified model of drag, lift and spin decay.
+Site statique, PWA et calculateur balistique airsoft en français. Le moteur reprend les relations documentées par l’Airsoft Trajectory Project de Mackila, reconstruit les coefficients de spin decay absents à partir de ses figures de référence et exécute le vol en trois dimensions dans un Web Worker.
 
-## Physics Model
+## Démarrage
 
-The motion of the BB is updated every `dt` seconds (default `0.0001`). A BB of mass `m` and radius `r` experiences gravity, aerodynamic drag, lift due to the hop-up induced backspin, and gradual decay of that spin.
+Prérequis : Node.js 20+ et Python 3 pour le serveur local.
 
-### Drag
-The drag force is computed using the standard quadratic form
-
+```bash
+npm test
+npm run serve
 ```
-F_drag = 0.5 * rho * C_d * A * V^2
-```
-where `rho` is the air density, `A = πr^2` the cross-sectional area and `V` the speed of the BB. The drag coefficient `C_d` depends on the Reynolds number and the spin ratio:
 
-```
-ratio = (ω * r) / V
-Re = (2 * r * rho * V) / μ
-```
-`computeCd` in `trajectory.worker.js` evaluates a rational polynomial in `ratio` and `Re` to approximate experimental values【F:trajectory.worker.js†L43-L79】.
+Ouvrir <http://localhost:8080>. Ne pas ouvrir `index.html` directement : les modules ES, le Worker et le service worker nécessitent HTTP(S).
 
-### Lift
-Lift due to backspin uses an analogous formula
+## Structure
 
-```
-F_lift = 0.5 * rho * C_l * A * V^2
-```
-with `C_l` obtained from another rational polynomial in the spin ratio【F:trajectory.worker.js†L23-L41】. To prevent unrealistic behaviour, the code caps the magnitude of the lift force to five times the BB weight【F:trajectory.worker.js†L129-L133】.
+- `physics-core.js` : coefficients ATP, intégrateur RK4, vent, zérotage et métriques ;
+- `trajectory.worker.js` : exécution du calcul hors du thread principal ;
+- `app.js` : interface du banc balistique, comparaisons, graphique Canvas et partage ;
+- `site.js` : navigation, PWA et convertisseurs simples ;
+- `gas-pressure-tool.js` : sélection, lecture directe des courbes et conversion PSI/bar ;
+- `gas-pressure-app.js` : interface, URL partageable, stockage local et partage natif ;
+- `data/green-gas-pressure-curves.json` : 49 produits, 35 courbes uniques et 56 températures par produit ;
+- `outils/choisir-gaz-airsoft-pression-temperature/` : page-outil gaz, contenu et FAQ ;
+- `assets/site.css` : charte et composants responsives ;
+- `service-worker.js` / `manifest.webmanifest` : installation et cache hors ligne ;
+- `guides/` : contenus SEO de lancement ;
+- `docs/strategie-seo.md` : arborescence et plan de croissance ;
+- `docs/moteur-atp.md` : décisions techniques du moteur ;
+- `tests/` : tests physiques et vérification des pages/liens.
 
-### Spin Decay
-Backspin decreases over time due to air friction. The torque applied to the spinning BB is
+Le calculateur gaz consomme le pack V2 validé dans `docs/green-gas-research-pack-v2/`. Les variantes sèches/lubrifiées restent des produits distincts ; `curveGroupId` identifie les 35 courbes physiques partagées et `packagingOptions` décrit les formats sans modifier la pression.
 
-```
-T = computeTorque(ω, r, rho, μ) * 10
-```
-`computeTorque` switches between laminar and turbulent regimes based on the rotational Reynolds number and returns an empirical expression derived from mackila.com's studies【F:trajectory.worker.js†L82-L89】. The factor of `10` is an empirical scaling used to match observed spin decay rates. Angular acceleration is then `α = -T/I` where `I = (2/5) m r^2`.
+## Référence ATP
 
-### Motion Update
-The velocities are updated each step via
+Le spin interne est exprimé en tr/min, unité employée dans les graphes de Mackila. L’interface calcule automatiquement le réglage qui maximise le trajet dans l’enveloppe tendue ATP, puis propose des corrections de ±250 tr/min. Le cas de validation principal reste une bille de 0,20 g tirée à 0,98 J avec 120 000 tr/min : après une seconde, les tests vérifient environ 30 000 tr/min, `V/U ≈ 0,421` et `Cl ≈ 0,034`, conformément aux figures III-A-02 à III-A-04.
 
-```
-ax = F_drag_x / m
-ay = (F_drag_y + F_lift) / m - g
-```
-The spin `ω` is updated using `α` and never allowed to drop below zero【F:trajectory.worker.js†L137-L155】.
+Mackila n’a pas publié les coefficients complets de son couple modifié. La formule textuelle reste disponible dans `publishedRotationalTorque()` pour audit ; le solveur utilise la loi différentielle reconstruite et documentée dans `docs/moteur-atp.md`.
 
-## Reference Sources
-- [mackila.com - Airsoft Trajectory Project](https://mackila.com/airsoft/ATP/)
-- Standard fluid dynamics relations for drag and lift.
-- The following acknowledgement appears in `index.html`:
+## Déploiement
 
-> pour avoir contribué directement, et indirectement à ce projet. Mention spéciale à mackila.com,
-> un passionné resté longtemps dans l'ombre mais qui a révolutionné notre univers. Merci à lui, au nom de tous.tes.【F:index.html†L483-L495】
+Copier le contenu du dossier à la racine HTTPS de `fps-airsoft-trajectory.com`. Le serveur doit :
 
-## Empirical Constants
-Several parameters can be tuned by editing `trajectory.worker.js`:
-- `omegaBase = 25000`: initial spin in rad/s applied when hop‑up is at 100 %. Lower `hopUpPercentage` scales this value linearly.
-- `maxLift = 5 * weight`: cap on lift force to avoid unrealistic curves.
-- `torque * 10`: scaling factor controlling how quickly spin decays; reduce to make spin last longer or increase for faster decay.
-- `defaultDt`: integration time step.
+- servir `index.html` comme index des répertoires ;
+- servir `.webmanifest` avec un type JSON/manifest ;
+- éviter un cache long sur `service-worker.js` ;
+- autoriser les modules JavaScript ;
+- conserver les URL avec slash final ou rediriger proprement vers elles.
 
-Adjusting these values allows experimenting with different behaviours without touching the rest of the code.
+Après déploiement : tester le Worker, l’installation PWA, une ouverture hors ligne, le partage d’un setup, toutes les URL du sitemap et les données structurées.
+
+## Identité graphique
+
+La future charte peut être appliquée dans le bloc `:root` au début de `assets/site.css`. Les couleurs, rayons, ombres, largeur et typographie y sont centralisés. Le SVG `assets/img/icon.svg` et l’image sociale devront être remplacés lorsque la nouvelle identité sera livrée.
+
+## Vie privée
+
+La V3 n’envoie aucun setup à un serveur et ne charge aucun CDN. Les préférences sont enregistrées localement. Aucun outil d’analytics n’est inclus tant que le choix de mesure et sa configuration légale ne sont pas définis.
+
+## Attribution
+
+F.A.T. crédite explicitement Mackila et l’Airsoft Trajectory Project. Voir la page `/modele-physique-atp/` et `docs/moteur-atp.md`.

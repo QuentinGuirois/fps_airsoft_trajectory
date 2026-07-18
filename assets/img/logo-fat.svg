@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" role="img" aria-labelledby="title desc">
+  <title id="title">F.A.T. — FPS Airsoft Trajectory</title>
+  <desc id="desc">Logo avec une bille, sa courbe balistique et un sol pointillé.</desc>
+  <style>
+    @font-face{font-family:Saira;src:url('../fonts/saira-latin-400-900.woff2')}@font-face{font-family:Plex;src:url('../fonts/ibm-plex-mono-latin-500.woff2')}.curve{fill:none;stroke:#a8ff3f;stroke-width:6;stroke-linecap:round}.ball{fill:#e9ecdd;stroke:#12160d;stroke-width:2.5}.spin{fill:none;stroke:#6b7a4f;stroke-width:4;stroke-linecap:round}.ground{stroke:#3a4529;stroke-width:3;stroke-dasharray:2 8;stroke-linecap:round}.name{fill:#e9ecdd;font:900 46px Saira,sans-serif;letter-spacing:.1em}.dot{fill:#a8ff3f}.sub{fill:#8b9378;font:500 11px Plex,monospace;letter-spacing:.22em}@media(prefers-color-scheme:light){.curve{stroke:#3d5220}.ball{fill:#12160d;stroke:#eef0e2}.ground{stroke:#a3a88e}.name{fill:#171c11}.dot{fill:#3d5220}.sub{fill:#5a6247}}
+  </style>
+  <g transform="translate(4 18)"><path class="curve" d="M6 62C30 30 62 22 78 26C96 31 106 44 112 62"/><circle class="ball" cx="78" cy="26" r="13"/><path class="spin" d="M60 30A20 20 0 0 1 71 15"/><line class="ground" x1="2" y1="68" x2="118" y2="68"/></g>
+  <text class="name" x="150" y="60">F.A.T<tspan class="dot">.</tspan></text>
+  <text class="sub" x="152" y="88">FPS AIRSOFT TRAJECTORY</text>
+</svg>
