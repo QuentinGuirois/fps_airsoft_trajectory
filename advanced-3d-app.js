@@ -7,10 +7,12 @@ const root = document.querySelector('[data-advanced-3d-app]');
 
 if (root) {
   const STORAGE_KEY = 'fat-shot-v3';
+  const SUMMARY_STORAGE_KEY = 'fat-last-summary-v3';
   const aliases = Object.freeze({
     massG: 'm', energyJ: 'j', initialRpm: 'rpm', zeroDistanceM: 'z',
     windSpeedKmh: 'w', windAngleDeg: 'wd', temperatureC: 't',
     pressureHpa: 'p', angleDeg: 'a', cantDeg: 'c',
+    shootingHeightM: 'sh', scopeHeightM: 'oh', latitudeDeg: 'lat', diameterMm: 'd',
   });
   const fields = Object.fromEntries(
     [...root.querySelectorAll('[data-advanced-field]')].map((element) => [element.dataset.advancedField, element]),
@@ -118,11 +120,28 @@ if (root) {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(Object.fromEntries(allowed.map((key) => [key, shot[key]])))); } catch { /* Stockage facultatif. */ }
   }
 
+  function persistLastSummary(result) {
+    const config = result?.simulation?.config;
+    const usefulRangeM = Number(result?.metrics?.usefulRangeM);
+    if (!config || !Number.isFinite(usefulRangeM)) return;
+    try {
+      localStorage.setItem(SUMMARY_STORAGE_KEY, JSON.stringify({
+        energyJ: config.energyJ,
+        massG: config.massG,
+        usefulRangeM,
+        calculatedAt: new Date().toISOString(),
+      }));
+      window.dispatchEvent(new CustomEvent('fat:lastsummarychange'));
+    } catch { /* Stockage facultatif. */ }
+  }
+
   function shareUrl(shot = readShot()) {
     const query = new URLSearchParams({
       m: shot.massG, j: shot.energyJ.toFixed(2), rpm: shot.initialRpm,
       z: shot.zeroDistanceM, w: shot.windSpeedKmh, wd: shot.windAngleDeg,
       t: shot.temperatureC, p: shot.pressureHpa, a: shot.angleDeg, c: shot.cantDeg,
+      sh: shot.shootingHeightM, oh: shot.scopeHeightM,
+      lat: shot.latitudeDeg, d: shot.diameterMm,
     });
     return `${location.origin}${location.pathname}?${query}`;
   }
@@ -229,6 +248,7 @@ if (root) {
       return;
     }
     state.latestResult = message;
+    persistLastSummary(message);
     root.dataset.lastRequestId = String(message.requestId);
     root.dataset.lastPointCount = String(message.simulation.points.length);
     status.textContent = 'Trajectoire reçue. Préparation de la scène 3D…';
@@ -330,6 +350,7 @@ if (root) {
   root.querySelector('[data-advanced-share]').addEventListener('click', shareShot);
   root.querySelector('[data-advanced-reset]').addEventListener('click', () => {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(SUMMARY_STORAGE_KEY);
     state.comparisons = [];
     state.selectedSeries = 0;
     for (const name of Object.keys(fields)) if (DEFAULT_SHOT[name] != null) setFieldValue(name, DEFAULT_SHOT[name]);

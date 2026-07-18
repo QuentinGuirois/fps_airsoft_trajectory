@@ -26,6 +26,9 @@ if (root) {
   const resetButton = root.querySelector('#reset-shot');
   const shareButton = root.querySelector('#share-shot');
   const shareFeedback = root.querySelector('#share-feedback');
+  const shareOutput = root.querySelector('#share-output');
+  const shareUrlInput = root.querySelector('#share-url');
+  const copyShareUrlButton = root.querySelector('#copy-share-url');
   const rpmOutput = root.querySelector('#rpm-output');
   const spinSetting = root.querySelector('#spin-setting');
   const spinAdjustment = root.querySelector('#spin-adjustment');
@@ -187,6 +190,7 @@ if (root) {
       massG: 'm', energyJ: 'j', initialRpm: 'rpm', zeroDistanceM: 'z',
       windSpeedKmh: 'w', windAngleDeg: 'wd', temperatureC: 't',
       pressureHpa: 'p', angleDeg: 'a', cantDeg: 'c',
+      shootingHeightM: 'sh', scopeHeightM: 'oh', latitudeDeg: 'lat', diameterMm: 'd',
     };
     const values = { ...DEFAULT_SHOT, ...saved };
     if (saved.initialRpm == null && saved.hopPercent != null) {
@@ -246,6 +250,22 @@ if (root) {
     const stored = Object.fromEntries(allowed.map((key) => [key, shot[key]]));
     stored._spinOffsetRpm = state.spinOffsetRpm;
     try { localStorage.setItem('fat-shot-v3', JSON.stringify(stored)); } catch { /* stockage facultatif */ }
+  }
+
+  function persistLastSummary(result) {
+    const config = result?.simulation?.config;
+    const usefulRangeM = Number(result?.metrics?.usefulRangeM);
+    if (!config || !Number.isFinite(usefulRangeM)) return;
+    const summary = {
+      energyJ: config.energyJ,
+      massG: config.massG,
+      usefulRangeM,
+      calculatedAt: new Date().toISOString(),
+    };
+    try {
+      localStorage.setItem('fat-last-summary-v3', JSON.stringify(summary));
+      window.dispatchEvent(new CustomEvent('fat:lastsummarychange'));
+    } catch { /* Stockage facultatif. */ }
   }
 
   function updateSpinReadout() {
@@ -342,6 +362,7 @@ if (root) {
     }
     calculationLoader?.complete(message.requestId);
     state.latestResult = message;
+    persistLastSummary(message);
     root.dataset.lastRequestId = String(message.requestId);
     root.dataset.lastPointCount = String(message.simulation.points.length);
     renderResults();
@@ -576,7 +597,7 @@ if (root) {
   function renderReferenceLegend(showTrajectoryGuides) {
     if (!chartReferenceLegend) return;
     chartReferenceLegend.innerHTML = showTrajectoryGuides ? `
-      <li><span class="reference-swatch reference-envelope"></span>Enveloppe ATP ±15,24 cm</li>
+      <li><span class="reference-swatch reference-envelope"></span>Marge buste 60 cm · ±60 cm</li>
       <li><span class="reference-swatch reference-sight"></span>Ligne de visée</li>
       <li><span class="reference-swatch reference-ground"></span>Sol</li>
       <li><span class="reference-swatch reference-markers"></span>Utile · apex · impact</li>
@@ -595,23 +616,61 @@ if (root) {
     drawChart();
   }
 
-  async function shareShot() {
-    const shot = readShot();
+  function buildShareUrl(shot = readShot()) {
     const query = new URLSearchParams({
       m: shot.massG, j: shot.energyJ.toFixed(2), rpm: shot.initialRpm,
       z: shot.zeroDistanceM, w: shot.windSpeedKmh, wd: shot.windAngleDeg,
       t: shot.temperatureC, p: shot.pressureHpa, a: shot.angleDeg, c: shot.cantDeg,
+      sh: shot.shootingHeightM, oh: shot.scopeHeightM,
+      lat: shot.latitudeDeg, d: shot.diameterMm,
     });
-    const url = `${location.origin}${location.pathname}?${query}`;
+    return `${location.origin}${location.pathname}?${query}#calculateur`;
+  }
+
+  function revealShareUrl(url) {
+    if (shareUrlInput) shareUrlInput.value = url;
+    if (shareOutput) shareOutput.hidden = false;
+    history.replaceState(history.state, '', url);
+  }
+
+  async function copyShareUrl(url) {
     try {
-      if (navigator.share) {
-        await navigator.share({ title: 'Mon setup F.A.T.', text: 'Passe mon setup airsoft au banc balistique.', url });
-      } else {
+      if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(url);
-        shareFeedback.textContent = 'Lien copié. À envoyer au squad, ou à ton mécano préféré.';
+        return true;
+      }
+    } catch { /* Repli par sélection manuelle ci-dessous. */ }
+    if (!shareUrlInput) return false;
+    shareUrlInput.focus();
+    shareUrlInput.select();
+    try { return Boolean(document.execCommand?.('copy')); } catch { return false; }
+  }
+
+  async function shareShot() {
+    const url = buildShareUrl();
+    revealShareUrl(url);
+    shareFeedback.textContent = 'Lien complet prêt. Tous les paramètres sont enregistrés dans l’URL.';
+    try {
+      const canUseNativeShare = typeof navigator.share === 'function'
+        && (typeof navigator.canShare !== 'function' || navigator.canShare({ url }));
+      if (canUseNativeShare) {
+        await navigator.share({ title: 'Mon setup F.A.T.', text: 'Passe mon setup airsoft au banc balistique.', url });
+        shareFeedback.textContent = 'Setup partagé. Le lien complet reste disponible ci-dessous.';
+      } else {
+        const copied = await copyShareUrl(url);
+        shareFeedback.textContent = copied
+          ? 'Lien copié. À envoyer au squad, ou à ton mécano préféré.'
+          : 'Copie automatique indisponible : sélectionne le lien complet ci-dessous.';
       }
     } catch (error) {
-      if (error?.name !== 'AbortError') shareFeedback.textContent = `Lien : ${url}`;
+      if (error?.name === 'AbortError') {
+        shareFeedback.textContent = 'Partage annulé. Le lien complet reste disponible ci-dessous.';
+      } else {
+        const copied = await copyShareUrl(url);
+        shareFeedback.textContent = copied
+          ? 'Le partage natif a échoué, mais le lien a été copié.'
+          : 'Partage automatique indisponible : sélectionne le lien complet ci-dessous.';
+      }
     }
   }
 
@@ -745,8 +804,16 @@ if (root) {
 
   compareButton.addEventListener('click', addComparison);
   shareButton.addEventListener('click', shareShot);
+  copyShareUrlButton?.addEventListener('click', async () => {
+    const url = shareUrlInput?.value || buildShareUrl();
+    const copied = await copyShareUrl(url);
+    shareFeedback.textContent = copied
+      ? 'Lien copié.'
+      : 'Sélectionne le lien puis utilise Ctrl+C.';
+  });
   resetButton.addEventListener('click', () => {
     localStorage.removeItem('fat-shot-v3');
+    localStorage.removeItem('fat-last-summary-v3');
     for (const [name, element] of Object.entries(fields)) {
       if (DEFAULT_SHOT[name] != null) element.value = DEFAULT_SHOT[name];
     }

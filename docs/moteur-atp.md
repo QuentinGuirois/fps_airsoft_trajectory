@@ -45,11 +45,11 @@ Le vent est un vecteur de vitesse de l’air. Convention interface : 0° de face
 
 ## Angle du canon et zérotage
 
-L’angle saisi est directement celui du canon par rapport à l’horizontale. À `0°`, les composantes initiales sont `vx = vitesse` et `vy = 0` ; aucun solveur ne modifie cet angle. Le zéro optique agit seulement sur la ligne de visée : si la bille atteint la distance demandée, la visée relie la hauteur de l’optique à ce point de trajectoire. La portée utile correspond à la première sortie de ±0,1524 m autour de cette ligne.
+L’angle saisi est directement celui du canon par rapport à l’horizontale. À `0°`, les composantes initiales sont `vx = vitesse` et `vy = 0` ; aucun solveur ne modifie cet angle. Le zéro optique agit seulement sur la ligne de visée : si la bille atteint la distance demandée, la visée relie la hauteur de l’optique à ce point de trajectoire. La portée utile F.A.T. correspond à la première sortie d’une marge verticale égale à une hauteur de buste complète, soit ±0,60 m autour de cette ligne. Il s’agit d’une convention produit appliquée à la trajectoire ATP, pas d’une mesure de dispersion.
 
 ## Réglage automatique du hop-up
 
-`findFlatSpin()` recherche la rotation initiale qui maintient le plus longtemps la bille dans une enveloppe de ±0,1524 m autour de la hauteur de bouche. Le cas de réglage est toujours calculé canon horizontal, sans vent ni inclinaison latérale ; il ne modifie donc pas l’angle choisi par l’utilisateur.
+`findFlatSpin()` recherche la rotation initiale qui maintient le plus longtemps la bille dans une fenêtre stricte de ±0,1524 m autour de la hauteur de bouche. Cette fenêtre de réglage reste volontairement plus exigeante que le gabarit buste utilisé pour la portée utile, afin d’éviter de conseiller une trajectoire trop haute. Le cas de réglage est toujours calculé canon horizontal, sans vent ni inclinaison latérale ; il ne modifie donc pas l’angle choisi par l’utilisateur.
 
 Une dichotomie localise la frontière entre la première sortie vers le bas (« ça plonge ») et la première sortie vers le haut (« ça décolle »). Les cinq valeurs voisines sont ensuite comparées et le meilleur résultat est arrondi au pas d’interface, actuellement 250 tr/min. La masse, l’énergie, la vitesse, la température, la pression ou le diamètre déclenchent un nouveau calcul. Les boutons moins et plus appliquent seulement un décalage autour de cette base conseillée.
 

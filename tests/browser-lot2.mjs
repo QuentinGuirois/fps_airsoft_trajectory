@@ -158,6 +158,53 @@ for (const theme of ['dark', 'light']) {
   await capture(`lot2-about-1440-${theme}.png`);
 }
 
+const briefingStates = [];
+for (const { width, height, theme, setup } of [
+  { width: 1440, height: 900, theme: 'dark', setup: 'empty' },
+  { width: 1440, height: 900, theme: 'light', setup: 'present' },
+  { width: 390, height: 844, theme: 'dark', setup: 'present' },
+  { width: 390, height: 844, theme: 'light', setup: 'empty' },
+]) {
+  await setViewport(width, height);
+  await setTheme(theme);
+  await navigate(`${base}convertisseur-joules-fps/?briefing=${width}-${theme}`);
+  if (setup === 'present') {
+    await evaluate(`(()=>{localStorage.setItem('fat-shot-v3',JSON.stringify({energyJ:1.5,massG:.28}));localStorage.setItem('fat-last-summary-v3',JSON.stringify({energyJ:1.5,massG:.28,usefulRangeM:52,calculatedAt:'2026-07-18T12:00:00.000Z'}))})()`);
+  } else {
+    await evaluate(`(()=>{localStorage.removeItem('fat-shot-v3');localStorage.removeItem('fat-last-summary-v3')})()`);
+  }
+  await navigate(`${base}convertisseur-joules-fps/?briefing=${width}-${theme}-${setup}`);
+  await waitFor(`Boolean(document.querySelector('[data-briefing-menu]'))`);
+  await evaluate(`document.querySelector('[data-menu-button]').click()`);
+  await waitFor(`!document.querySelector('[data-briefing-menu]').hidden`);
+  await wait(900);
+  const menuState = await evaluate(`(()=>{const overlay=document.querySelector('[data-briefing-menu]');const links=[...overlay.querySelectorAll('.briefing-link')];const targets=[...overlay.querySelectorAll('.briefing-link,.briefing-secondary a,.briefing-secondary button:not([hidden]),.last-setup-card .button')].filter(node=>node.getClientRects().length);return{expanded:document.querySelector('[data-menu-button]').getAttribute('aria-expanded'),role:overlay.getAttribute('role'),modal:overlay.getAttribute('aria-modal'),locked:document.body.classList.contains('has-briefing-menu'),focused:overlay.contains(document.activeElement),links:links.length,small:targets.filter(node=>node.getBoundingClientRect().height<47.5).map(node=>({text:node.textContent.trim(),height:node.getBoundingClientRect().height})),scroll:overlay.scrollWidth,width:overlay.clientWidth,setup:overlay.querySelector('[data-last-setup-card]').textContent.replace(/\\s+/g,' ').trim(),status:overlay.querySelector('[data-pwa-status]').textContent.trim()}})()`);
+  if (menuState.expanded !== 'true' || menuState.role !== 'dialog' || menuState.modal !== 'true' || !menuState.locked || !menuState.focused || menuState.links !== 5 || menuState.small.length || menuState.scroll > menuState.width) throw new Error(`Briefing state ${width}/${theme}: ${JSON.stringify(menuState)}`);
+  if (setup === 'present' && (!menuState.setup.includes('1,5') || !menuState.setup.includes('0,28') || !menuState.setup.includes('52 m') || !menuState.setup.includes('Calculé'))) throw new Error(`Briefing setup missing: ${JSON.stringify(menuState)}`);
+  if (setup === 'empty' && (!menuState.setup.includes('AUCUN SETUP ENREGISTRÉ') || !menuState.setup.includes('n’invente aucune portée'))) throw new Error(`Briefing empty state: ${JSON.stringify(menuState)}`);
+  if (!['SERVICE WORKER EN INITIALISATION', 'HORS CONNEXION PRÊT', 'MODE HORS CONNEXION ACTIF'].includes(menuState.status)) throw new Error(`Briefing PWA status: ${JSON.stringify(menuState)}`);
+  const trapped = await evaluate(`(()=>{const overlay=document.querySelector('[data-briefing-menu]');const focusable=[...overlay.querySelectorAll('a[href],button:not([disabled]):not([hidden]),input:not([disabled])')].filter(node=>!node.hidden&&node.getClientRects().length);const first=focusable[0];const last=focusable.at(-1);first.focus();document.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',shiftKey:true,bubbles:true,cancelable:true}));const wrappedBackward=document.activeElement===last;document.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',bubbles:true,cancelable:true}));return{wrappedBackward,wrappedForward:document.activeElement===first}})()`);
+  if (!trapped.wrappedBackward || !trapped.wrappedForward) throw new Error(`Briefing focus trap ${width}/${theme}: ${JSON.stringify(trapped)}`);
+  await capture(`lot4-briefing-${width}-${theme}-${setup}.png`);
+  await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+  await waitFor(`document.querySelector('[data-briefing-menu]').hidden`);
+  const closed = await evaluate(`({expanded:document.querySelector('[data-menu-button]').getAttribute('aria-expanded'),locked:document.body.classList.contains('has-briefing-menu'),focused:document.activeElement===document.querySelector('[data-menu-button]')})`);
+  if (closed.expanded !== 'false' || closed.locked || !closed.focused) throw new Error(`Briefing close ${width}/${theme}: ${JSON.stringify(closed)}`);
+  briefingStates.push({ width, theme, setup, menuState, closed });
+}
+
+await setViewport(1024, 900);
+await setTheme('dark');
+await navigate(`${base}convertisseur-joules-fps/?visual-fixes`);
+await waitFor(`Boolean(document.querySelector('[data-converter-trust]'))`);
+const converterVisual = await evaluate(`(()=>{const converter=document.querySelector('[data-converter]');const trust=document.querySelector('[data-converter-trust]');const cta=document.querySelector('.guide-rail-cta .button-primary');return{trustAfterGrid:converter.nextElementSibling===trust,firstChild:converter.firstElementChild.className,ctaColor:getComputedStyle(cta).color,ctaBackground:getComputedStyle(cta).backgroundColor}})()`);
+if (!converterVisual.trustAfterGrid || !converterVisual.firstChild.includes('field') || converterVisual.ctaColor === converterVisual.ctaBackground) throw new Error(`Converter fixes: ${JSON.stringify(converterVisual)}`);
+
+await navigate(`${base}outils/choisir-gaz-airsoft-pression-temperature/?t=20&brand=ASG%20Ultrair&gas=asg-ultrair-green-135-silicone`);
+await waitFor(`!document.querySelector('#gas-result').hidden`);
+const publishedBadge = await evaluate(`(()=>{const badge=document.querySelector('#gas-result-kind-pill');const style=getComputedStyle(badge);return{text:badge.textContent,color:style.color,background:style.backgroundColor}})()`);
+if (!publishedBadge.text.includes('publiée') || publishedBadge.color === publishedBadge.background) throw new Error(`Published badge: ${JSON.stringify(publishedBadge)}`);
+
 await navigate(`${base}outils/choisir-gaz-airsoft-pression-temperature/`);
 await waitFor(`document.documentElement.dataset.gasPressureReady === 'true'`);
 await evaluate(`(()=>{const temperature=document.querySelector('#gas-temperature');temperature.value='7';temperature.dispatchEvent(new Event('input',{bubbles:true}));const brand=document.querySelector('#gas-brand');brand.value=[...brand.options].find(option=>option.value!=='ASG Ultrair').value;brand.dispatchEvent(new Event('change',{bubbles:true}));const product=document.querySelector('#gas-product');product.value=product.options[product.options.length-1].value;product.dispatchEvent(new Event('change',{bubbles:true}))})()`);
@@ -236,11 +283,13 @@ const result = {
   accessibility: { ...accessibility, namelessControls },
   gasPersistence: { stored: gasStored, restored: gasRestored },
   gasSharing: { native: gasNativeShare, clipboard: gasClipboard },
+  briefingStates,
+  visualFixes: { converterVisual, publishedBadge },
   zoom200,
   systemTheme,
   reduced,
   consoleErrors,
-  screenshots: (await readdir(captureDir)).filter((file) => file.startsWith('lot2-')).sort(),
+  screenshots: (await readdir(captureDir)).filter((file) => file.startsWith('lot2-') || file.startsWith('lot4-')).sort(),
 };
 console.log(JSON.stringify(result, null, 2));
 if (consoleErrors.length) throw new Error(`Console errors: ${consoleErrors.join(' | ')}`);

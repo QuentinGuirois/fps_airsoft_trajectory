@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fps-airsoft-trajectory.com/data/replica-submission.schema.json",
+  "title": "Soumission de réplique F.A.T.",
+  "description": "Contrat d’entrée privé. Une soumission pending n’est jamais un profil publiable.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "pseudo",
+    "replicaName",
+    "simulationUrl",
+    "photo",
+    "rights",
+    "status"
+  ],
+  "properties": {
+    "pseudo": { "type": "string", "minLength": 2, "maxLength": 32 },
+    "replicaName": { "type": "string", "minLength": 2, "maxLength": 80 },
+    "simulationUrl": {
+      "type": "string",
+      "maxLength": 2048,
+      "pattern": "^https://fps-airsoft-trajectory\\.com/(?:index\\.html|simulateur-trajectoire-airsoft/)?\\?"
+    },
+    "youtubeUrl": {
+      "type": ["string", "null"],
+      "maxLength": 512
+    },
+    "photo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mediaType", "sizeBytes"],
+      "properties": {
+        "mediaType": { "enum": ["image/jpeg", "image/png", "image/webp"] },
+        "sizeBytes": { "type": "integer", "minimum": 1, "maximum": 8388608 }
+      }
+    },
+    "rights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["confirmed", "confirmedAt"],
+      "properties": {
+        "confirmed": { "const": true },
+        "confirmedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "status": { "const": "pending" }
+  }
+}

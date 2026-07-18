@@ -20,7 +20,12 @@ export const ATP = Object.freeze({
   spinRatioRatePerSecond: 3.929,
   dynamicViscosity: 17.4e-6,
   gasConstantDryAir: 287.058,
-  usefulEnvelopeM: 0.1524,
+  // Convention produit : la marge verticale utile vaut une hauteur de buste
+  // complète de 60 cm par rapport à la visée. Ce seuil ne modélise pas la dispersion.
+  usefulTargetHeightM: 0.6,
+  usefulEnvelopeM: 0.6,
+  // Le hop-up automatique conserve une fenêtre plus stricte pour rester tendu.
+  flatSpinEnvelopeM: 0.1524,
   maxTimeS: 8,
   maxRangeM: 250,
   integrationStepS: 0.001,
@@ -436,7 +441,7 @@ function flatShotAtRpm(input, initialRpm, envelopeM) {
  * puis compare les valeurs voisines au pas affiche par l'interface.
  */
 export function findFlatSpin(input = {}, options = {}) {
-  const envelopeM = Math.max(0.01, Number(options.envelopeM) || ATP.usefulEnvelopeM);
+  const envelopeM = Math.max(0.01, Number(options.envelopeM) || ATP.flatSpinEnvelopeM);
   const incrementRpm = Math.max(1, Math.round(Number(options.incrementRpm) || 250));
   const config = normalizeShot(input);
   const rpmForRatio = (ratio) => ratio * config.velocityMps / config.radiusM * 60 / (2 * Math.PI);

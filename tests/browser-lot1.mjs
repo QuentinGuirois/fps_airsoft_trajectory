@@ -110,11 +110,20 @@ async function captureHeader(name) {
 }
 
 async function selectThemeByKeyboard(value) {
+  const openedMenu = await evaluate(`(()=>{const input=document.querySelector('input[name="fat-theme"][value="${value}"]');if(input.getClientRects().length)return false;document.querySelector('[data-menu-button]').click();return true})()`);
+  if (openedMenu) {
+    await waitFor(`!document.querySelector('[data-briefing-menu]').hidden`);
+    await wait(80);
+  }
   await evaluate(`document.querySelector('input[name="fat-theme"][value="${value}"]').focus()`);
   const key = { key: ' ', code: 'Space', windowsVirtualKeyCode: 32, nativeVirtualKeyCode: 32 };
   await send('Input.dispatchKeyEvent', { type: 'keyDown', ...key });
   await send('Input.dispatchKeyEvent', { type: 'keyUp', ...key });
   await wait(60);
+  if (openedMenu) {
+    await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+    await waitFor(`document.querySelector('[data-briefing-menu]').hidden`);
+  }
 }
 
 await mkdir(captureDir, { recursive: true });
@@ -203,7 +212,7 @@ await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await navigate(`${base}?visual-lot1=sw-control`);
 await waitFor(`Boolean(navigator.serviceWorker.controller)`);
 const cache = await evaluate(`caches.keys().then(keys=>({keys,controller:Boolean(navigator.serviceWorker.controller)}))`, true);
-if (!cache.keys.includes('fat-v3-2026-07-18-19') || !cache.controller) throw new Error(`PWA cache mismatch ${JSON.stringify(cache)}`);
+if (!cache.keys.includes('fat-v3-2026-07-18-23') || !cache.controller) throw new Error(`PWA cache mismatch ${JSON.stringify(cache)}`);
 await navigate(`${base}simulateur-trajectoire-airsoft/`);
 await navigate(`${base}outils/choisir-gaz-airsoft-pression-temperature/`);
 await waitFor(`document.documentElement.dataset.gasPressureReady === 'true'`);

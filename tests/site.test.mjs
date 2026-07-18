@@ -72,14 +72,16 @@ test('le hop-up reste présenté en mode AUTO et le graphique utilise le format 
   assert.match(css, /\.chart-viewport \{ aspect-ratio: 3 \/ 1/);
 });
 
-test('l’outil gaz est accessible depuis le menu principal sur toutes les pages', async () => {
+test('l’outil gaz reste accessible depuis le hub et le menu briefing', async () => {
   const home = await readFile(join(root, 'index.html'), 'utf8');
   const gasPage = await readFile(join(root, 'outils', 'choisir-gaz-airsoft-pression-temperature', 'index.html'), 'utf8');
+  const toolsPage = await readFile(join(root, 'outils', 'index.html'), 'utf8');
   const site = await readFile(join(root, 'site.js'), 'utf8');
   const href = '/outils/choisir-gaz-airsoft-pression-temperature/';
 
-  assert.match(home, new RegExp(`<nav[^>]*class="menu"[\\s\\S]*href="${href}"`));
-  assert.match(gasPage, new RegExp(`<nav[^>]*class="menu"[\\s\\S]*aria-current="page" href="${href}"`));
-  assert.match(site, /\{ href: gasToolPath, label: 'Gaz \/ température' \}/);
-  assert.match(site, /navigationItems/);
+  assert.match(home, /<nav class="primary-nav"[^>]*>[\s\S]*href="\/outils\/"/);
+  assert.match(gasPage, /href="\/outils\/" aria-current="page">Outils/);
+  assert.match(toolsPage, new RegExp(`href="${href}"`));
+  assert.match(site, /href: gasToolPath, label: 'Gaz & température'/);
+  assert.match(site, /briefingNavigation/);
 });

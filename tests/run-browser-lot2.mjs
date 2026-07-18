@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -30,6 +31,11 @@ try {
   await import('./browser-lot2.mjs');
 } finally {
   browser.kill();
-  await new Promise((resolve) => setTimeout(resolve, 250));
-  await rm(profile, { recursive: true, force: true });
+  if (browser.exitCode === null) {
+    await Promise.race([
+      once(browser, 'exit'),
+      new Promise((resolve) => setTimeout(resolve, 2_000)),
+    ]);
+  }
+  await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 }

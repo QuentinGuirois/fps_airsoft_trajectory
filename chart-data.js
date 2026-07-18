@@ -1,13 +1,13 @@
-import { sightModel } from './physics-core.js';
+import { ATP, sightModel } from './physics-core.js';
 
-export const ATP_TOLERANCE_M = 0.1524;
+export const ATP_TOLERANCE_M = ATP.usefulEnvelopeM;
 export const TARGET_VERTICAL_EXAGGERATION = 10;
 
 const MODES = Object.freeze({
   trajectory: Object.freeze({
     unit: 'm',
     axisLabel: 'Hauteur au-dessus du sol',
-    referenceLabel: 'Enveloppe ATP ±15,24 cm autour de la visée, ligne de visée pointillée et sol.',
+    referenceLabel: 'Marge utile : une hauteur de buste de 60 cm (±60 cm autour de la visée), ligne de visée pointillée et sol.',
     floorAtZero: true,
     showZeroLine: false,
     value: (point) => point.y,

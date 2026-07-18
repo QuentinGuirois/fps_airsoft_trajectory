@@ -82,6 +82,24 @@ test('une trajectoire par défaut se termine au sol avec des valeurs finies', ()
   assert.ok(simulation.points.every((point) => Object.values(point).every(Number.isFinite)));
 });
 
+test('la portée utile tolère une hauteur de buste complète de 60 cm autour de la visée', () => {
+  assert.equal(ATP.usefulTargetHeightM, 0.6);
+  assert.equal(ATP.usefulEnvelopeM, ATP.usefulTargetHeightM);
+  assert.equal(ATP.flatSpinEnvelopeM, 0.1524);
+
+  const simulation = simulateTrajectory();
+  const sight = sightModel(simulation);
+  const metrics = analyzeTrajectory(simulation);
+  let expectedRangeM = 0;
+  let outside = false;
+  for (const point of simulation.points) {
+    const insideTarget = Math.abs(point.y - sight.yAt(point.x)) <= 0.6;
+    if (!outside && insideTarget) expectedRangeM = point.x;
+    else if (point.x > 1) outside = true;
+  }
+  assert.equal(metrics.usefulRangeM, expectedRangeM);
+});
+
 test('le cas étalon ATP 0,20 g, 0,98 J et 120 000 RPM suit les figures III-A-02 à 04', () => {
   const simulation = simulateTrajectory({
     massG: 0.2,

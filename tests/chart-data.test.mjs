@@ -9,7 +9,7 @@ import {
   fitChartDomain,
   prepareChartSeries,
 } from '../chart-data.js';
-import { pointAtDistance, simulateTrajectory } from '../physics-core.js';
+import { ATP, pointAtDistance, simulateTrajectory } from '../physics-core.js';
 
 test('la vue trajectoire affiche une hauteur au-dessus du sol sans domaine négatif', () => {
   const simulation = simulateTrajectory();
@@ -64,6 +64,7 @@ test('les guides et marqueurs de trajectoire suivent la visée et les points ATP
 
   assert.equal(guides.sightline.length, simulation.points.length);
   assert.ok(guides.upper.every((point, index) => Math.abs(point.y - guides.lower[index].y - 2 * ATP_TOLERANCE_M) < 1e-12));
+  assert.equal(ATP_TOLERANCE_M, ATP.usefulTargetHeightM);
   assert.equal(markers.useful.x, usefulDistance);
   assert.ok(markers.apex.y >= simulation.points[0].y);
   assert.deepEqual({ x: markers.impact.x, y: markers.impact.y }, {

@@ -1,4 +1,4 @@
-const CACHE = 'fat-v3-2026-07-18-19';
+const CACHE = 'fat-v3-2026-07-18-23';
 const CORE = [
   '/',
   '/index.html',
@@ -32,6 +32,8 @@ const CORE = [
   '/physics-core.js',
   '/trajectory.worker.js',
   '/convertisseur-joules-fps/',
+  '/outils/',
+  '/guides/',
   '/simulateur-3d-airsoft/',
   '/outils/choisir-gaz-airsoft-pression-temperature/',
   '/data/green-gas-pressure-curves.json',

@@ -48,10 +48,11 @@ test('le cockpit, le mobile tactile et les rails de guide suivent le lot 2', asy
   assert.match(css, /\.preset-row \{[^}]*overflow-x: auto/);
   assert.match(css, /\.control-panel > \.field-grid, \.advanced \.field-grid \{ grid-template-columns: repeat\(2/);
   assert.match(css, /min-height: 2\.75rem/);
+  assert.match(css, /\.control-panel \.field > label, \.control-panel \.field > \.field-label \{[^}]*min-height: 2\.2rem/);
   assert.match(site, /enhanceGuideRails/);
   assert.match(css, /\.guide-rail-cta/);
   assert.match(css, /max-width: var\(--reading\)/);
-  assert.match(css, /\.brand, \.menu-button, \.theme-option span \{ min-height: 44px; \}/);
+  assert.match(css, /\.brand, \.menu-toggle, \.theme-option span \{ min-height: 44px; \}/);
   assert.match(css, /\.theme-option span \{ min-height: 44px; padding-inline: \.42rem/);
   assert.match(css, /\.drone-controls button \{ min-height: 44px/);
 });
@@ -123,7 +124,7 @@ test('le cache et les ressources restent autonomes sans CDN', async () => {
   const [worker, css, site, gas] = await Promise.all([
     read('service-worker.js'), read('assets', 'site.css'), read('site.js'), read('gas-pressure-app.js'),
   ]);
-  assert.match(worker, /fat-v3-2026-07-18-19/);
+  assert.match(worker, /fat-v3-2026-07-18-23/);
   for (const source of [worker, css, site, gas]) {
     assert.doesNotMatch(source, /https?:\/\/(?:fonts\.|cdn\.|unpkg|jsdelivr)/i);
   }

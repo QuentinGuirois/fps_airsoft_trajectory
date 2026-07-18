@@ -33,8 +33,9 @@ function storeMode(storage, mode) {
 
 function createThemeControl(doc, currentMode) {
   const navRow = doc.querySelector('.site-header .nav-row');
-  if (!navRow) return null;
-  const existing = navRow.querySelector('[data-theme-control]');
+  const target = doc.querySelector('[data-theme-slot]') || navRow;
+  if (!target) return null;
+  const existing = doc.querySelector('[data-theme-control]');
   if (existing) return existing;
 
   const fieldset = doc.createElement('fieldset');
@@ -49,8 +50,7 @@ function createThemeControl(doc, currentMode) {
   `;
   const selected = fieldset.querySelector(`input[value="${normalizeThemeMode(currentMode)}"]`);
   if (selected) selected.checked = true;
-  const installButton = navRow.querySelector('[data-install-app]');
-  navRow.insertBefore(fieldset, installButton || null);
+  target.append(fieldset);
   return fieldset;
 }
 

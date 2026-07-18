@@ -43,9 +43,21 @@ test('la géométrie et les traits du cockpit suivent la charte 2D', async () =>
   assert.match(app, /renderReferenceLegend\(Boolean\(prepared\.trajectory\)\)/);
 });
 
+test('le partage expose toujours une URL complète et restaure les paramètres avancés', async () => {
+  const [html, app] = await Promise.all([read('index.html'), read('app.js')]);
+  assert.match(html, /id="share-output" hidden/);
+  assert.match(html, /id="share-url" type="url" readonly/);
+  assert.match(html, /id="copy-share-url"/);
+  for (const parameter of ['sh', 'oh', 'lat', 'd']) {
+    assert.match(app, new RegExp(`${parameter}: shot\.`));
+  }
+  assert.match(app, /history\.replaceState\(history\.state, '', url\)/);
+  assert.match(app, /document\.execCommand\?\.\('copy'\)/);
+});
+
 test('le cache PWA contient les modules 2D avec une nouvelle version', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /fat-v3-2026-07-18-19/);
+  assert.match(worker, /fat-v3-2026-07-18-23/);
   assert.match(worker, /'\/chart-data\.js'/);
   assert.match(worker, /'\/app\.js'/);
   assert.match(worker, /'\/assets\/site\.css'/);

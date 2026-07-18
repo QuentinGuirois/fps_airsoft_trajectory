@@ -22,6 +22,9 @@ Ouvrir <http://localhost:8080>. Ne pas ouvrir `index.html` directement : les mod
 - `gas-pressure-tool.js` : sélection, lecture directe des courbes et conversion PSI/bar ;
 - `gas-pressure-app.js` : interface, URL partageable, stockage local et partage natif ;
 - `data/green-gas-pressure-curves.json` : 49 produits, 35 courbes uniques et 56 températures par produit ;
+- `replica-utils.js` / `data/replica-submission.schema.json` : validations et contrat privé du futur flux de soumission ;
+- `database/replicas.sql` / `docs/repliques-production.md` : préparation MariaDB et protocole de publication modérée ;
+- `server/background-removal/` : worker local `rembg` optionnel, asynchrone et hors requête web ;
 - `outils/choisir-gaz-airsoft-pression-temperature/` : page-outil gaz, contenu et FAQ ;
 - `assets/site.css` : charte et composants responsives ;
 - `service-worker.js` / `manifest.webmanifest` : installation et cache hors ligne ;
@@ -56,7 +59,7 @@ La future charte peut être appliquée dans le bloc `:root` au début de `assets
 
 ## Vie privée
 
-La V3 n’envoie aucun setup à un serveur et ne charge aucun CDN. Les préférences sont enregistrées localement. Aucun outil d’analytics n’est inclus tant que le choix de mesure et sa configuration légale ne sont pas définis.
+La V3 publique n’envoie actuellement aucun setup, profil ou photo à un serveur et ne charge aucun CDN. Les préférences sont enregistrées localement. Les briques `replica-*` préparent un futur formulaire modéré mais aucune route communautaire ni API n’est ouverte sans profil autorisé, stockage privé et recette de sécurité. Aucun outil d’analytics n’est inclus tant que le choix de mesure et sa configuration légale ne sont pas définis.
 
 ## Attribution
 

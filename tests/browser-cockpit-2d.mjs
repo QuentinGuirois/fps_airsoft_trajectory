@@ -136,9 +136,9 @@ for (const width of [1440, 1024, 768, 390, 360]) {
   }
 }
 
-await openCockpit({ width: 1440, theme: 'dark', query: '?m=0.36&j=1.90&rpm=110000&z=42&w=8&wd=90&t=12&p=1000&a=0&c=0' });
-const currentUrl = await evaluate(`({m:document.querySelector('#mass').value,j:document.querySelector('#energy').value,rpm:document.querySelector('#rpm').value,z:document.querySelector('#zero').value,w:document.querySelector('#wind').value,wd:document.querySelector('#wind-angle').value,t:document.querySelector('#temperature').value,p:document.querySelector('#pressure').value,a:document.querySelector('#angle').value,c:document.querySelector('#cant').value})`);
-if (JSON.stringify(currentUrl) !== JSON.stringify({ m: '0.36', j: '1.9', rpm: '110000', z: '42', w: '8', wd: '90', t: '12', p: '1000', a: '0', c: '0' })) throw new Error(`Current URL: ${JSON.stringify(currentUrl)}`);
+await openCockpit({ width: 1440, theme: 'dark', query: '?m=0.36&j=1.90&rpm=110000&z=42&w=8&wd=90&t=12&p=1000&a=0&c=0&sh=1.2&oh=0.07&lat=48&d=5.95' });
+const currentUrl = await evaluate(`({m:document.querySelector('#mass').value,j:document.querySelector('#energy').value,rpm:document.querySelector('#rpm').value,z:document.querySelector('#zero').value,w:document.querySelector('#wind').value,wd:document.querySelector('#wind-angle').value,t:document.querySelector('#temperature').value,p:document.querySelector('#pressure').value,a:document.querySelector('#angle').value,c:document.querySelector('#cant').value,sh:document.querySelector('#height').value,oh:document.querySelector('#scope-height').value,lat:document.querySelector('#latitude').value,d:document.querySelector('#diameter').value})`);
+if (JSON.stringify(currentUrl) !== JSON.stringify({ m: '0.36', j: '1.9', rpm: '110000', z: '42', w: '8', wd: '90', t: '12', p: '1000', a: '0', c: '0', sh: '1.2', oh: '0.07', lat: '48', d: '5.95' })) throw new Error(`Current URL: ${JSON.stringify(currentUrl)}`);
 
 await openCockpit({ width: 1440, theme: 'dark', query: '?m=0.25&j=1&h=55&z=30' });
 const oldUrl = await evaluate(`({m:document.querySelector('#mass').value,j:document.querySelector('#energy').value,rpm:Number(document.querySelector('#rpm').value),z:document.querySelector('#zero').value})`);
@@ -155,12 +155,17 @@ if (await evaluate(`document.querySelector('#mass').value !== '0.43'`)) throw ne
 await evaluate(`(()=>{window.__sharedShot=null;Object.defineProperty(navigator,'share',{configurable:true,value:async data=>{window.__sharedShot=data}});document.querySelector('#share-shot').click()})()`);
 await waitFor(`window.__sharedShot !== null`);
 const nativeShare = await evaluate(`({title:window.__sharedShot.title,params:Object.fromEntries(new URL(window.__sharedShot.url).searchParams)})`);
-if (nativeShare.title !== 'Mon setup F.A.T.' || nativeShare.params.m !== '0.43' || !nativeShare.params.rpm || !nativeShare.params.wd) throw new Error(`Native share: ${JSON.stringify(nativeShare)}`);
+if (nativeShare.title !== 'Mon setup F.A.T.' || nativeShare.params.m !== '0.43' || !nativeShare.params.rpm || !nativeShare.params.wd || !nativeShare.params.sh || !nativeShare.params.oh || !nativeShare.params.lat || !nativeShare.params.d) throw new Error(`Native share: ${JSON.stringify(nativeShare)}`);
 
 await evaluate(`(()=>{window.__copiedShot='';Object.defineProperty(navigator,'share',{configurable:true,value:undefined});Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async value=>{window.__copiedShot=value}}});document.querySelector('#share-shot').click()})()`);
 await waitFor(`window.__copiedShot !== ''`);
 const clipboardShare = await evaluate(`({url:window.__copiedShot,feedback:document.querySelector('#share-feedback').textContent})`);
 if (!clipboardShare.url.includes('m=0.43') || !clipboardShare.feedback.includes('Lien copi')) throw new Error(`Clipboard share: ${JSON.stringify(clipboardShare)}`);
+
+await evaluate(`(()=>{Object.defineProperty(navigator,'share',{configurable:true,value:undefined});Object.defineProperty(navigator,'clipboard',{configurable:true,value:undefined});document.execCommand=()=>false;document.querySelector('#share-shot').click()})()`);
+await waitFor(`!document.querySelector('#share-output').hidden`);
+const manualShare = await evaluate(`({url:document.querySelector('#share-url').value,feedback:document.querySelector('#share-feedback').textContent,search:location.search,hash:location.hash})`);
+if (!manualShare.url.includes('sh=') || !manualShare.url.includes('oh=') || !manualShare.url.includes('lat=') || !manualShare.url.includes('d=') || !manualShare.feedback.includes('sélectionne') || !manualShare.search.includes('rpm=') || manualShare.hash !== '#calculateur') throw new Error(`Manual share: ${JSON.stringify(manualShare)}`);
 
 await evaluate(`window.__resetStart=Number(document.querySelector('[data-trajectory-app]').dataset.lastRequestId);document.querySelector('#compare-shot').click();document.querySelector('#reset-shot').click()`);
 await wait(800);
@@ -236,7 +241,7 @@ const result = {
   layouts,
   urls: { current: currentUrl, legacy: oldUrl },
   persistence: { storedMass: storedShot.massG, reset: resetShot },
-  sharing: { native: nativeShare, clipboard: clipboardShare.feedback },
+  sharing: { native: nativeShare, clipboard: clipboardShare.feedback, manual: manualShare.feedback },
   concurrency: concurrentAfter,
   calculationError: errorState,
   themeRedrawWithoutPhysics: themed.posts === 0,
