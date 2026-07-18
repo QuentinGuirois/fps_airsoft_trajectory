@@ -45,6 +45,11 @@ safe_extract() {
   done < <(tar -tzf "$archive")
   mkdir -p -- "$destination"
   tar -xzf "$archive" --no-same-owner --no-same-permissions -C "$destination"
+  # Plesk sert le document root via Apache avant PHP-FPM : les répertoires
+  # et fichiers publics doivent donc rester traversables/lisibles. Les secrets,
+  # uploads et sauvegardes vivent hors de la release sous private/ (umask 077).
+  find "$destination" -type d -exec chmod 755 {} +
+  find "$destination" -type f -exec chmod 644 {} +
   [[ -f "$destination/index.html" && -f "$destination/api/v1/index.php" && -f "$destination/bin/migrate.php" ]] || {
     echo "Release incomplète." >&2
     return 1
