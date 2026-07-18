@@ -61,6 +61,18 @@ function promoteTestAdmin(email) {
   command(PHP, ['-r', script, email]);
 }
 
+function forceReplicaPending(id) {
+  const script = [
+    '$pdo = new PDO(getenv("DB_DSN"), getenv("DB_USER"), getenv("DB_PASSWORD"));',
+    '$statement = $pdo->prepare("UPDATE replica_posts SET state = \'pending\', image_status = \'ready\', image_path = \'aaaaaaaaaaaaaaaaaaaaaaaa.webp\', image_mime = \'image/webp\', image_bytes = 1000, image_width = 1000, image_height = 500, image_sha256 = REPEAT(\'a\', 64), image_generated_at = UTC_TIMESTAMP() WHERE id = :id");',
+    '$statement->execute([":id" => $argv[1]]);',
+    '$read = $pdo->prepare("SELECT version FROM replica_posts WHERE id = :id");',
+    '$read->execute([":id" => $argv[1]]);',
+    'echo (string) $read->fetchColumn();',
+  ].join(' ');
+  return Number(command(PHP, ['-r', script, id]).trim());
+}
+
 function resetDatabase() {
   if (process.env.FAT_TEST_SKIP_DB_RESET !== 'true') {
     command('docker', ['exec', 'fat-mariadb-test', 'mariadb', '-uroot', '-pfat_local_root_only', '-e',
@@ -184,6 +196,12 @@ try {
   } });
   assert.equal(card.replica.usefulRangeM, 52.5);
   const cardId = card.replica.id;
+  const moderationCard = await api('/replicas', { method: 'POST', auth: true, expected: 201, body: {
+    modelName: 'Réplique à modérer', type: 'HPA', simulationUrl: `${ORIGIN}/?m=0.32&j=1.50`,
+    massG: 0.32, energyJ: 1.5, usefulRangeM: 55, maximumRangeM: 70,
+    curveThumbnailSvg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 30" role="img" aria-label="Courbe"><path d="M0 20L100 10"/></svg>', rightsConfirmed: true,
+  } });
+  const moderationVersion = forceReplicaPending(moderationCard.replica.id);
   await api('/replicas', { method: 'POST', auth: true, expected: 422, body: {
     modelName: 'Divergence', type: 'AEG', simulationUrl: `${ORIGIN}/?m=0.28&j=1.30`, massG: 0.30, energyJ: 1.3, rightsConfirmed: true,
   } });
@@ -204,6 +222,7 @@ try {
   await api(`/replicas/${cardId}/submit`, { method: 'POST', auth: true, expected: 409, body: { version: 1 } });
   await api('/admin/replicas', { auth: true, expected: 403 });
   await api('/admin/replicas/published', { auth: true, expected: 403 });
+  await api(`/admin/replicas/${moderationCard.replica.id}/publish`, { method: 'POST', auth: true, expected: 403, body: { version: moderationVersion } });
   await api(`/admin/replicas/${cardId}`, { method: 'PATCH', auth: true, expected: 403, body: { modelName: 'Interdit', version: 1 } });
 
   promoteTestAdmin('bravo@example.test');
@@ -213,7 +232,13 @@ try {
   assert.equal(adminLogin.user.role, 'admin');
   const adminCookie = cookie;
   const adminCsrf = csrf;
-  await api('/admin/replicas', { auth: true });
+  const pendingCards = await api('/admin/replicas', { auth: true });
+  assert.deepEqual(pendingCards.replicas.map((replica) => replica.id), [moderationCard.replica.id]);
+  const publishedModeration = await api(`/admin/replicas/${moderationCard.replica.id}/publish`, { method: 'POST', auth: true, body: { version: moderationVersion } });
+  assert.equal(publishedModeration.state, 'published');
+  const rejectionVersion = forceReplicaPending(moderationCard.replica.id);
+  const rejectedModeration = await api(`/admin/replicas/${moderationCard.replica.id}/reject`, { method: 'POST', auth: true, body: { version: rejectionVersion, note: 'Photo trop sombre.' } });
+  assert.equal(rejectedModeration.state, 'rejected');
   const publishedCards = await api('/admin/replicas/published', { auth: true });
   assert.deepEqual(publishedCards.replicas, []);
 

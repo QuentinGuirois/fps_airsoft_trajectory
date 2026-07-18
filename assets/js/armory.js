@@ -1,6 +1,6 @@
-import './replica-card.js?v=20260718-35';
-import { RepositoryError } from './community-repositories.js?v=20260718-35';
-import { createSimulationSnapshot, simulationUrlsMatch } from './simulation-link-snapshot.js?v=20260718-35';
+import './replica-card.js?v=20260718-36';
+import { RepositoryError } from './community-repositories.js?v=20260718-36';
+import { createSimulationSnapshot, simulationUrlsMatch } from './simulation-link-snapshot.js?v=20260718-36';
 
 export function summarizeReplicas(replicas = []) {
   return replicas.reduce((summary, replica) => {
@@ -27,11 +27,16 @@ export function initArmory({ root, accountRepository, replicaRepository } = {}) 
   const replicaDialog = root.querySelector('[data-replica-dialog]');
   const replicaForm = replicaDialog?.querySelector('[data-replica-form]');
   const adminButton = root.querySelector('[data-admin-armory]');
+  const moderationButton = root.querySelector('[data-admin-moderation]');
+  const rejectDialog = root.querySelector('[data-reject-dialog]');
+  const rejectForm = root.querySelector('[data-reject-form]');
+  const rejectName = root.querySelector('[data-reject-name]');
   const personalLink = root.querySelector('.armory-rail a[href="/compte/armurerie.html"]');
   const titleNode = root.querySelector('.armory-title-row h1');
   const addButton = root.querySelector('.armory-title-row [data-add-replica]');
   let replicas = [];
   let pendingArchiveId = null;
+  let pendingModerationId = null;
   let editingReplica = null;
   let mode = 'personal';
 
@@ -44,9 +49,11 @@ export function initArmory({ root, accountRepository, replicaRepository } = {}) 
   function updateSummary() {
     const summary = summarizeReplicas(replicas);
     countNode.textContent = String(summary.total);
-    summaryNode.textContent = mode === 'admin'
-      ? `${summary.published} CARD${summary.published > 1 ? 'S' : ''} PUBLIÉE${summary.published > 1 ? 'S' : ''} · TOUS LES JOUEURS`
-      : `${summary.total} RÉPLIQUE${summary.total > 1 ? 'S' : ''} · ${summary.published} PUBLIÉE${summary.published > 1 ? 'S' : ''} · ${summary.drafts} BROUILLON${summary.drafts > 1 ? 'S' : ''}`;
+    summaryNode.textContent = mode === 'moderation'
+      ? `${summary.pending} CARD${summary.pending > 1 ? 'S' : ''} À VALIDER`
+      : mode === 'admin'
+        ? `${summary.published} CARD${summary.published > 1 ? 'S' : ''} PUBLIÉE${summary.published > 1 ? 'S' : ''} · TOUS LES JOUEURS`
+        : `${summary.total} RÉPLIQUE${summary.total > 1 ? 'S' : ''} · ${summary.published} PUBLIÉE${summary.published > 1 ? 'S' : ''} · ${summary.drafts} BROUILLON${summary.drafts > 1 ? 'S' : ''}`;
   }
 
   function render() {
@@ -55,9 +62,11 @@ export function initArmory({ root, accountRepository, replicaRepository } = {}) 
     if (!replicas.length) {
       const empty = document.createElement('div');
       empty.className = 'armory-empty';
-      empty.innerHTML = mode === 'admin'
-        ? '<span aria-hidden="true">◇</span><strong>Aucune card publiée</strong><p>Les cards publiées par les joueurs apparaîtront ici.</p>'
-        : '<span aria-hidden="true">＋</span><strong>Râtelier vide</strong><p>Ta première card apparaîtra ici après création et traitement de sa photo.</p>';
+      empty.innerHTML = mode === 'moderation'
+        ? '<span aria-hidden="true">✓</span><strong>Modération à jour</strong><p>Aucune card n’attend actuellement ta validation.</p>'
+        : mode === 'admin'
+          ? '<span aria-hidden="true">◇</span><strong>Aucune card publiée</strong><p>Les cards publiées par les joueurs apparaîtront ici.</p>'
+          : '<span aria-hidden="true">＋</span><strong>Râtelier vide</strong><p>Ta première card apparaîtra ici après création et traitement de sa photo.</p>';
       const add = document.createElement('button');
       add.type = 'button';
       add.className = 'button button-primary';
@@ -73,10 +82,11 @@ export function initArmory({ root, accountRepository, replicaRepository } = {}) 
       const card = document.createElement('replica-card');
       card.setAttribute('mode', 'management');
       if (mode === 'admin') card.setAttribute('admin', '');
+      if (mode === 'moderation') card.setAttribute('moderation', '');
       card.data = replica;
       grid.append(card);
     }
-    if (mode === 'admin') return;
+    if (mode !== 'personal') return;
     const addTile = document.createElement('button');
     addTile.type = 'button';
     addTile.className = 'armory-add-tile';
@@ -116,20 +126,55 @@ export function initArmory({ root, accountRepository, replicaRepository } = {}) 
     openReplicaEditor(replica, false);
   }, { signal: controller.signal });
 
+  root.addEventListener('replica:publish', async (event) => {
+    if (mode !== 'moderation') return;
+    const replica = replicas.find((item) => item.id === event.detail.id);
+    if (!replica) return;
+    const publishButton = event.target.querySelector('.replica-publish');
+    if (publishButton) publishButton.disabled = true;
+    try {
+      await replicaRepository.publishAdmin(replica.id, replica.version, { signal: controller.signal });
+      replicas = replicas.filter((item) => item.id !== replica.id);
+      render();
+      announce(`La card « ${replica.name} » est publiée.`, 'success');
+    } catch (error) {
+      if (publishButton) publishButton.disabled = false;
+      announce(error.message, 'error');
+    }
+  }, { signal: controller.signal });
+
+  root.addEventListener('replica:reject', (event) => {
+    if (mode !== 'moderation') return;
+    const replica = replicas.find((item) => item.id === event.detail.id);
+    if (!replica) return;
+    pendingModerationId = replica.id;
+    rejectForm.reset();
+    rejectName.textContent = replica.name;
+    rejectDialog.showModal();
+    rejectForm.note.focus();
+  }, { signal: controller.signal });
+
   root.addEventListener('click', (event) => {
     if (mode === 'personal' && event.target.closest('[data-add-replica]')) openReplicaEditor(null, false);
   }, { signal: controller.signal });
 
-  adminButton?.addEventListener('click', () => {
-    mode = 'admin';
-    adminButton.classList.add('is-active');
-    adminButton.setAttribute('aria-current', 'page');
+  function switchAdminMode(nextMode) {
+    mode = nextMode;
+    for (const button of [adminButton, moderationButton]) {
+      const active = button === (mode === 'moderation' ? moderationButton : adminButton);
+      button?.classList.toggle('is-active', active);
+      if (active) button?.setAttribute('aria-current', 'page');
+      else button?.removeAttribute('aria-current');
+    }
     personalLink?.classList.remove('is-active');
     personalLink?.removeAttribute('aria-current');
-    if (titleNode) titleNode.textContent = 'Cards publiées';
+    if (titleNode) titleNode.textContent = mode === 'moderation' ? 'Modération' : 'Cards publiées';
     if (addButton) addButton.hidden = true;
     load();
-  }, { signal: controller.signal });
+  }
+
+  adminButton?.addEventListener('click', () => switchAdminMode('admin'), { signal: controller.signal });
+  moderationButton?.addEventListener('click', () => switchAdminMode('moderation'), { signal: controller.signal });
 
   function snapshot() {
     try { return JSON.parse(sessionStorage.getItem('fat.pending-replica.v1') || 'null'); }
@@ -248,6 +293,29 @@ export function initArmory({ root, accountRepository, replicaRepository } = {}) 
     }
   }, { signal: controller.signal });
 
+  rejectDialog?.querySelector('[data-cancel-reject]')?.addEventListener('click', () => {
+    pendingModerationId = null;
+    rejectDialog.close();
+  }, { signal: controller.signal });
+  rejectForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const replica = replicas.find((item) => item.id === pendingModerationId);
+    const submit = rejectForm.querySelector('button[type="submit"]');
+    if (!replica) return;
+    submit.disabled = true;
+    try {
+      await replicaRepository.rejectAdmin(replica.id, replica.version, rejectForm.note.value.trim(), { signal: controller.signal });
+      replicas = replicas.filter((item) => item.id !== replica.id);
+      pendingModerationId = null;
+      rejectDialog.close();
+      render();
+      announce(`La card « ${replica.name} » est rejetée. Le motif sera visible par le joueur.`, 'success');
+    } catch (error) { announce(error.message, 'error'); }
+    finally {
+      submit.disabled = false;
+    }
+  }, { signal: controller.signal });
+
   root.querySelector('[data-account-logout]')?.addEventListener('click', async () => {
     try { await accountRepository.logout({ signal: controller.signal }); } catch { /* Session déjà absente. */ }
     location.href = '/compte/';
@@ -266,14 +334,19 @@ export function initArmory({ root, accountRepository, replicaRepository } = {}) 
         return;
       }
       userNodes.forEach((node) => { node.textContent = session.user.pseudo; });
-      if (session.user.role === 'admin') adminButton?.removeAttribute('hidden');
-      if (mode === 'admin' && session.user.role !== 'admin') {
+      if (session.user.role === 'admin') {
+        adminButton?.removeAttribute('hidden');
+        moderationButton?.removeAttribute('hidden');
+      }
+      if (mode !== 'personal' && session.user.role !== 'admin') {
         mode = 'personal';
         throw new RepositoryError('Cette vue est réservée au compte administrateur.', { status: 403, code: 'forbidden' });
       }
-      const payload = mode === 'admin'
-        ? await replicaRepository.listPublishedAdmin({ signal: controller.signal })
-        : await replicaRepository.list({ signal: controller.signal, includeArchived: true });
+      const payload = mode === 'moderation'
+        ? await replicaRepository.listPendingAdmin({ signal: controller.signal })
+        : mode === 'admin'
+          ? await replicaRepository.listPublishedAdmin({ signal: controller.signal })
+          : await replicaRepository.list({ signal: controller.signal, includeArchived: true });
       replicas = Array.isArray(payload?.replicas) ? payload.replicas : [];
       announce('');
       render();

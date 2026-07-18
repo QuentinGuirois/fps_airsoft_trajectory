@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#10140c">
   <title>L’Armurerie — espace joueur privé | F.A.T.</title>
   <script data-cfasync="false">(()=>{const e=document.documentElement;let m='system';try{m=localStorage.getItem('fat-theme')||m}catch{}if(!['system','dark','light'].includes(m))m='system';const d=m==='dark'||(m==='system'&&(!window.matchMedia||matchMedia('(prefers-color-scheme: dark)').matches));const t=d?'dark':'light';e.dataset.themeMode=m;e.dataset.theme=t;e.style.colorScheme=t;document.querySelector('meta[name="theme-color"]').content=d?'#10140c':'#eef0e2'})()</script>
-  <link rel="stylesheet" href="/assets/site.css?v=20260718-32">
+  <link rel="stylesheet" href="/assets/site.css?v=20260718-36">
 </head>
 <body class="armory-page">
   <a class="skip-link" href="#armurerie">Aller à L’Armurerie</a>
@@ -30,6 +30,7 @@
         <p>// MON COMPTE</p>
         <nav>
           <a class="is-active" href="/compte/armurerie.html" aria-current="page"><span>⌂</span> L’Armurerie <strong data-armory-count>0</strong></a>
+          <button type="button" data-admin-moderation hidden><span>✓</span> Modération</button>
           <button type="button" data-admin-armory hidden><span>◆</span> Cards publiées</button>
           <button type="button" disabled><span>◔</span> Mes courbes</button>
           <button type="button" disabled><span>☰</span> Profil public</button>
@@ -81,7 +82,18 @@
         <div class="button-row"><button class="button" type="button" data-cancel-replica>ANNULER</button><button class="button button-primary" type="submit">ENREGISTRER →</button></div>
       </form>
     </dialog>
+
+    <dialog class="archive-dialog" data-reject-dialog aria-labelledby="reject-title">
+      <form data-reject-form>
+        <span class="patch-stencil">MODÉRATION</span>
+        <h2 id="reject-title">Rejeter cette card ?</h2>
+        <p>Explique clairement au joueur ce qu’il doit corriger sur <strong data-reject-name></strong>.</p>
+        <label for="reject-note">MOTIF DU REJET</label>
+        <textarea id="reject-note" name="note" required minlength="3" maxlength="500" rows="5"></textarea>
+        <div class="button-row"><button class="button" type="button" data-cancel-reject>ANNULER</button><button class="button archive-confirm" type="submit">REJETER LA CARD</button></div>
+      </form>
+    </dialog>
   </div>
-  <script type="module" data-cfasync="false" src="/assets/js/armory-entry.js?v=20260718-35"></script>
+  <script type="module" data-cfasync="false" src="/assets/js/armory-entry.js?v=20260718-36"></script>
 </body>
 </html>

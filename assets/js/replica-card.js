@@ -61,6 +61,7 @@ export function normalizeReplicaCardData(input, {
     usefulRangeM: finiteOrNull(data.usefulRangeM),
     maximumRangeM: finiteOrNull(data.maximumRangeM),
     version: Math.max(1, Number.parseInt(data.version, 10) || 1),
+    moderationNote: state === 'rejected' ? String(data.moderationNote || '').slice(0, 500) : '',
     curveThumbSvg: typeof data.curveThumbSvg === 'string' && data.curveThumbSvg.length <= 80_000 ? data.curveThumbSvg : '',
     simUrl: simulation.ok ? `${new URL(simulation.url).pathname}${new URL(simulation.url).search}` : '',
     user: {
@@ -136,6 +137,7 @@ export class ReplicaCardElement extends HTMLElementBase {
     const doc = this.ownerDocument;
     const data = this.#data;
     const management = this.getAttribute('mode') === 'management';
+    const moderation = this.hasAttribute('moderation');
     const article = element(doc, 'article', `replica-card-shell replica-state-${data.state}`);
     article.dataset.state = data.state;
     article.dataset.imageStatus = data.imageStatus;
@@ -223,25 +225,40 @@ export class ReplicaCardElement extends HTMLElementBase {
       stats.append(item);
     }
     body.append(stats);
+    if (management && data.state === 'rejected' && data.moderationNote) {
+      body.append(element(doc, 'p', 'replica-moderation-note', `Motif : ${data.moderationNote}`));
+    }
 
     const actions = element(doc, 'div', 'replica-card-actions');
     if (management) {
-      const primary = element(doc, 'button', `replica-edit${data.state === 'draft' ? ' button-primary' : ''}`, data.state === 'draft' ? 'TERMINER' : 'MODIFIER');
-      primary.type = 'button';
-      primary.addEventListener('click', () => this.#dispatch('edit'));
-      actions.append(primary);
+      if (moderation) {
+        const publish = element(doc, 'button', 'replica-publish button-primary', 'PUBLIER');
+        publish.type = 'button';
+        publish.addEventListener('click', () => this.#dispatch('publish'));
+        const reject = element(doc, 'button', 'replica-reject archive-confirm', 'REJETER');
+        reject.type = 'button';
+        reject.addEventListener('click', () => this.#dispatch('reject'));
+        actions.append(publish, reject);
+      } else {
+        const primary = element(doc, 'button', `replica-edit${data.state === 'draft' ? ' button-primary' : ''}`, data.state === 'draft' ? 'TERMINER' : 'MODIFIER');
+        primary.type = 'button';
+        primary.addEventListener('click', () => this.#dispatch('edit'));
+        actions.append(primary);
+      }
       if (data.simUrl) {
         const curveLink = element(doc, 'a', '', 'COURBE');
         curveLink.href = data.simUrl;
+        curveLink.target = '_blank';
+        curveLink.rel = 'noopener';
         actions.append(curveLink);
       }
-      if (['rejected', 'failed'].includes(data.imageStatus)) {
+      if (!moderation && ['rejected', 'failed'].includes(data.imageStatus)) {
         const retry = element(doc, 'button', '', 'NOUVELLE PHOTO');
         retry.type = 'button';
         retry.addEventListener('click', () => this.#dispatch('retry'));
         actions.append(retry);
       }
-      if (data.state !== 'archived') {
+      if (!moderation && data.state !== 'archived') {
         const archive = element(doc, 'button', 'replica-archive', this.hasAttribute('admin') ? 'RETIRER' : 'ARCHIVER');
         archive.type = 'button';
         archive.addEventListener('click', () => this.#dispatch('archive'));

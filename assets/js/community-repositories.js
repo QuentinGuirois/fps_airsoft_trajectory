@@ -28,9 +28,12 @@ export class ReplicaRepository {
   async submit() { throw new Error('ReplicaRepository.submit() doit être implémenté.'); }
   async archive() { throw new Error('ReplicaRepository.archive() doit être implémenté.'); }
   async listPublishedAdmin() { throw new Error('ReplicaRepository.listPublishedAdmin() doit être implémenté.'); }
+  async listPendingAdmin() { throw new Error('ReplicaRepository.listPendingAdmin() doit être implémenté.'); }
   async updateAdmin() { throw new Error('ReplicaRepository.updateAdmin() doit être implémenté.'); }
   async archiveAdmin() { throw new Error('ReplicaRepository.archiveAdmin() doit être implémenté.'); }
   async restoreAdmin() { throw new Error('ReplicaRepository.restoreAdmin() doit être implémenté.'); }
+  async publishAdmin() { throw new Error('ReplicaRepository.publishAdmin() doit être implémenté.'); }
+  async rejectAdmin() { throw new Error('ReplicaRepository.rejectAdmin() doit être implémenté.'); }
 }
 
 export class HttpApiClient {
@@ -128,6 +131,7 @@ export class HttpReplicaRepository extends ReplicaRepository {
     return this.client.request(`/replicas/${encodeURIComponent(id)}`, { method: 'DELETE', body: { version }, signal });
   }
   listPublishedAdmin({ signal } = {}) { return this.client.request('/admin/replicas/published', { signal }); }
+  listPendingAdmin({ signal } = {}) { return this.client.request('/admin/replicas', { signal }); }
   updateAdmin(id, data, { signal } = {}) {
     return this.client.request(`/admin/replicas/${encodeURIComponent(id)}`, { method: 'PATCH', body: data, signal });
   }
@@ -136,6 +140,12 @@ export class HttpReplicaRepository extends ReplicaRepository {
   }
   restoreAdmin(id, version, { signal } = {}) {
     return this.client.request(`/admin/replicas/${encodeURIComponent(id)}/restore`, { method: 'POST', body: { version }, signal });
+  }
+  publishAdmin(id, version, { signal } = {}) {
+    return this.client.request(`/admin/replicas/${encodeURIComponent(id)}/publish`, { method: 'POST', body: { version }, signal });
+  }
+  rejectAdmin(id, version, note, { signal } = {}) {
+    return this.client.request(`/admin/replicas/${encodeURIComponent(id)}/reject`, { method: 'POST', body: { version, note }, signal });
   }
 }
 

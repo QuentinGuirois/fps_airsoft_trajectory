@@ -1356,10 +1356,12 @@ replica-card { display: block; min-width: 0; }
 .replica-card-stats dt { overflow: hidden; color: var(--muted); font: 500 .47rem/1 var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
 .replica-card-stats dd { margin: .32rem 0 0; color: var(--paper); font: 600 .73rem/1 var(--font-mono); white-space: nowrap; }
 .replica-card-stats [data-metric="energy"] dd { color: var(--acid-text); }
+.replica-moderation-note { margin: 0 0 .75rem; border-left: 3px solid var(--danger); background: color-mix(in srgb, var(--danger) 8%, transparent); padding: .65rem .75rem; color: var(--muted-strong); font: 500 .68rem/1.5 var(--font); }
 .replica-card-actions { display: flex; gap: .4rem; }
 .replica-card-actions a, .replica-card-actions button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; border: 1px solid var(--line-strong); border-radius: .55rem; background: transparent; color: var(--muted-strong); padding: .55rem .7rem; font: 600 .56rem/1 var(--font-mono); text-decoration: none; cursor: pointer; }
 .replica-card-actions .button-primary { flex: 1; border-color: var(--acid); background: var(--acid); color: var(--on-acid); }
 .replica-card-actions .replica-archive { border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); color: var(--danger); }
+.replica-card-actions .replica-reject { border-color: color-mix(in srgb, var(--danger) 55%, var(--line)); color: var(--danger); }
 replica-card[mode="management"] .replica-card-media { min-height: 8.6rem; }
 replica-card[mode="management"] .replica-card-pane { height: 8.6rem; }
 replica-card[mode="management"] .replica-card-header .replica-avatar, replica-card[mode="management"] .replica-card-header .replica-pseudo, replica-card[mode="management"] .replica-card-header .replica-trust, replica-card[mode="management"] .replica-card-header .replica-youtube { display: none; }
@@ -1412,6 +1414,8 @@ replica-card[mode="management"] .replica-state-badge { margin-left: 0; }
 .archive-dialog::backdrop { background: color-mix(in srgb, var(--ink-0) 82%, transparent); }
 .archive-dialog h2 { margin: 1rem 0 .5rem; font: 800 1.5rem/1.1 var(--font-display); }
 .archive-dialog p { color: var(--muted); }
+.archive-dialog label { display: block; margin: .9rem 0 .45rem; color: var(--muted); font: 500 .56rem/1.2 var(--font-mono); letter-spacing: .08em; }
+.archive-dialog textarea { width: 100%; min-height: 7rem; resize: vertical; border: 1px solid var(--line); border-radius: .55rem; background: var(--ink-0); color: var(--paper); padding: .7rem .8rem; font: 500 .75rem/1.5 var(--font); }
 .archive-dialog .button-row { justify-content: flex-end; }
 .archive-confirm { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 16%, var(--ink-1)); color: var(--danger); }
 .replica-editor-dialog { width: min(38rem, calc(100% - 1.5rem)); max-height: calc(100dvh - 1.5rem); overflow: auto; border: 1px solid var(--line-strong); border-radius: var(--radius-lg); background: var(--ink-1); box-shadow: var(--shadow); color: var(--paper); padding: 1.4rem; }

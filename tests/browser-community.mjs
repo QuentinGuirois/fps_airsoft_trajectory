@@ -186,6 +186,17 @@ await send('Page.addScriptToEvaluateOnNewDocument', { source: `
         if (!payload.verified) status = 422;
       } else if (requestUrl.pathname.endsWith('/admin/replicas/published') && method === 'GET') {
         payload = { replicas: fixture.replicas.filter((replica) => replica.state === 'published') };
+      } else if (requestUrl.pathname.endsWith('/admin/replicas') && method === 'GET') {
+        payload = { replicas: fixture.replicas.filter((replica) => replica.state === 'pending').map((replica) => ({ ...replica, imageStatus: 'ready', photoUrl: '/tests/fixtures/replica-side.fixture.webp' })) };
+      } else if (/\\/admin\\/replicas\\/[^/]+\\/publish$/.test(requestUrl.pathname) && method === 'POST') {
+        const id = decodeURIComponent(requestUrl.pathname.split('/').at(-2));
+        payload = { id, state: 'published' };
+      } else if (/\\/admin\\/replicas\\/[^/]+\\/reject$/.test(requestUrl.pathname) && method === 'POST') {
+        const id = decodeURIComponent(requestUrl.pathname.split('/').at(-2));
+        if (!requestBody?.note || requestBody.note.trim().length < 3) {
+          status = 422;
+          payload = { code: 'validation', message: 'Le motif de rejet est obligatoire.' };
+        } else payload = { id, state: 'rejected' };
       } else if (/\\/admin\\/replicas\\/[^/]+$/.test(requestUrl.pathname) && method === 'PATCH') {
         const id = decodeURIComponent(requestUrl.pathname.split('/').at(-1));
         payload = { replica: { ...fixture.replicas.find((replica) => replica.id === id), ...requestBody, state: 'pending', version: 2 } };
@@ -293,7 +304,7 @@ await capture('lot56-armory-desktop-day.png');
 
 const trajectoryLink = await evaluate(`document.querySelector('label[for="replica-simulation"] a') && ({text:document.querySelector('label[for="replica-simulation"] a').textContent,target:document.querySelector('label[for="replica-simulation"] a').target,href:document.querySelector('label[for="replica-simulation"] a').getAttribute('href')})`);
 if (!trajectoryLink || trajectoryLink.target !== '_blank' || trajectoryLink.href !== '/#tutoriel-calculateur' || !trajectoryLink.text.includes('VOIR LE TUTORIEL')) throw new Error(`Trajectory tutorial link mismatch ${JSON.stringify(trajectoryLink)}`);
-const linkedSnapshot = await evaluate(`import('/assets/js/simulation-link-snapshot.js?v=20260718-35').then(module => module.createSimulationSnapshot(location.origin + '/?m=0.36&j=1.9&rpm=112500&z=30&w=0&wd=90&t=20&p=1013.25&a=0&c=0&sh=1.5&oh=0.05&lat=45&d=5.95')).then(snapshot => ({svg:snapshot.curveThumbnailSvg.startsWith('<svg'),mass:snapshot.massG,energy:snapshot.energyJ,useful:Number.isFinite(snapshot.usefulRangeM),maximum:Number.isFinite(snapshot.maximumRangeM)}))`, true);
+const linkedSnapshot = await evaluate(`import('/assets/js/simulation-link-snapshot.js?v=20260718-36').then(module => module.createSimulationSnapshot(location.origin + '/?m=0.36&j=1.9&rpm=112500&z=30&w=0&wd=90&t=20&p=1013.25&a=0&c=0&sh=1.5&oh=0.05&lat=45&d=5.95')).then(snapshot => ({svg:snapshot.curveThumbnailSvg.startsWith('<svg'),mass:snapshot.massG,energy:snapshot.energyJ,useful:Number.isFinite(snapshot.usefulRangeM),maximum:Number.isFinite(snapshot.maximumRangeM)}))`, true);
 if (!linkedSnapshot.svg || linkedSnapshot.mass !== 0.36 || Math.abs(linkedSnapshot.energy - 1.9) > 1e-9 || !linkedSnapshot.useful || !linkedSnapshot.maximum) throw new Error(`Linked simulation snapshot mismatch ${JSON.stringify(linkedSnapshot)}`);
 
 await evaluate(`sessionStorage.setItem('__fatCommunityAdmin','1')`);
@@ -307,6 +318,20 @@ await evaluate(`document.querySelector('replica-card .replica-edit').click()`);
 await waitFor(`document.querySelector('[data-replica-dialog]').open`);
 if (!await evaluate(`document.querySelector('[data-replica-form] [name="photo"]').disabled`)) throw new Error('Admin photo field must stay disabled');
 await evaluate(`document.querySelector('[data-cancel-replica]').click()`);
+await evaluate(`document.querySelector('[data-admin-moderation]').click()`);
+await waitFor(`document.querySelectorAll('replica-card').length === 1 && document.querySelector('replica-card').hasAttribute('moderation')`);
+const moderationArmory = await evaluate(`({title:document.querySelector('.armory-title-row h1').textContent,publish:document.querySelector('replica-card .replica-publish')?.textContent.trim(),reject:document.querySelector('replica-card .replica-reject')?.textContent.trim(),curveTarget:document.querySelector('replica-card .replica-card-actions a')?.target})`);
+if (moderationArmory.title !== 'Modération' || moderationArmory.publish !== 'PUBLIER' || moderationArmory.reject !== 'REJETER' || moderationArmory.curveTarget !== '_blank') throw new Error(`Moderation armory mismatch ${JSON.stringify(moderationArmory)}`);
+await evaluate(`document.querySelector('replica-card .replica-publish').click()`);
+await waitFor(`document.querySelectorAll('replica-card').length === 0 && document.querySelector('.armory-empty')`);
+await evaluate(`document.querySelector('[data-admin-moderation]').click()`);
+await waitFor(`document.querySelectorAll('replica-card').length === 1`);
+await evaluate(`document.querySelector('replica-card .replica-reject').click()`);
+await waitFor(`document.querySelector('[data-reject-dialog]').open && document.activeElement === document.querySelector('[data-reject-form] [name="note"]')`);
+await evaluate(`(()=>{const form=document.querySelector('[data-reject-form]');form.note.value='Photo trop sombre et cadrage à reprendre.';form.requestSubmit()})()`);
+await waitFor(`document.querySelectorAll('replica-card').length === 0 && !document.querySelector('[data-reject-dialog]').open`);
+const moderationCalls = await evaluate(`JSON.parse(sessionStorage.getItem('__fatCommunityApiCalls') || '[]').filter(call=>/\\/admin\\/replicas\\/[^/]+\\/(publish|reject)$/.test(call.path))`);
+if (moderationCalls.length !== 2 || moderationCalls.some((call) => call.headers['x-csrf-token'] !== 'fixture-csrf')) throw new Error(`Moderation CSRF mismatch ${JSON.stringify(moderationCalls)}`);
 await evaluate(`sessionStorage.removeItem('__fatCommunityAdmin')`);
 await navigate(`${base}compte/armurerie.html?recipe=personal-after-admin`);
 await waitFor(`document.querySelectorAll('replica-card').length === ${COMMUNITY_FIXTURE.replicas.length}`);
@@ -352,7 +377,7 @@ await navigate(base);
 await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await navigate(`${base}compte/armurerie.html?recipe=sw`);
 await waitFor(`Boolean(navigator.serviceWorker.controller)`);
-const cache = await evaluate(`Promise.all([caches.open('fat-v3-2026-07-18-34').then(cache=>cache.match('/assets/js/replica-card.js?v=20260718-35')).then(Boolean),caches.match('/api/v1/me').then(Boolean)]).then(([component,api])=>({component,api}))`, true);
+const cache = await evaluate(`Promise.all([caches.open('fat-v3-2026-07-18-35').then(cache=>cache.match('/assets/js/replica-card.js?v=20260718-36')).then(Boolean),caches.match('/api/v1/me').then(Boolean)]).then(([component,api])=>({component,api}))`, true);
 if (!cache.component || cache.api) throw new Error(`Private cache mismatch ${JSON.stringify(cache)}`);
 
 await evaluate(`sessionStorage.setItem('__fatDisableCommunityApi','1')`);
@@ -378,6 +403,7 @@ const result = {
   mobile,
   emptyState,
   adminArmory,
+  moderationArmory,
   linkedSnapshot,
   cache,
   offline,

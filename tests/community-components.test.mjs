@@ -44,7 +44,10 @@ test('les repositories HTTP utilisent même origine, no-store, credentials et CS
   await account.login({ identity: 'test@example.test', password: 'secret-long' });
   await replicas.list();
   await replicas.archive('replica/unsafe', 4);
-  assert.equal(calls.length, 4);
+  await replicas.listPendingAdmin();
+  await replicas.publishAdmin('replica/unsafe', 5);
+  await replicas.rejectAdmin('replica/unsafe', 6, 'Photo trop sombre.');
+  assert.equal(calls.length, 7);
   for (const call of calls) {
     assert.equal(call.options.credentials, 'same-origin');
     assert.equal(call.options.cache, 'no-store');
@@ -52,6 +55,9 @@ test('les repositories HTTP utilisent même origine, no-store, credentials et CS
   assert.equal(calls[1].options.headers.get('X-CSRF-Token'), 'csrf-123');
   assert.match(calls[3].url, /replicas\/replica%2Funsafe$/);
   assert.equal(JSON.parse(calls[3].options.body).version, 4);
+  assert.match(calls[5].url, /admin\/replicas\/replica%2Funsafe\/publish$/);
+  assert.equal(calls[5].options.headers.get('X-CSRF-Token'), 'csrf-123');
+  assert.deepEqual(JSON.parse(calls[6].options.body), { version: 6, note: 'Photo trop sombre.' });
 });
 
 test('les erreurs API restent typées sans inventer de session', async () => {
@@ -96,6 +102,12 @@ test('une card refuse blob, data, photo externe et raster non-WebP, mais conserv
     assert.equal(normalizeReplicaCardData({ ...base, photoUrl }).photoUrl, '');
   }
   assert.equal(normalizeReplicaCardData(base).photoUrl, '/tests/fixtures/replica-side.fixture.webp');
+});
+
+test('le motif de rejet est conservé uniquement sur une card rejetée', () => {
+  const base = COMMUNITY_FIXTURE.replicas[0];
+  assert.equal(normalizeReplicaCardData({ ...base, state: 'rejected', moderationNote: 'Photo trop sombre.' }).moderationNote, 'Photo trop sombre.');
+  assert.equal(normalizeReplicaCardData({ ...base, state: 'published', moderationNote: 'Ancien motif' }).moderationNote, '');
 });
 
 test('la miniature sérialise les points Worker reçus sans importer le moteur', async () => {
@@ -167,11 +179,18 @@ test('l’administration publiée est visible uniquement aux admins et archive s
     read('api', 'src', 'Application.php'),
   ]);
   assert.match(html, /data-admin-armory hidden/);
+  assert.match(html, /data-admin-moderation hidden/);
+  assert.match(html, /data-reject-dialog/);
   assert.match(app, /session\.user\.role === 'admin'/);
   assert.match(app, /listPublishedAdmin/);
+  assert.match(app, /listPendingAdmin/);
+  assert.match(app, /publishAdmin/);
+  assert.match(app, /rejectAdmin/);
   for (const path of ['/admin/replicas/published', '/admin/replicas/{id}']) assert.ok(routes.includes(`'${path}`), path);
   assert.match(repositories, /updateAdmin[\s\S]*method: 'PATCH'/);
   assert.match(repositories, /archiveAdmin[\s\S]*method: 'DELETE'/);
+  assert.match(repositories, /publishAdmin[\s\S]*\/publish[\s\S]*method: 'POST'/);
+  assert.match(repositories, /rejectAdmin[\s\S]*\/reject[\s\S]*method: 'POST'/);
   assert.match(controller, /function published[\s\S]*require\(\$request, 'admin'\)/);
   assert.match(controller, /function update[\s\S]*requireCsrf/);
   assert.match(controller, /state='archived'/);
@@ -181,8 +200,8 @@ test('l’administration publiée est visible uniquement aux admins et archive s
 
 test('le service worker cache seulement les shells et contourne toutes les réponses API privées', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-34'/);
-  for (const path of ['/compte/', '/compte/verifier-email.html', '/compte/compte-active.html', '/compte/armurerie.html', '/assets/js/replica-card.js?v=20260718-35', '/assets/js/simulation-link-snapshot.js?v=20260718-35', '/assets/js/armory.js?v=20260718-35', '/assets/js/armory-entry.js?v=20260718-35', '/assets/js/account-login.js?v=20260718-34', '/assets/js/account-login-entry.js?v=20260718-34', '/assets/js/community-repositories.js?v=20260718-35', '/assets/js/turnstile-client.js?v=20260718-30']) {
+  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-35'/);
+  for (const path of ['/compte/', '/compte/verifier-email.html', '/compte/compte-active.html', '/compte/armurerie.html', '/assets/site.css?v=20260718-36', '/assets/js/replica-card.js?v=20260718-36', '/assets/js/simulation-link-snapshot.js?v=20260718-36', '/assets/js/armory.js?v=20260718-36', '/assets/js/armory-entry.js?v=20260718-36', '/assets/js/account-login.js?v=20260718-34', '/assets/js/account-login-entry.js?v=20260718-34', '/assets/js/community-repositories.js?v=20260718-36', '/assets/js/turnstile-client.js?v=20260718-30']) {
     assert.ok(worker.includes(`'${path}'`), path);
   }
   assert.match(worker, /url\.pathname\.startsWith\('\/api\/'\)[\s\S]*event\.respondWith\(fetch\(event\.request\)\);[\s\S]*return;/);
