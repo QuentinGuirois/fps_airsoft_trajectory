@@ -47,7 +47,7 @@ test('les hubs Outils et Guides existent, sont indexables et ne pointent que ver
   }
 });
 
-test('le briefing expose le dialogue, les cinq routes réelles et les comportements accessibles', async () => {
+test('le briefing expose le dialogue, les routes réelles et les comportements accessibles', async () => {
   const site = await read('site.js');
   assert.match(site, /role', 'dialog'/);
   assert.match(site, /aria-modal', 'true'/);
@@ -59,8 +59,7 @@ test('le briefing expose le dialogue, les cinq routes réelles et les comporteme
   assert.match(site, /window\.scrollTo\(0, menuScrollY\)/);
   assert.match(site, /briefingMenu\.hidden = true/);
   assert.match(site, /briefingMenu\.hidden = false/);
-  for (const href of ['/#calculateur', '/convertisseur-joules-fps/', '/outils/choisir-gaz-airsoft-pression-temperature/', '/guides/', '/simulateur-3d-airsoft/']) assert.ok(site.includes(href), href);
-  assert.doesNotMatch(site, /tu-joues-avec-quoi/);
+  for (const href of ['/#calculateur', '/convertisseur-joules-fps/', '/outils/choisir-gaz-airsoft-pression-temperature/', '/guides/', '/simulateur-3d-airsoft/', '/tu-joues-avec-quoi/']) assert.ok(site.includes(href), href);
 });
 
 test('le dernier setup reste honnête et ne déduit jamais une portée de l’énergie', async () => {
@@ -88,7 +87,7 @@ test('animations, reduced motion, PWA et fond CSS respectent la salle de briefin
   assert.doesNotMatch(`${site}\n${css}`, /three\.js|three-r185/i);
   assert.match(site, /SERVICE WORKER EN INITIALISATION/);
   assert.match(site, /HORS CONNEXION PRÊT/);
-  assert.match(worker, /fat-v3-2026-07-18-35/);
+  assert.match(worker, /fat-v3-2026-07-18-39/);
   assert.match(worker, /'\/outils\/'/);
   assert.match(worker, /'\/guides\/'/);
 });

@@ -43,23 +43,22 @@ test('la géométrie et les traits du cockpit suivent la charte 2D', async () =>
   assert.match(app, /renderReferenceLegend\(Boolean\(prepared\.trajectory\)\)/);
 });
 
-test('le partage expose toujours une URL complète et restaure les paramètres avancés', async () => {
-  const [html, app, share] = await Promise.all([read('index.html'), read('app.js'), read('assets', 'js', 'share-link.js')]);
-  assert.match(html, /id="share-output" hidden/);
-  assert.match(html, /id="share-url" type="url" readonly/);
-  assert.match(html, /id="copy-share-url"/);
+test('l’enregistrement conserve une URL complète et les paramètres avancés', async () => {
+  const [html, app] = await Promise.all([read('index.html'), read('app.js')]);
+  assert.match(html, /id="share-shot"[^>]*data-tuto="enregistrer">ENREGISTRER/);
+  assert.doesNotMatch(html, /id="share-url"/);
   for (const parameter of ['sh', 'oh', 'lat', 'd']) {
     assert.match(app, new RegExp(`${parameter}: shot\.`));
   }
   assert.match(app, /history\.replaceState\(history\.state, '', url\)/);
-  assert.match(app, /shareLink\(\{/);
-  assert.match(share, /documentRef\?\.execCommand\?\.\('copy'\)/);
+  assert.match(app, /trajectoryRepository\.create\(\{/);
+  assert.match(app, /simulationUrl: url/);
 });
 
 test('le cache PWA contient les modules 2D avec une nouvelle version', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /fat-v3-2026-07-18-35/);
+  assert.match(worker, /fat-v3-2026-07-18-39/);
   assert.match(worker, /'\/chart-data\.js\?v=20260718-28'/);
-  assert.match(worker, /'\/app\.js\?v=20260718-29'/);
-  assert.match(worker, /'\/assets\/site\.css\?v=20260718-32'/);
+  assert.match(worker, /'\/app\.js\?v=20260718-38'/);
+  assert.match(worker, /'\/assets\/site\.css\?v=20260718-38'/);
 });

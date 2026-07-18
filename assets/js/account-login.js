@@ -1,4 +1,11 @@
-import { RepositoryError } from './community-repositories.js?v=20260718-33';
+import { RepositoryError } from './community-repositories.js?v=20260718-38';
+
+export function safeAccountReturn(search = globalThis.location?.search || '') {
+  try {
+    const value = new URLSearchParams(search).get('return') || '';
+    return value.startsWith('/') && !value.startsWith('//') && !/[\r\n]/.test(value) ? value : '';
+  } catch { return ''; }
+}
 
 const fieldValue = (form, name) => String(new FormData(form).get(name) || '').trim();
 
@@ -15,6 +22,7 @@ export function initAccountLogin({
   const forgotForm = root.querySelector('[data-account-forgot-form]');
   const resetForm = root.querySelector('[data-account-reset-form]');
   const controller = new AbortController();
+  const returnTarget = safeAccountReturn();
   let mode = 'login';
 
   function announce(message, tone = '') {
@@ -63,7 +71,7 @@ export function initAccountLogin({
           ...await protectedPayload('login'),
         }, { signal: controller.signal });
         announce('Connexion réussie.', 'success');
-        redirect('/compte/armurerie.html');
+        redirect(returnTarget || '/compte/armurerie.html');
       } else {
         const registration = await accountRepository.register({
           pseudo: fieldValue(form, 'pseudo'),
@@ -144,7 +152,7 @@ export function initAccountLogin({
   }
   const ready = accountRepository.getSession({ signal: controller.signal })
     .then((session) => {
-      if (session?.authenticated) redirect('/compte/armurerie.html');
+      if (session?.authenticated) redirect(returnTarget || '/compte/armurerie.html');
       return session;
     })
     .catch((error) => {

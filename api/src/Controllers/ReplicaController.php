@@ -49,19 +49,26 @@ final class ReplicaController
         $this->sessions->requireCsrf($request, $session);
         $this->limits->hit('replica_create', $session['id'], 20, 3600);
         $body = $request->json();
-        Validator::keys($body, ['modelName','type','simulationUrl','massG','energyJ','usefulRangeM','maximumRangeM','youtubeUrl','curveThumbnailSvg','rightsConfirmed'], ['modelName','type','simulationUrl','rightsConfirmed']);
+        Validator::keys($body, ['modelName','type','trajectoryId','simulationUrl','massG','energyJ','usefulRangeM','maximumRangeM','youtubeUrl','curveThumbnailSvg','rightsConfirmed'], ['modelName','type','rightsConfirmed']);
         Validator::boolTrue($body['rightsConfirmed'], 'La confirmation des droits');
-        $simulation = SimulationUrl::parse($body['simulationUrl'], $this->config);
-        $this->assertMeasurementMatch($body, $simulation);
+        $trajectory = isset($body['trajectoryId']) ? $this->trajectory((string) $body['trajectoryId'], $session['id']) : null;
+        if ($trajectory === null && !isset($body['simulationUrl'])) {
+            throw new HttpException(422, 'trajectory_required', 'Choisis une courbe enregistrée avant de créer la card.');
+        }
+        $simulation = SimulationUrl::parse($trajectory['simulation_url'] ?? $body['simulationUrl'], $this->config);
+        $this->assertMeasurementMatch($trajectory ?? $body, $simulation);
         $name = Validator::text($body['modelName'], 'Le nom de la réplique', 2, 80);
         $type = Validator::text($body['type'], 'Le type de réplique', 2, 24);
         $youtube = $this->youtube($body['youtubeUrl'] ?? null);
-        $curve = CurveThumbnail::sanitize($body['curveThumbnailSvg'] ?? null);
-        [$usefulRange, $maximumRange] = $this->ranges($body['usefulRangeM'] ?? null, $body['maximumRangeM'] ?? null);
+        $curve = CurveThumbnail::sanitize($trajectory['curve_thumbnail_svg'] ?? ($body['curveThumbnailSvg'] ?? null));
+        [$usefulRange, $maximumRange] = $this->ranges(
+            $trajectory['useful_range_m'] ?? ($body['usefulRangeM'] ?? null),
+            $trajectory['maximum_range_m'] ?? ($body['maximumRangeM'] ?? null),
+        );
         $id = Support::uuid();
         $slug = substr(str_replace('-', '', $id), 0, 20);
-        $statement = $this->db->prepare('INSERT INTO replica_posts (id,user_id,slug,model_name,replica_type,mass_g,energy_j,useful_range_m,maximum_range_m,simulation_url,youtube_url,curve_thumbnail_svg,rights_confirmed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,UTC_TIMESTAMP())');
-        $statement->execute([$id, $session['id'], $slug, $name, $type, $simulation['massG'], $simulation['energyJ'], $usefulRange, $maximumRange, $simulation['url'], $youtube, $curve]);
+        $statement = $this->db->prepare('INSERT INTO replica_posts (id,user_id,trajectory_id,slug,model_name,replica_type,mass_g,energy_j,useful_range_m,maximum_range_m,simulation_url,youtube_url,curve_thumbnail_svg,rights_confirmed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,UTC_TIMESTAMP())');
+        $statement->execute([$id, $session['id'], $trajectory['id'] ?? null, $slug, $name, $type, $simulation['massG'], $simulation['energyJ'], $usefulRange, $maximumRange, $simulation['url'], $youtube, $curve]);
         $this->audit->write($request->requestId, $session['id'], 'replica.create', 'replica', $id);
         Response::json(['replica' => $this->owned($id, $session)], 201);
     }
@@ -71,7 +78,7 @@ final class ReplicaController
         $session = $this->sessions->require($request);
         $this->sessions->requireCsrf($request, $session);
         $body = $request->json();
-        Validator::keys($body, ['modelName','type','simulationUrl','massG','energyJ','usefulRangeM','maximumRangeM','youtubeUrl','curveThumbnailSvg','restore','version'], ['version']);
+        Validator::keys($body, ['modelName','type','trajectoryId','simulationUrl','massG','energyJ','usefulRangeM','maximumRangeM','youtubeUrl','curveThumbnailSvg','restore','version'], ['version']);
         $current = $this->ownedRow($params['id'], $session);
         $version = Validator::version($body['version']);
         $values = [
@@ -84,16 +91,30 @@ final class ReplicaController
             'maximumRangeM' => $current['maximum_range_m'] === null ? null : (float) $current['maximum_range_m'],
             'youtubeUrl' => $current['youtube_url'],
             'curveThumbnailSvg' => $current['curve_thumbnail_svg'],
+            'trajectoryId' => $current['trajectory_id'],
         ];
         foreach ($values as $key => $value) {
             if (array_key_exists($key, $body)) {
                 $values[$key] = $body[$key];
             }
         }
+        $trajectory = array_key_exists('trajectoryId', $body)
+            ? $this->trajectory((string) $body['trajectoryId'], $session['id'])
+            : null;
+        if ($trajectory !== null) {
+            $values['trajectoryId'] = $trajectory['id'];
+            $values['simulationUrl'] = $trajectory['simulation_url'];
+            $values['massG'] = (float) $trajectory['mass_g'];
+            $values['energyJ'] = (float) $trajectory['energy_j'];
+            $values['usefulRangeM'] = $trajectory['useful_range_m'];
+            $values['maximumRangeM'] = $trajectory['maximum_range_m'];
+            $values['curveThumbnailSvg'] = $trajectory['curve_thumbnail_svg'];
+        }
         $simulation = SimulationUrl::parse($values['simulationUrl'], $this->config);
         $this->assertMeasurementMatch($values, $simulation);
         [$usefulRange, $maximumRange] = $this->ranges($values['usefulRangeM'], $values['maximumRangeM']);
         $sensitive = $simulation['url'] !== $current['simulation_url']
+            || $values['trajectoryId'] !== $current['trajectory_id']
             || abs($simulation['massG'] - (float) $current['mass_g']) > 0.0001
             || abs($simulation['energyJ'] - (float) $current['energy_j']) > 0.0001
             || Validator::text($values['modelName'], 'Le nom de la réplique', 2, 80) !== $current['model_name']
@@ -107,8 +128,9 @@ final class ReplicaController
         } elseif ($sensitive && $state === 'published') {
             $state = 'pending';
         }
-        $statement = $this->db->prepare('UPDATE replica_posts SET model_name=?,replica_type=?,mass_g=?,energy_j=?,useful_range_m=?,maximum_range_m=?,simulation_url=?,youtube_url=?,curve_thumbnail_svg=?,state=?,archived_at=IF(?="archived",archived_at,NULL),version=version+1 WHERE id=? AND user_id=? AND version=?');
+        $statement = $this->db->prepare('UPDATE replica_posts SET trajectory_id=?,model_name=?,replica_type=?,mass_g=?,energy_j=?,useful_range_m=?,maximum_range_m=?,simulation_url=?,youtube_url=?,curve_thumbnail_svg=?,state=?,archived_at=IF(?="archived",archived_at,NULL),version=version+1 WHERE id=? AND user_id=? AND version=?');
         $statement->execute([
+            $values['trajectoryId'],
             Validator::text($values['modelName'], 'Le nom de la réplique', 2, 80),
             Validator::text($values['type'], 'Le type de réplique', 2, 24),
             $simulation['massG'], $simulation['energyJ'], $usefulRange, $maximumRange, $simulation['url'],
@@ -212,9 +234,23 @@ final class ReplicaController
             'usefulRangeM' => $row['useful_range_m'] === null ? null : (float) $row['useful_range_m'],
             'maximumRangeM' => $row['maximum_range_m'] === null ? null : (float) $row['maximum_range_m'],
             'curveThumbSvg' => $row['curve_thumbnail_svg'] ?? '', 'simUrl' => $row['simulation_url'],
+            'trajectoryId' => $row['trajectory_id'] ?? null,
             'version' => (int) $row['version'], 'moderationNote' => $row['moderation_note'],
             'user' => ['pseudo' => $session['pseudo'], 'chrony' => false, 'youtubeUrl' => $row['youtube_url'] ?? ''],
         ];
+    }
+
+    /** @return array<string,mixed> */
+    private function trajectory(string $id, string $userId): array
+    {
+        if (!preg_match('/^[a-f0-9-]{36}$/i', $id)) {
+            throw new HttpException(422, 'trajectory_id', 'La courbe enregistrée sélectionnée est invalide.');
+        }
+        $statement = $this->db->prepare('SELECT * FROM saved_trajectories WHERE id=? AND user_id=? LIMIT 1');
+        $statement->execute([$id, $userId]);
+        $row = $statement->fetch();
+        if (!$row) throw new HttpException(404, 'trajectory_not_found', 'Cette courbe enregistrée est introuvable dans ton compte.');
+        return $row;
     }
 
     /** @param array<string,mixed> $body @param array{url:string,massG:float,energyJ:float} $simulation */

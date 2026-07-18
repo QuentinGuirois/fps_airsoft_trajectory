@@ -5,7 +5,9 @@ namespace Fat\Api;
 
 use Fat\Api\Controllers\AdminController;
 use Fat\Api\Controllers\AuthController;
+use Fat\Api\Controllers\PublicReplicaController;
 use Fat\Api\Controllers\ReplicaController;
+use Fat\Api\Controllers\TrajectoryController;
 use Fat\Api\Controllers\UserController;
 use Fat\Api\Middleware\Security;
 use Fat\Api\Services\AuditLogger;
@@ -55,6 +57,8 @@ final class Application
         $auth = new AuthController($this->db, $this->config, $sessions, $limits, $audit, MailerFactory::create($this->config), $turnstile);
         $user = new UserController($this->db, $this->config, $sessions, $audit);
         $replicas = new ReplicaController($this->db, $this->config, $sessions, $limits, $audit, new UploadService($this->db, $this->config));
+        $trajectories = new TrajectoryController($this->db, $this->config, $sessions, $limits, $audit);
+        $publicReplicas = new PublicReplicaController($this->db, $this->config);
         $admin = new AdminController($this->db, $this->config, $sessions, $limits, $audit);
         $router = new Router();
         $router->add('GET', '/health', static fn(): never => Response::json(['status' => 'ok']));
@@ -69,6 +73,11 @@ final class Application
         $router->add('PATCH', '/me', [$user, 'update']);
         $router->add('POST', '/me/export', [$user, 'export']);
         $router->add('DELETE', '/me', [$user, 'requestDeletion']);
+        $router->add('GET', '/trajectories', [$trajectories, 'list']);
+        $router->add('POST', '/trajectories', [$trajectories, 'create']);
+        $router->add('DELETE', '/trajectories/{id}', [$trajectories, 'delete']);
+        $router->add('GET', '/public/replicas', [$publicReplicas, 'list']);
+        $router->add('GET', '/public/replicas/{slug}/image.webp', [$publicReplicas, 'image']);
         $router->add('GET', '/replicas', [$replicas, 'list']);
         $router->add('POST', '/replicas', [$replicas, 'create']);
         $router->add('GET', '/replicas/{id}', [$replicas, 'get']);

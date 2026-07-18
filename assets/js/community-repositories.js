@@ -34,6 +34,13 @@ export class ReplicaRepository {
   async restoreAdmin() { throw new Error('ReplicaRepository.restoreAdmin() doit être implémenté.'); }
   async publishAdmin() { throw new Error('ReplicaRepository.publishAdmin() doit être implémenté.'); }
   async rejectAdmin() { throw new Error('ReplicaRepository.rejectAdmin() doit être implémenté.'); }
+  async listPublishedPublic() { throw new Error('ReplicaRepository.listPublishedPublic() doit être implémenté.'); }
+}
+
+export class TrajectoryRepository {
+  async list() { throw new Error('TrajectoryRepository.list() doit être implémenté.'); }
+  async create() { throw new Error('TrajectoryRepository.create() doit être implémenté.'); }
+  async delete() { throw new Error('TrajectoryRepository.delete() doit être implémenté.'); }
 }
 
 export class HttpApiClient {
@@ -147,6 +154,20 @@ export class HttpReplicaRepository extends ReplicaRepository {
   rejectAdmin(id, version, note, { signal } = {}) {
     return this.client.request(`/admin/replicas/${encodeURIComponent(id)}/reject`, { method: 'POST', body: { version, note }, signal });
   }
+  listPublishedPublic({ signal } = {}) { return this.client.request('/public/replicas', { signal }); }
+}
+
+export class HttpTrajectoryRepository extends TrajectoryRepository {
+  constructor({ client = new HttpApiClient() } = {}) {
+    super();
+    this.client = client;
+  }
+
+  list({ signal } = {}) { return this.client.request('/trajectories', { signal }); }
+  create(data, { signal } = {}) { return this.client.request('/trajectories', { method: 'POST', body: data, signal }); }
+  delete(id, { signal } = {}) {
+    return this.client.request(`/trajectories/${encodeURIComponent(id)}`, { method: 'DELETE', body: {}, signal });
+  }
 }
 
 export function createProductionRepositories(options = {}) {
@@ -154,5 +175,6 @@ export function createProductionRepositories(options = {}) {
   return {
     accountRepository: new HttpAccountRepository({ client }),
     replicaRepository: new HttpReplicaRepository({ client }),
+    trajectoryRepository: new HttpTrajectoryRepository({ client }),
   };
 }

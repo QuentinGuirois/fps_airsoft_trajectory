@@ -2,20 +2,22 @@
 
 ## État du dépôt
 
-Le pack `replicas-rembg-mvp` est une proposition d’architecture, pas un
-backend prêt à publier. La V3 conserve donc ces règles :
+Le backend PHP/MariaDB et le pipeline de détourage sont désormais la source de
+vérité. La route `/tu-joues-avec-quoi/` expose uniquement les cards dont la
+publication et l’image ont été validées côté serveur. La V3 conserve ces
+règles :
 
-- aucune route `/tu-joues-avec-quoi/` tant qu’aucun profil ne respecte
-  `data/operator-profile.schema.json` ;
-- aucune fiche de démonstration, valeur manquante ou photo « brouillon » dans
-  le sitemap ou le cache PWA ;
+- aucune fiche de démonstration, valeur manquante, card privée ou photo
+  « brouillon » dans la galerie publique ;
+- seuls les enregistrements `published` avec une image `ready` sont retournés
+  par l’API publique ;
 - aucun enregistrement de soumission dans `localStorage`, qui ne fournit ni
   sécurité, ni partage entre visiteurs, ni modération ;
 - aucun original téléversé servi directement depuis un répertoire public.
 
-`replica-utils.js`, `data/replica-submission.schema.json` et
-`database/replicas.sql` préparent le futur flux sans l’ouvrir. Ils ne remplacent
-jamais les validations serveur.
+`replica-utils.js` et `data/replica-submission.schema.json` documentent les
+bornes côté client. Les migrations `database/migrations/` et les validations
+PHP restent la source de vérité côté serveur.
 
 ## Architecture retenue
 
@@ -36,8 +38,8 @@ requête PHP. Il ne justifie pas à lui seul un service Node permanent.
 
 ## Flux de soumission
 
-1. Le visiteur calcule son setup et copie son lien F.A.T.
-2. Le formulaire exige le lien, le pseudo, le nom réel de la réplique, une
+1. Le visiteur calcule son setup et enregistre sa courbe dans son espace privé.
+2. Le formulaire exige une courbe enregistrée, le pseudo, le nom réel de la réplique, une
    photo latérale et l’acceptation explicite des droits.
 3. Le navigateur réduit la copie d’aperçu, normalise son orientation et retire
    ses métadonnées. Il ne présente jamais ce traitement comme une validation.
@@ -120,9 +122,10 @@ pendant la recette, jamais déclenchée par une visite web.
    sont compatibles. Limiter à une instance.
 7. Tester le rejet automatique, la suppression des temporaires, le remplacement
    atomique, le délai de restauration de l’ancien WebP et les fichiers orphelins.
-8. Ajouter la page, ses modules et ses dérivées au cache PWA uniquement après
-   un premier profil vérifié et autorisé.
-9. Ajouter enfin la route au menu, aux liens internes et au sitemap.
+8. Mettre en cache uniquement le shell statique de la galerie ; les réponses
+   API et images authentifiées ne doivent jamais rejoindre le cache PWA.
+9. La route publique, le menu et le sitemap peuvent être actifs tant que l’API
+   ne renvoie que les cards `published` dont l’image est `ready`.
 
 La présence d’un accès SSH ou d’une base MariaDB ne suffit pas à ouvrir la
 fonction. Tant que l’API, l’interface de modération et les preuves d’autorisation

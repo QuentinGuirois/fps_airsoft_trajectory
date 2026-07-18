@@ -27,7 +27,7 @@ function fakeStorage(value = null) {
 test('le tutoriel contient les sept étapes éditoriales dans l’ordre prévu', () => {
   assert.equal(TUTORIAL_STORAGE_KEY, 'fat-tutorial-v1');
   assert.deepEqual(TUTORIAL_STEPS.map(({ anchor }) => anchor), [
-    'masse', 'energie', 'hopup', 'angle', 'avance', 'comparer', 'partager',
+    'masse', 'energie', 'hopup', 'angle', 'avance', 'comparer', 'enregistrer',
   ]);
   assert.equal(TUTORIAL_STEPS.length, 7);
   for (const step of TUTORIAL_STEPS) {
@@ -66,7 +66,7 @@ test('les vrais champs du calculateur portent les ancres et le lancement reste v
     assert.ok(html.includes(`data-tuto="${anchor}"`), anchor);
   }
   assert.match(html, /data-tuto-include="energie"/);
-  assert.match(html, /<script type="module" data-cfasync="false" src="\/calculator-tutorial\.js\?v=20260718-28"><\/script>/);
+  assert.match(html, /<script type="module" data-cfasync="false" src="\/calculator-tutorial\.js\?v=20260718-38"><\/script>/);
 });
 
 test('le guidage est accessible, résilient et n’intervient pas dans les calculs', async () => {
@@ -95,6 +95,6 @@ test('le guidage est accessible, résilient et n’intervient pas dans les calcu
 
 test('le module est précaché et la version PWA est incrémentée', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-35'/);
-  assert.match(worker, /'\/calculator-tutorial\.js\?v=20260718-28'/);
+  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-39'/);
+  assert.match(worker, /'\/calculator-tutorial\.js\?v=20260718-38'/);
 });

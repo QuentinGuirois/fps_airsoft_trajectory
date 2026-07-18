@@ -107,7 +107,12 @@ async function setTheme(value) {
 
 async function nextStep(expected) {
   await evaluate(`document.querySelector('[data-tutorial-next]').click()`);
-  await waitFor(`window.fatCalculatorTutorial.getState().index === ${expected}`);
+  try {
+    await waitFor(`window.fatCalculatorTutorial.getState().index === ${expected}`);
+  } catch (error) {
+    const diagnostic = await evaluate(`(()=>{const target=document.querySelector('[data-tuto="hopup"]');const rect=target?.getBoundingClientRect();return{state:window.fatCalculatorTutorial.getState(),target:Boolean(target),display:target&&getComputedStyle(target).display,rect:rect&&{x:rect.x,y:rect.y,width:rect.width,height:rect.height},scrollY}})()`);
+    throw new Error(`${error.message}; tutorial=${JSON.stringify(diagnostic)}`);
+  }
   await wait(520);
 }
 
@@ -168,6 +173,8 @@ await waitFor(`!window.fatCalculatorTutorial.getState().active`);
 const dismissed = await evaluate(`({stored:localStorage.getItem('fat-tutorial-v1'),restored:document.activeElement===document.querySelector('[data-tutorial-launch]')})`);
 if (dismissed.stored !== 'dismissed' || !dismissed.restored) throw new Error(`Dismiss mismatch ${JSON.stringify(dismissed)}`);
 
+await navigate(`${base}?tutorial-recipe=completion`);
+await waitFor(`Boolean(window.fatCalculatorTutorial) && Boolean(document.querySelector('[data-trajectory-app]')?.dataset.lastRequestId)`);
 await evaluate(`document.querySelector('[data-menu-button]').click()`);
 await waitFor(`!document.querySelector('[data-briefing-menu]').hidden`);
 await evaluate(`document.querySelector('.briefing-secondary [data-tutorial-launch]').click()`);
@@ -208,7 +215,7 @@ if (await evaluate(`document.documentElement.scrollWidth > innerWidth`)) throw n
 await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await navigate(`${base}?tutorial-recipe=sw-control`);
 await waitFor(`Boolean(navigator.serviceWorker.controller)`);
-const cache = await evaluate(`caches.open('fat-v3-2026-07-18-35').then(cache=>cache.match('/calculator-tutorial.js?v=20260718-28')).then(Boolean)`, true);
+const cache = await evaluate(`caches.open('fat-v3-2026-07-18-39').then(cache=>cache.match('/calculator-tutorial.js?v=20260718-38')).then(Boolean)`, true);
 if (!cache) throw new Error('Tutorial module missing from PWA cache');
 await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 });
 await navigate(`${base}?tutorial-recipe=offline`);

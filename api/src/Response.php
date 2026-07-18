@@ -38,4 +38,17 @@ final class Response
         readfile($path);
         exit;
     }
+
+    public static function publicWebp(string $path): never
+    {
+        if (!is_file($path)) {
+            throw new HttpException(404, 'image_not_found', 'Image indisponible.');
+        }
+        http_response_code(200);
+        header('Content-Type: image/webp');
+        header('Content-Length: ' . (string) filesize($path));
+        header('Cache-Control: public, max-age=86400, immutable');
+        readfile($path);
+        exit;
+    }
 }

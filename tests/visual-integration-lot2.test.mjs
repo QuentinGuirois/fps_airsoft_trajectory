@@ -38,7 +38,7 @@ test('le shell rend un header, un sélecteur de thème et un footer cohérents p
   assert.match(theme, /Nuit/);
   assert.match(theme, /Jour/);
   assert.match(css, /\.site-footer > \.camo-strip/);
-  assert.match(offline, /src="\/site\.js\?v=20260718-32"/);
+  assert.match(offline, /src="\/site\.js\?v=20260718-38"/);
 });
 
 test('le cockpit, le mobile tactile et les rails de guide suivent le lot 2', async () => {
@@ -92,15 +92,18 @@ test('les données gaz restent bit à bit identiques au début du lot 2', async 
   assert.equal(data.products.reduce((sum, product) => sum + product.curve.length, 0), 2744);
 });
 
-test('aucune page joueur mince n’est publiée sans profil autorisé', async () => {
+test('la galerie communautaire ne publie que les cards serveur validées', async () => {
   const [schema, docs, sitemap, css] = await Promise.all([
     read('data', 'operator-profile.schema.json'),
     read('docs', 'operator-cards.md'),
     read('sitemap.xml'),
     read('assets', 'site.css'),
   ]);
-  await assert.rejects(stat(join(root, 'tu-joues-avec-quoi', 'index.html')));
-  assert.doesNotMatch(sitemap, /tu-joues-avec-quoi/);
+  const gallery = await read('tu-joues-avec-quoi', 'index.html');
+  assert.match(sitemap, /tu-joues-avec-quoi/);
+  assert.match(gallery, /data-community-gallery/);
+  assert.match(gallery, /AJOUTER MA RÉPLIQUE/);
+  assert.doesNotMatch(gallery, /fixture|profil vérifié|citation/i);
   assert.match(schema, /"status": \{ "const": "verified" \}/);
   assert.match(schema, /"profile": \{ "const": true \}/);
   assert.match(docs, /CHRONY/);
@@ -128,7 +131,7 @@ test('le cache et les ressources restent autonomes sans CDN', async () => {
   const [worker, css, site, gas] = await Promise.all([
     read('service-worker.js'), read('assets', 'site.css'), read('site.js'), read('gas-pressure-app.js'),
   ]);
-  assert.match(worker, /fat-v3-2026-07-18-35/);
+  assert.match(worker, /fat-v3-2026-07-18-39/);
   for (const source of [worker, css, site, gas]) {
     assert.doesNotMatch(source, /https?:\/\/(?:fonts\.|cdn\.|unpkg|jsdelivr)/i);
   }

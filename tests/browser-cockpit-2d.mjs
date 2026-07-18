@@ -116,7 +116,21 @@ await send('Emulation.setEmulatedMedia', { features: [
   { name: 'prefers-reduced-motion', value: 'no-preference' },
 ] });
 await send('Page.addScriptToEvaluateOnNewDocument', {
-  source: `if (location.search.includes('no-worker')) Object.defineProperty(window,'Worker',{configurable:true,value:class{constructor(){throw new Error('Worker disabled by browser test')}}});`,
+  source: `
+    if (location.search.includes('no-worker')) Object.defineProperty(window,'Worker',{configurable:true,value:class{constructor(){throw new Error('Worker disabled by browser test')}}});
+    const nativeFetch = globalThis.fetch.bind(globalThis);
+    globalThis.__savedTrajectory = null;
+    globalThis.fetch = async (input, init = {}) => {
+      const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url, location.href);
+      const method = String(init.method || 'GET').toUpperCase();
+      if (url.pathname === '/api/v1/me' && method === 'GET') return new Response(JSON.stringify({authenticated:true,csrfToken:'cockpit-csrf',user:{pseudo:'Cockpit'}}),{headers:{'Content-Type':'application/json'}});
+      if (url.pathname === '/api/v1/trajectories' && method === 'POST') {
+        globalThis.__savedTrajectory = JSON.parse(init.body);
+        return new Response(JSON.stringify({trajectory:{id:'10000000-0000-4000-8000-000000000001',...globalThis.__savedTrajectory}}),{status:201,headers:{'Content-Type':'application/json'}});
+      }
+      return nativeFetch(input, init);
+    };
+  `,
 });
 await navigate(base);
 
@@ -152,25 +166,10 @@ await navigate(base);
 await waitFor(`Boolean(document.querySelector('[data-trajectory-app]')?.dataset.lastRequestId)`);
 if (await evaluate(`document.querySelector('#mass').value !== '0.43'`)) throw new Error('Stored shot was not restored');
 
-await evaluate(`(()=>{window.__sharedShot=null;window.__desktopCopiedShot='';Object.defineProperty(navigator,'share',{configurable:true,value:async data=>{window.__sharedShot=data}});Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async value=>{window.__desktopCopiedShot=value}}});document.querySelector('#share-shot').click()})()`);
-await waitFor(`window.__desktopCopiedShot !== ''`);
-const desktopShare = await evaluate(`({native:window.__sharedShot,url:window.__desktopCopiedShot,label:document.querySelector('#share-shot').textContent,params:Object.fromEntries(new URL(window.__desktopCopiedShot).searchParams)})`);
-if (desktopShare.native !== null || desktopShare.label !== 'Copier le lien' || desktopShare.params.m !== '0.43' || !desktopShare.params.rpm || !desktopShare.params.wd || !desktopShare.params.sh || !desktopShare.params.oh || !desktopShare.params.lat || !desktopShare.params.d) throw new Error(`Desktop share: ${JSON.stringify(desktopShare)}`);
-
-await evaluate(`(()=>{window.__sharedShot=null;const originalMatchMedia=window.matchMedia.bind(window);window.matchMedia=query=>query==='(pointer: coarse)'?{matches:true,media:query,addEventListener(){},removeEventListener(){}}:originalMatchMedia(query);Object.defineProperty(navigator,'maxTouchPoints',{configurable:true,value:5});Object.defineProperty(navigator,'share',{configurable:true,value:async data=>{window.__sharedShot=data}});document.querySelector('#share-shot').click()})()`);
-await waitFor(`window.__sharedShot !== null`);
-const nativeShare = await evaluate(`({title:window.__sharedShot.title,params:Object.fromEntries(new URL(window.__sharedShot.url).searchParams)})`);
-if (nativeShare.title !== 'Mon setup F.A.T.' || nativeShare.params.m !== '0.43') throw new Error(`Coarse touch share: ${JSON.stringify(nativeShare)}`);
-
-await evaluate(`(()=>{window.__copiedShot='';Object.defineProperty(navigator,'share',{configurable:true,value:undefined});Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async value=>{window.__copiedShot=value}}});document.querySelector('#share-shot').click()})()`);
-await waitFor(`window.__copiedShot !== ''`);
-const clipboardShare = await evaluate(`({url:window.__copiedShot,feedback:document.querySelector('#share-feedback').textContent})`);
-if (!clipboardShare.url.includes('m=0.43') || !clipboardShare.feedback.includes('Lien copi')) throw new Error(`Clipboard share: ${JSON.stringify(clipboardShare)}`);
-
-await evaluate(`(()=>{Object.defineProperty(navigator,'share',{configurable:true,value:undefined});Object.defineProperty(navigator,'clipboard',{configurable:true,value:undefined});document.execCommand=()=>false;document.querySelector('#share-shot').click()})()`);
-await waitFor(`!document.querySelector('#share-output').hidden`);
-const manualShare = await evaluate(`({url:document.querySelector('#share-url').value,feedback:document.querySelector('#share-feedback').textContent,search:location.search,hash:location.hash})`);
-if (!manualShare.url.includes('sh=') || !manualShare.url.includes('oh=') || !manualShare.url.includes('lat=') || !manualShare.url.includes('d=') || !manualShare.feedback.includes('sélectionne') || !manualShare.search.includes('rpm=') || manualShare.hash !== '#calculateur') throw new Error(`Manual share: ${JSON.stringify(manualShare)}`);
+await evaluate(`document.querySelector('#share-shot').click()`);
+await waitFor(`window.__savedTrajectory !== null && document.querySelector('#share-feedback').textContent.includes('Courbe enregistrée')`);
+const savedTrajectory = await evaluate(`({payload:window.__savedTrajectory,label:document.querySelector('#share-shot').textContent,feedback:document.querySelector('#share-feedback').textContent,params:Object.fromEntries(new URL(window.__savedTrajectory.simulationUrl).searchParams),search:location.search,hash:location.hash})`);
+if (!savedTrajectory.payload.curveThumbnailSvg.startsWith('<svg') || savedTrajectory.params.m !== '0.43' || !savedTrajectory.params.rpm || !savedTrajectory.params.wd || !savedTrajectory.params.sh || !savedTrajectory.params.oh || !savedTrajectory.params.lat || !savedTrajectory.params.d || !savedTrajectory.feedback.includes('Mes courbes') || savedTrajectory.hash !== '#calculateur') throw new Error(`Saved trajectory: ${JSON.stringify(savedTrajectory)}`);
 
 await evaluate(`window.__resetStart=Number(document.querySelector('[data-trajectory-app]').dataset.lastRequestId);document.querySelector('#compare-shot').click();document.querySelector('#reset-shot').click()`);
 await wait(800);
@@ -246,7 +245,7 @@ const result = {
   layouts,
   urls: { current: currentUrl, legacy: oldUrl },
   persistence: { storedMass: storedShot.massG, reset: resetShot },
-  sharing: { desktop: desktopShare.label, native: nativeShare, clipboard: clipboardShare.feedback, manual: manualShare.feedback },
+  savedTrajectory: { label: savedTrajectory.label, feedback: savedTrajectory.feedback, params: savedTrajectory.params },
   concurrency: concurrentAfter,
   calculationError: errorState,
   themeRedrawWithoutPhysics: themed.posts === 0,

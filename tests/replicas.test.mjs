@@ -113,12 +113,19 @@ test('le worker impose double masque, consensus, WebP 100 Ko et destruction des 
   assert.match(worker, /single_worker_lock/);
 });
 
-test('aucune galerie brouillon n’est publiée ni ajoutée au sitemap', async () => {
-  const sitemap = await read('sitemap.xml');
-  await assert.rejects(stat(join(root, 'tu-joues-avec-quoi', 'index.html')));
-  assert.doesNotMatch(sitemap, /tu-joues-avec-quoi/);
+test('la galerie publique est publiée sans embarquer de données brouillon', async () => {
+  const [sitemap, html, controller] = await Promise.all([
+    read('sitemap.xml'),
+    read('tu-joues-avec-quoi', 'index.html'),
+    read('api', 'src', 'Controllers', 'PublicReplicaController.php'),
+  ]);
+  assert.match(sitemap, /tu-joues-avec-quoi/);
+  assert.match(html, /data-community-gallery/);
+  assert.doesNotMatch(html, /fixture|blob:|data:image/i);
+  assert.match(controller, /r\.state='published'/);
+  assert.match(controller, /r\.image_status='ready'/);
   await assert.rejects(stat(join(root, 'replicas-data.js')));
-  assert.match(await read('docs', 'repliques-production.md'), /aucune route `\/tu-joues-avec-quoi\/`/);
+  assert.match(await read('docs', 'repliques-production.md'), /uniquement les cards/);
 });
 
 test('le flux de production exclut localStorage et exige une modération serveur', async () => {
@@ -134,4 +141,11 @@ test('le flux de production exclut localStorage et exige une modération serveur
   assert.match(docs, /sortie `ready`/);
   assert.match(docs, /102 400 octets/);
   assert.match(docs, /ni meilleur effort, ni/);
+});
+
+test('la card publique place le pseudo en premier et affiche la chaine YouTube', async () => {
+  const component = await read('assets', 'js', 'replica-card.js');
+  assert.match(component, /header\.append\(element\(doc, 'span', 'replica-pseudo', data\.user\.pseudo\), avatar\)/);
+  assert.match(component, /CHA\\u00ceNE YOUTUBE/);
+  assert.match(component, /if \(data\.user\.youtubeUrl\)/);
 });

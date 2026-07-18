@@ -7,6 +7,7 @@ import {
   HttpAccountRepository,
   HttpApiClient,
   HttpReplicaRepository,
+  HttpTrajectoryRepository,
   RepositoryError,
 } from '../assets/js/community-repositories.js';
 import { serializeCurveThumbnail } from '../assets/js/curve-thumbnail.js';
@@ -18,6 +19,7 @@ import {
 } from '../assets/js/replica-card.js';
 import { COMMUNITY_FIXTURE, FIXTURE_SIMULATION_RESULT } from './fixtures/community.fixture.mjs';
 import { MockAccountRepository, MockReplicaRepository } from './helpers/mock-community-repositories.mjs';
+import { safeAccountReturn } from '../assets/js/account-login.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (...parts) => readFile(join(root, ...parts), 'utf8');
@@ -40,6 +42,7 @@ test('les repositories HTTP utilisent même origine, no-store, credentials et CS
   const client = new HttpApiClient({ fetchImpl });
   const account = new HttpAccountRepository({ client });
   const replicas = new HttpReplicaRepository({ client });
+  const trajectories = new HttpTrajectoryRepository({ client });
   await account.getSession();
   await account.login({ identity: 'test@example.test', password: 'secret-long' });
   await replicas.list();
@@ -47,7 +50,10 @@ test('les repositories HTTP utilisent même origine, no-store, credentials et CS
   await replicas.listPendingAdmin();
   await replicas.publishAdmin('replica/unsafe', 5);
   await replicas.rejectAdmin('replica/unsafe', 6, 'Photo trop sombre.');
-  assert.equal(calls.length, 7);
+  await trajectories.list();
+  await trajectories.create({ name: 'Ma courbe', simulationUrl: 'https://fps-airsoft-trajectory.com/?m=0.3&j=1.5' });
+  await trajectories.delete('trajectory/unsafe');
+  assert.equal(calls.length, 10);
   for (const call of calls) {
     assert.equal(call.options.credentials, 'same-origin');
     assert.equal(call.options.cache, 'no-store');
@@ -58,6 +64,9 @@ test('les repositories HTTP utilisent même origine, no-store, credentials et CS
   assert.match(calls[5].url, /admin\/replicas\/replica%2Funsafe\/publish$/);
   assert.equal(calls[5].options.headers.get('X-CSRF-Token'), 'csrf-123');
   assert.deepEqual(JSON.parse(calls[6].options.body), { version: 6, note: 'Photo trop sombre.' });
+  assert.match(calls[7].url, /\/trajectories$/);
+  assert.equal(JSON.parse(calls[8].options.body).name, 'Ma courbe');
+  assert.match(calls[9].url, /trajectories\/trajectory%2Funsafe$/);
 });
 
 test('les erreurs API restent typées sans inventer de session', async () => {
@@ -65,6 +74,12 @@ test('les erreurs API restent typées sans inventer de session', async () => {
   await assert.rejects(() => new HttpAccountRepository({ client }).getSession(), (error) => (
     error instanceof RepositoryError && error.status === 401 && error.code === 'unauthorized'
   ));
+});
+
+test('le retour après connexion accepte uniquement un chemin local', () => {
+  assert.equal(safeAccountReturn('?return=%2Fcompte%2Farmurerie.html%3Faction%3Dadd'), '/compte/armurerie.html?action=add');
+  assert.equal(safeAccountReturn('?return=https%3A%2F%2Fevil.test'), '');
+  assert.equal(safeAccountReturn('?return=%2F%2Fevil.test'), '');
 });
 
 test('le client lie fetch au contexte global requis par les navigateurs', async () => {
@@ -156,18 +171,18 @@ test('l’archivage est réversible dans les textes et aucune suppression physiq
   assert.doesNotMatch(`${html}\n${app}`, /deleteReplica|suppression définitive|DELETE FROM/i);
 });
 
-test('la card accepte un lien de trajectoire issu d’un autre onglet et relie le tutoriel', async () => {
-  const [html, app, snapshot] = await Promise.all([
+test('la card choisit une courbe privée enregistrée et relie le tutoriel', async () => {
+  const [html, app] = await Promise.all([
     read('compte', 'armurerie.html'),
     read('assets', 'js', 'armory.js'),
-    read('assets', 'js', 'simulation-link-snapshot.js'),
   ]);
-  assert.match(html, /LIEN DE VOTRE TRAJECTOIRE/);
+  assert.match(html, /COURBE ENREGISTRÉE/);
+  assert.match(html, /id="replica-trajectory" name="trajectoryId"/);
   assert.match(html, /href="\/#tutoriel-calculateur" target="_blank" rel="noopener"/);
-  assert.match(app, /createSimulationSnapshot/);
-  assert.match(snapshot, /trajectory\.worker\.js/);
-  assert.doesNotMatch(app, /Lance d’abord un calcul|dernier résultat ATP de cet onglet/);
-  assert.doesNotMatch(snapshot, /simulateTrajectory|analyzeTrajectory|physics-core/);
+  assert.match(app, /trajectoryRepository\.list/);
+  assert.match(app, /payload\.trajectoryId = replicaForm\.trajectoryId\.value/);
+  assert.match(app, /tutoriel-calculateur/);
+  assert.doesNotMatch(app, /createSimulationSnapshot/);
 });
 
 test('l’administration publiée est visible uniquement aux admins et archive sans suppression physique', async () => {
@@ -200,8 +215,8 @@ test('l’administration publiée est visible uniquement aux admins et archive s
 
 test('le service worker cache seulement les shells et contourne toutes les réponses API privées', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-35'/);
-  for (const path of ['/compte/', '/compte/verifier-email.html', '/compte/compte-active.html', '/compte/armurerie.html', '/assets/site.css?v=20260718-36', '/assets/js/replica-card.js?v=20260718-36', '/assets/js/simulation-link-snapshot.js?v=20260718-36', '/assets/js/armory.js?v=20260718-36', '/assets/js/armory-entry.js?v=20260718-36', '/assets/js/account-login.js?v=20260718-34', '/assets/js/account-login-entry.js?v=20260718-34', '/assets/js/community-repositories.js?v=20260718-36', '/assets/js/turnstile-client.js?v=20260718-30']) {
+  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-39'/);
+  for (const path of ['/compte/', '/compte/verifier-email.html', '/compte/compte-active.html', '/compte/armurerie.html', '/tu-joues-avec-quoi/', '/assets/site.css?v=20260718-38', '/assets/js/replica-card.js?v=20260718-38', '/assets/js/armory.js?v=20260718-38', '/assets/js/armory-entry.js?v=20260718-38', '/assets/js/account-login.js?v=20260718-38', '/assets/js/account-login-entry.js?v=20260718-38', '/assets/js/community-repositories.js?v=20260718-38', '/assets/js/community-gallery.js?v=20260718-38', '/assets/js/turnstile-client.js?v=20260718-30']) {
     assert.ok(worker.includes(`'${path}'`), path);
   }
   assert.match(worker, /url\.pathname\.startsWith\('\/api\/'\)[\s\S]*event\.respondWith\(fetch\(event\.request\)\);[\s\S]*return;/);

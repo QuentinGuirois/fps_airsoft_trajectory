@@ -6,7 +6,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
 test('le routeur expose le contrat API v1 complet sans endpoint historique', async () => {
   const [app, repositories] = await Promise.all([read('api/src/Application.php'), read('assets/js/community-repositories.js')]);
-  for (const route of ['/health','/auth/turnstile-config','/auth/register','/auth/verify-email','/auth/login','/auth/logout','/auth/forgot-password','/auth/reset-password','/me','/replicas','/admin/replicas','/admin/replicas/published']) {
+  for (const route of ['/health','/auth/turnstile-config','/auth/register','/auth/verify-email','/auth/login','/auth/logout','/auth/forgot-password','/auth/reset-password','/me','/trajectories','/replicas','/public/replicas','/admin/replicas','/admin/replicas/published']) {
     assert.ok(app.includes(`'${route}`), route);
   }
   assert.doesNotMatch(repositories, /\/session|\/accounts|background-removal/);
@@ -27,13 +27,15 @@ test('les mutations privées combinent cookie serveur, CSRF, Origin strict et no
 });
 
 test('les migrations sont additives, indexées, sans BLOB et bornent le WebP à 102400 octets', async () => {
-  const sql = `${await read('database/migrations/000_schema.sql')}\n${await read('database/migrations/001_auth.sql')}\n${await read('database/migrations/002_replicas.sql')}\n${await read('database/migrations/003_legal_acceptance.sql')}`;
+  const sql = `${await read('database/migrations/000_schema.sql')}\n${await read('database/migrations/001_auth.sql')}\n${await read('database/migrations/002_replicas.sql')}\n${await read('database/migrations/003_legal_acceptance.sql')}\n${await read('database/migrations/004_saved_trajectories.sql')}`;
   assert.match(sql, /schema_migrations/);
   assert.match(sql, /ENGINE=InnoDB/g);
   assert.match(sql, /utf8mb4/g);
   assert.match(sql, /image_bytes BETWEEN 1 AND 102400/);
   assert.doesNotMatch(sql, /\b(?:TINY|MEDIUM|LONG)?BLOB\b/i);
   assert.match(sql, /FOREIGN KEY/g);
+  assert.match(sql, /CREATE TABLE saved_trajectories/);
+  assert.match(sql, /fk_replica_trajectory/);
 });
 
 test('le pipeline photo conserve un seul WebP privé, réconcilie par événement et détruit les uploads', async () => {

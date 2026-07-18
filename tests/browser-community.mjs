@@ -122,6 +122,17 @@ const browserFixture = JSON.stringify(browserFixtureData).replaceAll('<', '\\u00
 await send('Page.addScriptToEvaluateOnNewDocument', { source: `
   (() => {
     const fixture = ${browserFixture};
+    const savedTrajectories = fixture.replicas.slice(0, 2).map((replica, index) => ({
+      id: '10000000-0000-4000-8000-00000000000' + (index + 1),
+      name: 'Courbe enregistrée ' + (index + 1),
+      simUrl: replica.simUrl,
+      massG: replica.massG,
+      energyJ: replica.energyJ,
+      usefulRangeM: replica.usefulRangeM,
+      maximumRangeM: replica.maximumRangeM,
+      curveThumbSvg: replica.curveThumbSvg,
+      createdAt: '2026-07-18 10:00:00',
+    }));
     const nativeFetch = globalThis.fetch.bind(globalThis);
     const callsKey = '__fatCommunityApiCalls';
     let widgetSequence = 0;
@@ -203,6 +214,16 @@ await send('Page.addScriptToEvaluateOnNewDocument', { source: `
       } else if (/\\/admin\\/replicas\\/[^/]+$/.test(requestUrl.pathname) && method === 'DELETE') {
         const id = decodeURIComponent(requestUrl.pathname.split('/').at(-1));
         payload = { replica: { ...fixture.replicas.find((replica) => replica.id === id), state: 'archived', version: 2 } };
+      } else if (requestUrl.pathname.endsWith('/trajectories') && method === 'GET') {
+        payload = { trajectories: sessionStorage.getItem('__fatCommunityTrajectoryMode') === 'empty' ? [] : savedTrajectories };
+      } else if (requestUrl.pathname.endsWith('/trajectories') && method === 'POST') {
+        payload = { trajectory: { id: '10000000-0000-4000-8000-000000000099', ...requestBody, simUrl: requestBody.simulationUrl } };
+        status = 201;
+      } else if (/\\/trajectories\\/[^/]+$/.test(requestUrl.pathname) && method === 'DELETE') {
+        payload = null;
+        status = 204;
+      } else if (requestUrl.pathname.endsWith('/public/replicas') && method === 'GET') {
+        payload = { replicas: fixture.replicas.filter((replica) => replica.state === 'published' && replica.imageStatus === 'ready') };
       } else if (/\\/replicas\\?/.test(requestUrl.pathname + requestUrl.search)) {
         payload = { replicas: sessionStorage.getItem('__fatCommunityReplicaMode') === 'empty' ? [] : fixture.replicas };
       } else if (/\\/replicas\\/[^/]+$/.test(requestUrl.pathname) && method === 'DELETE') {
@@ -269,6 +290,22 @@ await send('Emulation.setEmulatedMedia', { features: [
   { name: 'prefers-reduced-motion', value: 'no-preference' },
 ] });
 
+await navigate(`${base}tu-joues-avec-quoi/`);
+await waitFor(`document.querySelectorAll('replica-card').length === 1`);
+await setViewport(1440, 900);
+await setTheme('dark');
+const publicGallery = await evaluate(`(()=>{const header=document.querySelector('.replica-card-header');return {cards:document.querySelectorAll('replica-card').length,state:document.querySelector('.replica-card-shell')?.dataset.state,cta:document.querySelector('[data-add-replica-link]').getAttribute('href'),robots:document.querySelector('meta[name="robots"]').content,overflow:document.documentElement.scrollWidth>innerWidth,pseudo:header?.firstElementChild?.textContent,youtube:header?.querySelector('.replica-youtube')?.textContent,youtubeHref:header?.querySelector('.replica-youtube')?.href}})()`);
+if (publicGallery.cards !== 1 || publicGallery.state !== 'published' || !publicGallery.cta.startsWith('/compte/?return=') || !publicGallery.robots.includes('index') || publicGallery.overflow || publicGallery.pseudo !== 'OPÉRATEUR FIXTURE' || publicGallery.youtube !== '▶ CHAÎNE YOUTUBE' || !publicGallery.youtubeHref.includes('youtube.com/@fixture')) throw new Error(`Public gallery mismatch ${JSON.stringify(publicGallery)}`);
+await capture('community-gallery-desktop-night.png');
+await setTheme('light');
+await capture('community-gallery-desktop-day.png');
+await setViewport(390, 844, true);
+const publicGalleryMobile = await evaluate(`({width:innerWidth,scroll:document.documentElement.scrollWidth,cta:document.querySelector('[data-add-replica-link]').getBoundingClientRect().height})`);
+if (publicGalleryMobile.scroll > publicGalleryMobile.width || publicGalleryMobile.cta < 43.5) throw new Error(`Public gallery mobile mismatch ${JSON.stringify(publicGalleryMobile)}`);
+await capture('community-gallery-mobile-day.png');
+await navigate(`${base}compte/?recipe=login-after-gallery`);
+await waitFor(`document.querySelectorAll('[data-account-tab]').length === 2`);
+
 await evaluate(`(()=>{const form=document.querySelector('[data-account-form="login"]');form.querySelector('[name="identity"]').value='fixture@example.test';form.querySelector('[name="password"]').value='mot-de-passe-fixture';form.requestSubmit()})()`);
 try {
   await waitFor(`location.pathname === '/compte/armurerie.html'`);
@@ -302,10 +339,12 @@ await wait(550);
 if (!await evaluate(`document.querySelector('replica-card .replica-card-track').classList.contains('show-curve')`)) throw new Error('Curve slide did not open');
 await capture('lot56-armory-desktop-day.png');
 
-const trajectoryLink = await evaluate(`document.querySelector('label[for="replica-simulation"] a') && ({text:document.querySelector('label[for="replica-simulation"] a').textContent,target:document.querySelector('label[for="replica-simulation"] a').target,href:document.querySelector('label[for="replica-simulation"] a').getAttribute('href')})`);
+await evaluate(`document.querySelector('.armory-title-row [data-add-replica]').click()`);
+await waitFor(`document.querySelector('[data-replica-dialog]').open && document.querySelectorAll('#replica-trajectory option').length === 3`);
+const trajectoryLink = await evaluate(`document.querySelector('label[for="replica-trajectory"] a') && ({text:document.querySelector('label[for="replica-trajectory"] a').textContent,target:document.querySelector('label[for="replica-trajectory"] a').target,href:document.querySelector('label[for="replica-trajectory"] a').getAttribute('href'),options:document.querySelectorAll('#replica-trajectory option').length})`);
 if (!trajectoryLink || trajectoryLink.target !== '_blank' || trajectoryLink.href !== '/#tutoriel-calculateur' || !trajectoryLink.text.includes('VOIR LE TUTORIEL')) throw new Error(`Trajectory tutorial link mismatch ${JSON.stringify(trajectoryLink)}`);
-const linkedSnapshot = await evaluate(`import('/assets/js/simulation-link-snapshot.js?v=20260718-36').then(module => module.createSimulationSnapshot(location.origin + '/?m=0.36&j=1.9&rpm=112500&z=30&w=0&wd=90&t=20&p=1013.25&a=0&c=0&sh=1.5&oh=0.05&lat=45&d=5.95')).then(snapshot => ({svg:snapshot.curveThumbnailSvg.startsWith('<svg'),mass:snapshot.massG,energy:snapshot.energyJ,useful:Number.isFinite(snapshot.usefulRangeM),maximum:Number.isFinite(snapshot.maximumRangeM)}))`, true);
-if (!linkedSnapshot.svg || linkedSnapshot.mass !== 0.36 || Math.abs(linkedSnapshot.energy - 1.9) > 1e-9 || !linkedSnapshot.useful || !linkedSnapshot.maximum) throw new Error(`Linked simulation snapshot mismatch ${JSON.stringify(linkedSnapshot)}`);
+if (trajectoryLink.options !== 3) throw new Error(`Saved trajectory options mismatch ${JSON.stringify(trajectoryLink)}`);
+await evaluate(`document.querySelector('[data-cancel-replica]').click()`);
 
 await evaluate(`sessionStorage.setItem('__fatCommunityAdmin','1')`);
 await navigate(`${base}compte/armurerie.html?recipe=admin`);
@@ -363,6 +402,17 @@ await capture('lot56-armory-mobile-night.png');
 await setTheme('light');
 await capture('lot56-armory-mobile-day.png');
 
+await evaluate(`sessionStorage.setItem('__fatCommunityTrajectoryMode','empty')`);
+await navigate(`${base}compte/armurerie.html?action=add`);
+try {
+  await waitFor(`Boolean(document.querySelector('[data-calculator-tutorial]:not([hidden])'))`);
+} catch (error) {
+  const redirectFailure = await evaluate(`({path:location.pathname,search:location.search,hash:location.hash,mode:sessionStorage.getItem('__fatCommunityTrajectoryMode'),status:document.querySelector('[data-armory-state]')?.textContent,trajectories:window.__unused})`);
+  throw new Error(`${error.message}; redirect=${JSON.stringify(redirectFailure)}`);
+}
+const noTrajectoryRedirect = await evaluate(`({path:location.pathname,hash:location.hash,tutorial:Boolean(document.querySelector('[data-calculator-tutorial]:not([hidden])'))})`);
+await evaluate(`sessionStorage.removeItem('__fatCommunityTrajectoryMode')`);
+
 await evaluate(`sessionStorage.setItem('__fatCommunityReplicaMode','empty')`);
 await navigate(`${base}compte/armurerie.html?recipe=empty`);
 await waitFor(`Boolean(document.querySelector('.armory-empty'))`);
@@ -377,7 +427,7 @@ await navigate(base);
 await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await navigate(`${base}compte/armurerie.html?recipe=sw`);
 await waitFor(`Boolean(navigator.serviceWorker.controller)`);
-const cache = await evaluate(`Promise.all([caches.open('fat-v3-2026-07-18-35').then(cache=>cache.match('/assets/js/replica-card.js?v=20260718-36')).then(Boolean),caches.match('/api/v1/me').then(Boolean)]).then(([component,api])=>({component,api}))`, true);
+const cache = await evaluate(`Promise.all([caches.open('fat-v3-2026-07-18-39').then(cache=>cache.match('/assets/js/replica-card.js?v=20260718-38')).then(Boolean),caches.match('/api/v1/me').then(Boolean)]).then(([component,api])=>({component,api}))`, true);
 if (!cache.component || cache.api) throw new Error(`Private cache mismatch ${JSON.stringify(cache)}`);
 
 await evaluate(`sessionStorage.setItem('__fatDisableCommunityApi','1')`);
@@ -388,6 +438,10 @@ await navigate(`${base}compte/armurerie.html?recipe=offline`);
 await waitFor(`document.querySelector('[data-armory-state]')?.dataset.tone === 'error'`);
 const offline = await evaluate(`({title:document.title,cards:document.querySelectorAll('replica-card').length,message:document.querySelector('[data-armory-state]').textContent})`);
 if (offline.cards || !offline.message.includes('Impossible')) throw new Error(`Offline private state mismatch ${JSON.stringify(offline)}`);
+await navigate(`${base}tu-joues-avec-quoi/?recipe=offline`);
+await waitFor(`document.querySelector('[data-community-status]')?.dataset.tone === 'error'`);
+const offlinePublic = await evaluate(`({title:document.title,message:document.querySelector('[data-community-status]').textContent,shell:Boolean(document.querySelector('[data-community-gallery]'))})`);
+if (!offlinePublic.shell || !offlinePublic.message.includes('Impossible')) throw new Error(`Offline public shell mismatch ${JSON.stringify(offlinePublic)}`);
 consoleErrors.splice(offlineErrorStart);
 await send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
 
@@ -404,9 +458,13 @@ const result = {
   emptyState,
   adminArmory,
   moderationArmory,
-  linkedSnapshot,
+  publicGallery,
+  publicGalleryMobile,
+  noTrajectoryRedirect,
+  savedTrajectoryOptions: trajectoryLink.options,
   cache,
   offline,
+  offlinePublic,
   consoleErrors,
   screenshots: (await readdir(captureDir)).filter((file) => file.startsWith('lot56-')).sort(),
 };

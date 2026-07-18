@@ -189,17 +189,27 @@ try {
   assert.equal(me.authenticated, true);
   await api('/me', { method: 'PATCH', auth: true, expected: 422, body: { pseudo: 'Root', role: 'admin', version: me.user.version } });
 
-  const card = await api('/replicas', { method: 'POST', auth: true, expected: 201, body: {
-    modelName: 'Réplique Alpha', type: 'AEG', simulationUrl: `${ORIGIN}/?m=0.28&j=1.30`,
+  const alphaTrajectory = await api('/trajectories', { method: 'POST', auth: true, expected: 201, body: {
+    name: 'Alpha 0,28 g', simulationUrl: `${ORIGIN}/?m=0.28&j=1.30&rpm=98000`,
     massG: 0.28, energyJ: 1.3, usefulRangeM: 52.5, maximumRangeM: 68.2,
-    curveThumbnailSvg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 30" role="img" aria-label="Courbe"><path d="M0 20L100 10"/></svg>', rightsConfirmed: true,
+    curveThumbnailSvg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 30" role="img" aria-label="Courbe"><path d="M0 20L100 10"/></svg>',
+  } });
+  const moderationTrajectory = await api('/trajectories', { method: 'POST', auth: true, expected: 201, body: {
+    name: 'Alpha 0,32 g', simulationUrl: `${ORIGIN}/?m=0.32&j=1.50&rpm=104000`,
+    usefulRangeM: 55, maximumRangeM: 70,
+    curveThumbnailSvg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 30" role="img" aria-label="Courbe"><path d="M0 21L100 9"/></svg>',
+  } });
+  const alphaTrajectories = await api('/trajectories', { auth: true });
+  assert.deepEqual(new Set(alphaTrajectories.trajectories.map(({ id }) => id)), new Set([alphaTrajectory.trajectory.id, moderationTrajectory.trajectory.id]));
+
+  const card = await api('/replicas', { method: 'POST', auth: true, expected: 201, body: {
+    modelName: 'Réplique Alpha', type: 'AEG', trajectoryId: alphaTrajectory.trajectory.id, rightsConfirmed: true,
   } });
   assert.equal(card.replica.usefulRangeM, 52.5);
+  assert.equal(card.replica.trajectoryId, alphaTrajectory.trajectory.id);
   const cardId = card.replica.id;
   const moderationCard = await api('/replicas', { method: 'POST', auth: true, expected: 201, body: {
-    modelName: 'Réplique à modérer', type: 'HPA', simulationUrl: `${ORIGIN}/?m=0.32&j=1.50`,
-    massG: 0.32, energyJ: 1.5, usefulRangeM: 55, maximumRangeM: 70,
-    curveThumbnailSvg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 30" role="img" aria-label="Courbe"><path d="M0 20L100 10"/></svg>', rightsConfirmed: true,
+    modelName: 'Réplique à modérer', type: 'HPA', trajectoryId: moderationTrajectory.trajectory.id, rightsConfirmed: true,
   } });
   const moderationVersion = forceReplicaPending(moderationCard.replica.id);
   await api('/replicas', { method: 'POST', auth: true, expected: 422, body: {
@@ -220,6 +230,8 @@ try {
   await api(`/replicas/${cardId}`, { method: 'DELETE', auth: true, expected: 404, body: { version: 1 } });
   await api(`/replicas/${cardId}/processing-status`, { auth: true, expected: 404 });
   await api(`/replicas/${cardId}/submit`, { method: 'POST', auth: true, expected: 409, body: { version: 1 } });
+  await api(`/trajectories/${alphaTrajectory.trajectory.id}`, { method: 'DELETE', auth: true, expected: 404 });
+  await api('/replicas', { method: 'POST', auth: true, expected: 404, body: { modelName: 'Vol de courbe', type: 'AEG', trajectoryId: alphaTrajectory.trajectory.id, rightsConfirmed: true } });
   await api('/admin/replicas', { auth: true, expected: 403 });
   await api('/admin/replicas/published', { auth: true, expected: 403 });
   await api(`/admin/replicas/${moderationCard.replica.id}/publish`, { method: 'POST', auth: true, expected: 403, body: { version: moderationVersion } });
@@ -236,6 +248,14 @@ try {
   assert.deepEqual(pendingCards.replicas.map((replica) => replica.id), [moderationCard.replica.id]);
   const publishedModeration = await api(`/admin/replicas/${moderationCard.replica.id}/publish`, { method: 'POST', auth: true, body: { version: moderationVersion } });
   assert.equal(publishedModeration.state, 'published');
+  const publicResponse = await fetch(`${ORIGIN}/api/v1/public/replicas`);
+  assert.equal(publicResponse.status, 200);
+  assert.match(publicResponse.headers.get('cache-control') || '', /public/);
+  const publicCards = await publicResponse.json();
+  assert.equal(publicCards.replicas.length, 1);
+  assert.equal(publicCards.replicas[0].name, 'Réplique à modérer');
+  assert.equal(publicCards.replicas[0].state, 'published');
+  assert.equal('version' in publicCards.replicas[0], false);
   const rejectionVersion = forceReplicaPending(moderationCard.replica.id);
   const rejectedModeration = await api(`/admin/replicas/${moderationCard.replica.id}/reject`, { method: 'POST', auth: true, body: { version: rejectionVersion, note: 'Photo trop sombre.' } });
   assert.equal(rejectedModeration.state, 'rejected');
@@ -243,6 +263,10 @@ try {
   assert.deepEqual(publishedCards.replicas, []);
 
   cookie = alphaCookie; csrf = alphaCsrf;
+  await api(`/trajectories/${alphaTrajectory.trajectory.id}`, { method: 'DELETE', auth: true, expected: 204 });
+  const alphaAfterTrajectoryDelete = await api(`/replicas/${cardId}`, { auth: true });
+  assert.equal(alphaAfterTrajectoryDelete.replica.trajectoryId, null);
+  assert.equal(alphaAfterTrajectoryDelete.replica.massG, 0.28);
   const updated = await concurrentPatch(`/replicas/${cardId}`, { modelName: 'Réplique Alpha II', version: card.replica.version });
   await api(`/replicas/${cardId}`, { method: 'PATCH', auth: true, expected: 409, body: { modelName: 'Conflit', version: card.replica.version } });
   const archived = await api(`/replicas/${cardId}`, { method: 'DELETE', auth: true, body: { version: updated.version } });
@@ -273,7 +297,7 @@ try {
   }
   await api('/auth/login', { method: 'POST', expected: 429, body: { identity: 'limit@example.test', password: 'MotDePasseInvalide123', turnstileToken: turnstileToken('login') } });
 
-  console.log('API intégration: migrations, auth, Origin/CSRF, fixation, énumération, quotas, concurrence, rôles, IDOR, cards et upload hostile validés.');
+  console.log('API intégration: migrations, auth, courbes privées, galerie publique, Origin/CSRF, fixation, énumération, quotas, concurrence, rôles, IDOR, cards et upload hostile validés.');
 } finally {
   server.kill('SIGTERM');
   turnstileServer.close();

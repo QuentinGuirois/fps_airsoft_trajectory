@@ -13,7 +13,7 @@ import { fitChartDomain, prepareChartSeries } from './chart-data.js?v=20260718-2
 import { createCalculationLoader } from './calculation-loader.js?v=20260718-28';
 import { detectWebGL } from './render-capabilities.js?v=20260718-28';
 import { serializeCurveThumbnail } from './assets/js/curve-thumbnail.js?v=20260718-28';
-import { configureShareButton, shareLink } from './assets/js/share-link.js?v=20260718-29';
+import { createProductionRepositories, RepositoryError } from './assets/js/community-repositories.js?v=20260718-38';
 
 const root = document.querySelector('[data-trajectory-app]');
 
@@ -28,9 +28,7 @@ if (root) {
   const resetButton = root.querySelector('#reset-shot');
   const shareButton = root.querySelector('#share-shot');
   const shareFeedback = root.querySelector('#share-feedback');
-  const shareOutput = root.querySelector('#share-output');
-  const shareUrlInput = root.querySelector('#share-url');
-  const copyShareUrlButton = root.querySelector('#copy-share-url');
+  const { accountRepository, trajectoryRepository } = createProductionRepositories();
   const rpmOutput = root.querySelector('#rpm-output');
   const spinSetting = root.querySelector('#spin-setting');
   const spinAdjustment = root.querySelector('#spin-adjustment');
@@ -642,28 +640,39 @@ if (root) {
     return `${location.origin}${location.pathname}?${query}#calculateur`;
   }
 
-  function revealShareUrl(url) {
-    if (shareUrlInput) shareUrlInput.value = url;
-    if (shareOutput) shareOutput.hidden = false;
+  async function saveShot() {
+    if (!state.latestResult || shareButton.disabled) return;
+    const { config } = state.latestResult.simulation;
+    const url = buildShareUrl(config);
     history.replaceState(history.state, '', url);
-  }
-
-  async function shareShot() {
-    const url = buildShareUrl();
-    revealShareUrl(url);
-    await shareLink({
-      url,
-      title: 'Mon setup F.A.T.',
-      text: 'Passe mon setup airsoft au banc balistique.',
-      output: shareOutput,
-      input: shareUrlInput,
-      feedback: shareFeedback,
-      messages: {
-        copied: 'Lien copié. Tous les paramètres du setup sont enregistrés dans l’URL.',
-        shared: 'Setup partagé. Le lien complet reste disponible ci-dessous.',
-        manual: 'Copie automatique indisponible : sélectionne le lien complet ci-dessous.',
-      },
-    });
+    shareButton.disabled = true;
+    if (shareFeedback) shareFeedback.textContent = 'Enregistrement dans ton espace privé…';
+    try {
+      const session = await accountRepository.getSession();
+      if (!session?.authenticated) throw new RepositoryError('Connexion requise.', { status: 401 });
+      const formatter = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+      await trajectoryRepository.create({
+        name: `${format(config.massG, 2)} g · ${format(config.energyJ, 2)} J · ${formatter.format(new Date())}`,
+        simulationUrl: url,
+        massG: config.massG,
+        energyJ: config.energyJ,
+        usefulRangeM: state.latestResult.metrics?.usefulRangeM ?? null,
+        maximumRangeM: state.latestResult.metrics?.maximumRangeM ?? null,
+        curveThumbnailSvg: serializeCurveThumbnail(state.latestResult),
+      });
+      if (shareFeedback) shareFeedback.textContent = 'Courbe enregistrée. Tu peux la retrouver dans Mes courbes et l’associer à une card.';
+      shareButton.textContent = 'ENREGISTRÉE ✓';
+      window.setTimeout(() => { shareButton.textContent = 'ENREGISTRER'; }, 2200);
+    } catch (error) {
+      if (error instanceof RepositoryError && error.status === 401) {
+        const returnPath = `${location.pathname}${location.search}#calculateur`;
+        location.href = `/compte/?return=${encodeURIComponent(returnPath)}`;
+        return;
+      }
+      if (shareFeedback) shareFeedback.textContent = error?.message || 'La courbe n’a pas pu être enregistrée.';
+    } finally {
+      shareButton.disabled = false;
+    }
   }
 
   const flatSpinInputs = new Set([
@@ -795,19 +804,7 @@ if (root) {
   });
 
   compareButton.addEventListener('click', addComparison);
-  configureShareButton(shareButton);
-  shareButton.addEventListener('click', shareShot);
-  copyShareUrlButton?.addEventListener('click', async () => {
-    const url = shareUrlInput?.value || buildShareUrl();
-    revealShareUrl(url);
-    await shareLink({
-      url,
-      output: shareOutput,
-      input: shareUrlInput,
-      feedback: shareFeedback,
-      allowNative: false,
-    });
-  });
+  shareButton.addEventListener('click', saveShot);
   resetButton.addEventListener('click', () => {
     localStorage.removeItem('fat-shot-v3');
     localStorage.removeItem('fat-last-summary-v3');

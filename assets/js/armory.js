@@ -1,6 +1,5 @@
-import './replica-card.js?v=20260718-36';
-import { RepositoryError } from './community-repositories.js?v=20260718-36';
-import { createSimulationSnapshot, simulationUrlsMatch } from './simulation-link-snapshot.js?v=20260718-36';
+import { sanitizedCurveSvg } from './replica-card.js?v=20260718-38';
+import { RepositoryError } from './community-repositories.js?v=20260718-38';
 
 export function summarizeReplicas(replicas = []) {
   return replicas.reduce((summary, replica) => {
@@ -13,8 +12,8 @@ export function summarizeReplicas(replicas = []) {
   }, { total: 0, published: 0, drafts: 0, pending: 0, archived: 0 });
 }
 
-export function initArmory({ root, accountRepository, replicaRepository } = {}) {
-  if (!root || !accountRepository || !replicaRepository) return null;
+export function initArmory({ root, accountRepository, replicaRepository, trajectoryRepository } = {}) {
+  if (!root || !accountRepository || !replicaRepository || !trajectoryRepository) return null;
   const controller = new AbortController();
   const grid = root.querySelector('[data-armory-grid]');
   const statePanel = root.querySelector('[data-armory-state]');
@@ -28,6 +27,8 @@ export function initArmory({ root, accountRepository, replicaRepository } = {}) 
   const replicaForm = replicaDialog?.querySelector('[data-replica-form]');
   const adminButton = root.querySelector('[data-admin-armory]');
   const moderationButton = root.querySelector('[data-admin-moderation]');
+  const trajectoriesButton = root.querySelector('[data-saved-trajectories]');
+  const trajectoryCount = root.querySelector('[data-trajectory-count]');
   const rejectDialog = root.querySelector('[data-reject-dialog]');
   const rejectForm = root.querySelector('[data-reject-form]');
   const rejectName = root.querySelector('[data-reject-name]');
@@ -35,6 +36,7 @@ export function initArmory({ root, accountRepository, replicaRepository } = {}) 
   const titleNode = root.querySelector('.armory-title-row h1');
   const addButton = root.querySelector('.armory-title-row [data-add-replica]');
   let replicas = [];
+  let savedTrajectories = [];
   let pendingArchiveId = null;
   let pendingModerationId = null;
   let editingReplica = null;
@@ -47,6 +49,12 @@ export function initArmory({ root, accountRepository, replicaRepository } = {}) 
   }
 
   function updateSummary() {
+    if (mode === 'curves') {
+      countNode.textContent = String(replicas.length);
+      trajectoryCount.textContent = String(savedTrajectories.length);
+      summaryNode.textContent = `${savedTrajectories.length} COURBE${savedTrajectories.length > 1 ? 'S' : ''} ENREGISTRÉE${savedTrajectories.length > 1 ? 'S' : ''}`;
+      return;
+    }
     const summary = summarizeReplicas(replicas);
     countNode.textContent = String(summary.total);
     summaryNode.textContent = mode === 'moderation'
@@ -59,6 +67,10 @@ export function initArmory({ root, accountRepository, replicaRepository } = {}) 
   function render() {
     grid.replaceChildren();
     updateSummary();
+    if (mode === 'curves') {
+      renderTrajectories();
+      return;
+    }
     if (!replicas.length) {
       const empty = document.createElement('div');
       empty.className = 'armory-empty';
@@ -93,6 +105,45 @@ export function initArmory({ root, accountRepository, replicaRepository } = {}) 
     addTile.dataset.addReplica = '';
     addTile.innerHTML = '<span aria-hidden="true">＋</span><strong>UNE RÉPLIQUE DE PLUS AU RÂTELIER ?</strong><span>Ajoute-la, règle-la au banc, puis publie sa card.</span>';
     grid.append(addTile);
+  }
+
+  function renderTrajectories() {
+    if (!savedTrajectories.length) {
+      const empty = document.createElement('div');
+      empty.className = 'armory-empty';
+      empty.innerHTML = '<span aria-hidden="true">⌁</span><strong>AUCUNE COURBE ENREGISTRÉE</strong><p>Lance un calcul, puis utilise « Enregistrer » pour le retrouver ici.</p><a class="button button-primary" href="/#tutoriel-calculateur">VOIR LE TUTORIEL</a>';
+      grid.append(empty);
+      return;
+    }
+    for (const trajectory of savedTrajectories) {
+      const article = document.createElement('article');
+      article.className = 'saved-trajectory-card';
+      const media = document.createElement('div');
+      media.className = 'saved-trajectory-media';
+      const curve = sanitizedCurveSvg(trajectory.curveThumbSvg, document);
+      if (curve) media.append(curve);
+      const body = document.createElement('div');
+      body.className = 'saved-trajectory-body';
+      const title = document.createElement('h2');
+      title.textContent = trajectory.name;
+      const metrics = document.createElement('p');
+      metrics.textContent = `${trajectory.massG.toLocaleString('fr-FR')} g · ${trajectory.energyJ.toLocaleString('fr-FR')} J · utile ${trajectory.usefulRangeM == null ? '—' : Math.round(trajectory.usefulRangeM) + ' m'}`;
+      const actions = document.createElement('div');
+      actions.className = 'saved-trajectory-actions';
+      const open = document.createElement('a');
+      open.className = 'button button-primary button-small';
+      open.href = trajectory.simUrl;
+      open.textContent = 'OUVRIR';
+      const remove = document.createElement('button');
+      remove.className = 'button button-small';
+      remove.type = 'button';
+      remove.dataset.deleteTrajectory = trajectory.id;
+      remove.textContent = 'SUPPRIMER';
+      actions.append(open, remove);
+      body.append(title, metrics, actions);
+      article.append(media, body);
+      grid.append(article);
+    }
   }
 
   function openArchive(replica) {
@@ -155,12 +206,21 @@ export function initArmory({ root, accountRepository, replicaRepository } = {}) 
   }, { signal: controller.signal });
 
   root.addEventListener('click', (event) => {
-    if (mode === 'personal' && event.target.closest('[data-add-replica]')) openReplicaEditor(null, false);
+    if (mode === 'personal' && event.target.closest('[data-add-replica]')) {
+      if (!savedTrajectories.length) {
+        location.href = '/#tutoriel-calculateur';
+        return;
+      }
+      openReplicaEditor(null, false);
+    }
+    if (mode === 'curves' && event.target.closest('[data-add-replica]')) location.href = '/#calculateur';
+    const trajectoryId = event.target.closest('[data-delete-trajectory]')?.dataset.deleteTrajectory;
+    if (mode === 'curves' && trajectoryId) deleteTrajectory(trajectoryId);
   }, { signal: controller.signal });
 
   function switchAdminMode(nextMode) {
     mode = nextMode;
-    for (const button of [adminButton, moderationButton]) {
+    for (const button of [adminButton, moderationButton, trajectoriesButton]) {
       const active = button === (mode === 'moderation' ? moderationButton : adminButton);
       button?.classList.toggle('is-active', active);
       if (active) button?.setAttribute('aria-current', 'page');
@@ -173,41 +233,72 @@ export function initArmory({ root, accountRepository, replicaRepository } = {}) 
     load();
   }
 
-  adminButton?.addEventListener('click', () => switchAdminMode('admin'), { signal: controller.signal });
-  moderationButton?.addEventListener('click', () => switchAdminMode('moderation'), { signal: controller.signal });
-
-  function snapshot() {
-    try { return JSON.parse(sessionStorage.getItem('fat.pending-replica.v1') || 'null'); }
-    catch { return null; }
+  function switchPersonalMode(nextMode) {
+    mode = nextMode;
+    const curvesActive = mode === 'curves';
+    trajectoriesButton?.classList.toggle('is-active', curvesActive);
+    if (curvesActive) trajectoriesButton?.setAttribute('aria-current', 'page');
+    else trajectoriesButton?.removeAttribute('aria-current');
+    personalLink?.classList.toggle('is-active', !curvesActive);
+    if (curvesActive) personalLink?.removeAttribute('aria-current');
+    else personalLink?.setAttribute('aria-current', 'page');
+    for (const button of [adminButton, moderationButton]) {
+      button?.classList.remove('is-active');
+      button?.removeAttribute('aria-current');
+    }
+    if (titleNode) titleNode.textContent = curvesActive ? 'Mes courbes' : 'L’Armurerie';
+    if (addButton) {
+      addButton.hidden = false;
+      addButton.textContent = curvesActive ? '+ ENREGISTRER UNE COURBE' : '+ AJOUTER UNE RÉPLIQUE';
+    }
+    load();
   }
 
-  async function snapshotForUrl(simulationUrl, replica = null) {
-    const saved = snapshot();
-    if (saved?.curveThumbnailSvg && saved?.simulationUrl
-      && simulationUrlsMatch(saved.simulationUrl, simulationUrl, location.origin)) return saved;
-    if (replica?.curveThumbSvg && replica?.simUrl
-      && simulationUrlsMatch(replica.simUrl, simulationUrl, location.origin)) {
-      return {
-        simulationUrl,
-        curveThumbnailSvg: replica.curveThumbSvg,
-        usefulRangeM: replica.usefulRangeM,
-        maximumRangeM: replica.maximumRangeM,
-        massG: replica.massG,
-        energyJ: replica.energyJ,
-      };
-    }
-    announce('Lecture du lien et génération de la miniature ATP…');
-    return createSimulationSnapshot(simulationUrl, { origin: location.origin, signal: controller.signal });
+  adminButton?.addEventListener('click', () => switchAdminMode('admin'), { signal: controller.signal });
+  moderationButton?.addEventListener('click', () => switchAdminMode('moderation'), { signal: controller.signal });
+  trajectoriesButton?.addEventListener('click', () => switchPersonalMode('curves'), { signal: controller.signal });
+  personalLink?.addEventListener('click', (event) => {
+    if (location.pathname !== '/compte/armurerie.html') return;
+    event.preventDefault();
+    switchPersonalMode('personal');
+  }, { signal: controller.signal });
+
+  async function deleteTrajectory(id) {
+    const trajectory = savedTrajectories.find((item) => item.id === id);
+    if (!trajectory || !confirm(`Supprimer la courbe « ${trajectory.name} » ? Les cards déjà créées conserveront leur copie.`)) return;
+    try {
+      await trajectoryRepository.delete(id, { signal: controller.signal });
+      savedTrajectories = savedTrajectories.filter((item) => item.id !== id);
+      render();
+      announce('Courbe supprimée de ton espace privé. Les cards existantes sont intactes.', 'success');
+    } catch (error) { announce(error.message, 'error'); }
   }
 
   function openReplicaEditor(replica = null, photoOnly = false) {
     editingReplica = replica;
-    const saved = snapshot();
     replicaForm.reset();
     replicaForm.dataset.photoOnly = String(photoOnly);
     replicaForm.modelName.value = replica?.name || '';
     replicaForm.type.value = replica?.type || 'AEG';
-    replicaForm.simulationUrl.value = replica?.simUrl ? new URL(replica.simUrl, location.origin).href : (saved?.simulationUrl || '');
+    const trajectoryChoice = replicaForm.querySelector('[data-trajectory-choice]');
+    const trajectorySelect = replicaForm.trajectoryId;
+    trajectoryChoice.hidden = mode === 'admin' || photoOnly;
+    trajectorySelect.replaceChildren();
+    if (mode !== 'admin' && !photoOnly) {
+      if (replica && !replica.trajectoryId) {
+        const historical = new Option('Courbe historique de cette card — inchangée', '', true, true);
+        trajectorySelect.add(historical);
+      } else {
+        trajectorySelect.add(new Option('Choisir une courbe…', '', true, false));
+      }
+      for (const trajectory of savedTrajectories) {
+        const option = new Option(`${trajectory.name} — ${trajectory.massG.toLocaleString('fr-FR')} g / ${trajectory.energyJ.toLocaleString('fr-FR')} J`, trajectory.id);
+        option.selected = trajectory.id === replica?.trajectoryId;
+        trajectorySelect.add(option);
+      }
+      trajectorySelect.required = !replica?.trajectoryId && !replica?.simUrl;
+    } else trajectorySelect.required = false;
+    replicaForm.querySelector('[data-trajectory-empty]').hidden = savedTrajectories.length > 0 || mode === 'admin' || photoOnly;
     replicaForm.youtubeUrl.value = replica?.user?.youtubeUrl || '';
     replicaForm.rightsConfirmed.checked = Boolean(replica);
     replicaForm.photo.required = mode === 'personal' && (!replica || photoOnly);
@@ -243,14 +334,11 @@ export function initArmory({ root, accountRepository, replicaRepository } = {}) 
     try {
       let replica = editingReplica;
       if (replicaForm.dataset.photoOnly !== 'true') {
-        const formUrl = new URL(replicaForm.simulationUrl.value, location.origin);
-        const saved = await snapshotForUrl(formUrl.href, replica);
         const payload = {
           modelName: replicaForm.modelName.value.trim(), type: replicaForm.type.value,
-          simulationUrl: formUrl.href, massG: saved.massG, energyJ: saved.energyJ,
-          usefulRangeM: saved.usefulRangeM, maximumRangeM: saved.maximumRangeM,
-          youtubeUrl: replicaForm.youtubeUrl.value.trim(), curveThumbnailSvg: saved.curveThumbnailSvg,
+          youtubeUrl: replicaForm.youtubeUrl.value.trim(),
         };
+        if (mode !== 'admin' && replicaForm.trajectoryId.value) payload.trajectoryId = replicaForm.trajectoryId.value;
         const response = replica
           ? await (mode === 'admin' ? replicaRepository.updateAdmin : replicaRepository.update).call(
             replicaRepository, replica.id, { ...payload, version: replica.version }, { signal: controller.signal },
@@ -339,8 +427,17 @@ export function initArmory({ root, accountRepository, replicaRepository } = {}) 
         moderationButton?.removeAttribute('hidden');
       }
       if (mode !== 'personal' && session.user.role !== 'admin') {
-        mode = 'personal';
-        throw new RepositoryError('Cette vue est réservée au compte administrateur.', { status: 403, code: 'forbidden' });
+        if (mode !== 'curves') {
+          mode = 'personal';
+          throw new RepositoryError('Cette vue est réservée au compte administrateur.', { status: 403, code: 'forbidden' });
+        }
+      }
+      if (mode === 'curves') {
+        const trajectoryPayload = await trajectoryRepository.list({ signal: controller.signal });
+        savedTrajectories = Array.isArray(trajectoryPayload?.trajectories) ? trajectoryPayload.trajectories : [];
+        announce('');
+        render();
+        return;
       }
       const payload = mode === 'moderation'
         ? await replicaRepository.listPendingAdmin({ signal: controller.signal })
@@ -348,8 +445,18 @@ export function initArmory({ root, accountRepository, replicaRepository } = {}) 
           ? await replicaRepository.listPublishedAdmin({ signal: controller.signal })
           : await replicaRepository.list({ signal: controller.signal, includeArchived: true });
       replicas = Array.isArray(payload?.replicas) ? payload.replicas : [];
+      if (mode === 'personal') {
+        const trajectoryPayload = await trajectoryRepository.list({ signal: controller.signal });
+        savedTrajectories = Array.isArray(trajectoryPayload?.trajectories) ? trajectoryPayload.trajectories : [];
+        trajectoryCount.textContent = String(savedTrajectories.length);
+      }
       announce('');
       render();
+      if (mode === 'personal' && new URLSearchParams(location.search).get('action') === 'add') {
+        history.replaceState(history.state, '', location.pathname);
+        if (!savedTrajectories.length) location.href = '/#tutoriel-calculateur';
+        else openReplicaEditor(null, false);
+      }
     } catch (error) {
       replicas = [];
       grid.replaceChildren();
@@ -364,5 +471,10 @@ export function initArmory({ root, accountRepository, replicaRepository } = {}) 
   }
 
   load();
-  return { reload: load, destroy: () => controller.abort(), get replicas() { return replicas; } };
+  return {
+    reload: load,
+    destroy: () => controller.abort(),
+    get replicas() { return replicas; },
+    get trajectories() { return savedTrajectories; },
+  };
 }

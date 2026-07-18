@@ -51,6 +51,7 @@ export function normalizeReplicaCardData(input, {
   const imagePath = safeSameOriginPath(data.photoUrl, origin);
   return {
     id: String(data.id || ''),
+    trajectoryId: typeof data.trajectoryId === 'string' ? data.trajectoryId : null,
     name: String(data.name || 'Réplique sans nom').slice(0, 80),
     type: String(data.type || 'TYPE NON RENSEIGNÉ').slice(0, 24),
     state,
@@ -151,12 +152,12 @@ export class ReplicaCardElement extends HTMLElementBase {
       image.alt = '';
       avatar.replaceChildren(image);
     }
-    header.append(avatar, element(doc, 'span', 'replica-pseudo', data.user.pseudo));
+    header.append(element(doc, 'span', 'replica-pseudo', data.user.pseudo), avatar);
     const trust = element(doc, 'span', 'replica-trust', data.user.chrony ? 'CHRONY ✓' : 'DÉCLARÉ');
     trust.dataset.trust = data.user.chrony ? 'measured' : 'declared';
     header.append(trust);
     if (data.user.youtubeUrl) {
-      const youtube = element(doc, 'a', 'replica-youtube', '▶ YOUTUBE');
+      const youtube = element(doc, 'a', 'replica-youtube', '\u25b6 CHA\u00ceNE YOUTUBE');
       youtube.href = data.user.youtubeUrl;
       youtube.target = '_blank';
       youtube.rel = 'ugc noopener noreferrer';
@@ -269,16 +270,6 @@ export class ReplicaCardElement extends HTMLElementBase {
         const open = element(doc, 'a', 'button-primary', 'OUVRIR LA COURBE →');
         open.href = data.simUrl;
         actions.append(open);
-        const copy = element(doc, 'button', 'replica-copy', '⧉');
-        copy.type = 'button';
-        copy.setAttribute('aria-label', 'Copier le lien de la courbe');
-        copy.addEventListener('click', async () => {
-          const url = new URL(data.simUrl, location.origin).href;
-          try { await navigator.clipboard.writeText(url); } catch { /* Le lien principal reste disponible. */ }
-          const live = this.querySelector('.replica-card-live');
-          if (live) live.textContent = 'Copié';
-        });
-        actions.append(copy);
       }
     }
     body.append(actions, element(doc, 'span', 'replica-card-live visually-hidden'));

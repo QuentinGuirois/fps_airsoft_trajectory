@@ -32,9 +32,9 @@ export const TUTORIAL_STEPS = Object.freeze([
     body: 'Fige ta courbe actuelle et changes-en un paramètre : les deux trajectoires s’affichent ensemble. C’est LE moyen de trancher un débat de grammage en 10 secondes.',
   },
   {
-    anchor: 'partager',
-    title: 'PARTAGER',
-    body: 'Ton setup complet tient dans l’URL. Copie-la, envoie-la à ta team ou colle-la dans un débat — la simulation s’ouvre à l’identique, sans compte.',
+    anchor: 'enregistrer',
+    title: 'ENREGISTRER TA COURBE',
+    body: 'Enregistre la trajectoire dans ton espace privé. Tu la retrouveras dans « Mes courbes » et tu pourras ensuite la sélectionner pour créer la card de ta réplique. Le calculateur reste utilisable sans compte.',
   },
 ]);
 
@@ -244,11 +244,12 @@ export function createCalculatorTutorial({
     void tip.offsetWidth;
     tip.classList.add('is-entering');
     const rect = await scrollTargetIntoSafeView(step, token);
-    if (!rect || token !== renderToken || !active) {
-      if (active) {
-        index += direction;
-        renderStep(direction, focusButton);
-      }
+    // Une ancienne étape peut terminer son scroll après que l’utilisateur a
+    // déjà avancé. Elle ne doit jamais déplacer l’index courant.
+    if (token !== renderToken || !active) return;
+    if (!rect) {
+      index += direction;
+      renderStep(direction, focusButton);
       return;
     }
     const hole = setSpotlight(rect);
