@@ -20,3 +20,4 @@ server/background-removal/queue/
 server/background-removal/public/
 storage/*
 !storage/README.md
+docs/visual-regression/lot4-briefing-*.png

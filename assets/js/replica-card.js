@@ -226,7 +226,7 @@ export class ReplicaCardElement extends HTMLElementBase {
 
     const actions = element(doc, 'div', 'replica-card-actions');
     if (management) {
-      const primary = element(doc, 'button', data.state === 'draft' ? 'button-primary' : '', data.state === 'draft' ? 'TERMINER' : 'MODIFIER');
+      const primary = element(doc, 'button', `replica-edit${data.state === 'draft' ? ' button-primary' : ''}`, data.state === 'draft' ? 'TERMINER' : 'MODIFIER');
       primary.type = 'button';
       primary.addEventListener('click', () => this.#dispatch('edit'));
       actions.append(primary);
@@ -242,7 +242,7 @@ export class ReplicaCardElement extends HTMLElementBase {
         actions.append(retry);
       }
       if (data.state !== 'archived') {
-        const archive = element(doc, 'button', 'replica-archive', 'ARCHIVER');
+        const archive = element(doc, 'button', 'replica-archive', this.hasAttribute('admin') ? 'RETIRER' : 'ARCHIVER');
         archive.type = 'button';
         archive.addEventListener('click', () => this.#dispatch('archive'));
         actions.append(archive);

@@ -6,7 +6,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
 test('le routeur expose le contrat API v1 complet sans endpoint historique', async () => {
   const [app, repositories] = await Promise.all([read('api/src/Application.php'), read('assets/js/community-repositories.js')]);
-  for (const route of ['/health','/auth/turnstile-config','/auth/register','/auth/verify-email','/auth/login','/auth/logout','/auth/forgot-password','/auth/reset-password','/me','/replicas','/admin/replicas']) {
+  for (const route of ['/health','/auth/turnstile-config','/auth/register','/auth/verify-email','/auth/login','/auth/logout','/auth/forgot-password','/auth/reset-password','/me','/replicas','/admin/replicas','/admin/replicas/published']) {
     assert.ok(app.includes(`'${route}`), route);
   }
   assert.doesNotMatch(repositories, /\/session|\/accounts|background-removal/);

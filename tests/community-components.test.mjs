@@ -144,10 +144,45 @@ test('l’archivage est réversible dans les textes et aucune suppression physiq
   assert.doesNotMatch(`${html}\n${app}`, /deleteReplica|suppression définitive|DELETE FROM/i);
 });
 
+test('la card accepte un lien de trajectoire issu d’un autre onglet et relie le tutoriel', async () => {
+  const [html, app, snapshot] = await Promise.all([
+    read('compte', 'armurerie.html'),
+    read('assets', 'js', 'armory.js'),
+    read('assets', 'js', 'simulation-link-snapshot.js'),
+  ]);
+  assert.match(html, /LIEN DE VOTRE TRAJECTOIRE/);
+  assert.match(html, /href="\/#tutoriel-calculateur" target="_blank" rel="noopener"/);
+  assert.match(app, /createSimulationSnapshot/);
+  assert.match(snapshot, /trajectory\.worker\.js/);
+  assert.doesNotMatch(app, /Lance d’abord un calcul|dernier résultat ATP de cet onglet/);
+  assert.doesNotMatch(snapshot, /simulateTrajectory|analyzeTrajectory|physics-core/);
+});
+
+test('l’administration publiée est visible uniquement aux admins et archive sans suppression physique', async () => {
+  const [html, app, repositories, controller, routes] = await Promise.all([
+    read('compte', 'armurerie.html'),
+    read('assets', 'js', 'armory.js'),
+    read('assets', 'js', 'community-repositories.js'),
+    read('api', 'src', 'Controllers', 'AdminController.php'),
+    read('api', 'src', 'Application.php'),
+  ]);
+  assert.match(html, /data-admin-armory hidden/);
+  assert.match(app, /session\.user\.role === 'admin'/);
+  assert.match(app, /listPublishedAdmin/);
+  for (const path of ['/admin/replicas/published', '/admin/replicas/{id}']) assert.ok(routes.includes(`'${path}`), path);
+  assert.match(repositories, /updateAdmin[\s\S]*method: 'PATCH'/);
+  assert.match(repositories, /archiveAdmin[\s\S]*method: 'DELETE'/);
+  assert.match(controller, /function published[\s\S]*require\(\$request, 'admin'\)/);
+  assert.match(controller, /function update[\s\S]*requireCsrf/);
+  assert.match(controller, /state='archived'/);
+  assert.match(controller, /\$changed && \$current\['state'\] === 'published' \? 'pending'/);
+  assert.doesNotMatch(controller, /DELETE\s+FROM\s+replica_posts/i);
+});
+
 test('le service worker cache seulement les shells et contourne toutes les réponses API privées', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-33'/);
-  for (const path of ['/compte/', '/compte/verifier-email.html', '/compte/compte-active.html', '/compte/armurerie.html', '/assets/js/replica-card.js?v=20260718-28', '/assets/js/account-login.js?v=20260718-34', '/assets/js/account-login-entry.js?v=20260718-34', '/assets/js/community-repositories.js?v=20260718-33', '/assets/js/turnstile-client.js?v=20260718-30']) {
+  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-34'/);
+  for (const path of ['/compte/', '/compte/verifier-email.html', '/compte/compte-active.html', '/compte/armurerie.html', '/assets/js/replica-card.js?v=20260718-35', '/assets/js/simulation-link-snapshot.js?v=20260718-35', '/assets/js/armory.js?v=20260718-35', '/assets/js/armory-entry.js?v=20260718-35', '/assets/js/account-login.js?v=20260718-34', '/assets/js/account-login-entry.js?v=20260718-34', '/assets/js/community-repositories.js?v=20260718-35', '/assets/js/turnstile-client.js?v=20260718-30']) {
     assert.ok(worker.includes(`'${path}'`), path);
   }
   assert.match(worker, /url\.pathname\.startsWith\('\/api\/'\)[\s\S]*event\.respondWith\(fetch\(event\.request\)\);[\s\S]*return;/);

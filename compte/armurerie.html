@@ -30,6 +30,7 @@
         <p>// MON COMPTE</p>
         <nav>
           <a class="is-active" href="/compte/armurerie.html" aria-current="page"><span>⌂</span> L’Armurerie <strong data-armory-count>0</strong></a>
+          <button type="button" data-admin-armory hidden><span>◆</span> Cards publiées</button>
           <button type="button" disabled><span>◔</span> Mes courbes</button>
           <button type="button" disabled><span>☰</span> Profil public</button>
           <button type="button" disabled><span>⚙</span> Réglages</button>
@@ -65,12 +66,12 @@
       <form data-replica-form>
         <span class="patch-stencil">CARD PRIVÉE</span>
         <h2 id="replica-editor-title">Ajouter une réplique</h2>
-        <p>La courbe et les portées viennent du dernier calcul ATP effectué dans cet onglet. Elles ne sont pas recalculées ici.</p>
+        <p>Colle le lien complet de la trajectoire : F.A.T. reconstruira sa miniature, même si le calcul vient d’un autre onglet ou d’une autre fenêtre.</p>
         <label for="replica-model">MODÈLE</label>
         <input id="replica-model" name="modelName" required minlength="2" maxlength="80">
         <label for="replica-type">TYPE</label>
         <select id="replica-type" name="type" required><option>AEG</option><option>GBBR</option><option>GBB</option><option>HPA</option><option>SPRING</option><option>AUTRE</option></select>
-        <label for="replica-simulation">LIEN COMPLET F.A.T.</label>
+        <label for="replica-simulation">LIEN DE VOTRE TRAJECTOIRE — <a href="/#tutoriel-calculateur" target="_blank" rel="noopener">VOIR LE TUTORIEL ↗</a></label>
         <input id="replica-simulation" name="simulationUrl" type="url" required maxlength="2048">
         <label for="replica-youtube">LIEN YOUTUBE (OPTIONNEL)</label>
         <input id="replica-youtube" name="youtubeUrl" type="url" maxlength="512">
@@ -81,6 +82,6 @@
       </form>
     </dialog>
   </div>
-  <script type="module" data-cfasync="false" src="/assets/js/armory-entry.js?v=20260718-33"></script>
+  <script type="module" data-cfasync="false" src="/assets/js/armory-entry.js?v=20260718-35"></script>
 </body>
 </html>

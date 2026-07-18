@@ -203,19 +203,34 @@ try {
   await api(`/replicas/${cardId}/processing-status`, { auth: true, expected: 404 });
   await api(`/replicas/${cardId}/submit`, { method: 'POST', auth: true, expected: 409, body: { version: 1 } });
   await api('/admin/replicas', { auth: true, expected: 403 });
+  await api('/admin/replicas/published', { auth: true, expected: 403 });
+  await api(`/admin/replicas/${cardId}`, { method: 'PATCH', auth: true, expected: 403, body: { modelName: 'Interdit', version: 1 } });
 
   promoteTestAdmin('bravo@example.test');
   await api('/auth/logout', { method: 'POST', auth: true, expected: 204 });
   cookie = ''; csrf = '';
   const adminLogin = await api('/auth/login', { method: 'POST', body: { identity: 'bravo@example.test', password: 'MotDePasseBravo123', turnstileToken: turnstileToken('login') } });
   assert.equal(adminLogin.user.role, 'admin');
+  const adminCookie = cookie;
+  const adminCsrf = csrf;
   await api('/admin/replicas', { auth: true });
+  const publishedCards = await api('/admin/replicas/published', { auth: true });
+  assert.deepEqual(publishedCards.replicas, []);
 
   cookie = alphaCookie; csrf = alphaCsrf;
   const updated = await concurrentPatch(`/replicas/${cardId}`, { modelName: 'Réplique Alpha II', version: card.replica.version });
   await api(`/replicas/${cardId}`, { method: 'PATCH', auth: true, expected: 409, body: { modelName: 'Conflit', version: card.replica.version } });
   const archived = await api(`/replicas/${cardId}`, { method: 'DELETE', auth: true, body: { version: updated.version } });
   assert.equal(archived.replica.state, 'archived');
+
+  cookie = adminCookie; csrf = adminCsrf;
+  const adminEdited = await api(`/admin/replicas/${cardId}`, { method: 'PATCH', auth: true, body: { modelName: 'Réplique Alpha administrée', version: archived.replica.version } });
+  assert.equal(adminEdited.replica.name, 'Réplique Alpha administrée');
+  const restored = await api(`/admin/replicas/${cardId}/restore`, { method: 'POST', auth: true, body: { version: adminEdited.replica.version } });
+  assert.equal(restored.replica.state, 'draft');
+  const adminArchived = await api(`/admin/replicas/${cardId}`, { method: 'DELETE', auth: true, body: { version: restored.replica.version } });
+  assert.equal(adminArchived.replica.state, 'archived');
+  cookie = alphaCookie; csrf = alphaCsrf;
 
   const forgotKnown = await api('/auth/forgot-password', { method: 'POST', expected: 202, body: { email: 'alpha@example.test', turnstileToken: turnstileToken('forgot_password') } });
   const forgotUnknown = await api('/auth/forgot-password', { method: 'POST', expected: 202, body: { email: 'absent@example.test', turnstileToken: turnstileToken('forgot_password') } });

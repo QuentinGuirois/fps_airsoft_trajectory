@@ -55,7 +55,7 @@ final class Application
         $auth = new AuthController($this->db, $this->config, $sessions, $limits, $audit, MailerFactory::create($this->config), $turnstile);
         $user = new UserController($this->db, $this->config, $sessions, $audit);
         $replicas = new ReplicaController($this->db, $this->config, $sessions, $limits, $audit, new UploadService($this->db, $this->config));
-        $admin = new AdminController($this->db, $sessions, $limits, $audit);
+        $admin = new AdminController($this->db, $this->config, $sessions, $limits, $audit);
         $router = new Router();
         $router->add('GET', '/health', static fn(): never => Response::json(['status' => 'ok']));
         $router->add('GET', '/auth/turnstile-config', [$auth, 'turnstileConfig']);
@@ -79,6 +79,11 @@ final class Application
         $router->add('POST', '/replicas/{id}/submit', [$replicas, 'submit']);
         $router->add('GET', '/replicas/{id}/image.webp', [$replicas, 'image']);
         $router->add('GET', '/admin/replicas', [$admin, 'list']);
+        $router->add('GET', '/admin/replicas/published', [$admin, 'published']);
+        $router->add('GET', '/admin/replicas/{id}/image.webp', [$admin, 'image']);
+        $router->add('PATCH', '/admin/replicas/{id}', [$admin, 'update']);
+        $router->add('DELETE', '/admin/replicas/{id}', [$admin, 'archive']);
+        $router->add('POST', '/admin/replicas/{id}/restore', [$admin, 'restore']);
         $router->add('POST', '/admin/replicas/{id}/publish', [$admin, 'publish']);
         $router->add('POST', '/admin/replicas/{id}/reject', [$admin, 'reject']);
         return $router;

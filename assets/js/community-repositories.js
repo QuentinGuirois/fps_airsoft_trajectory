@@ -27,6 +27,10 @@ export class ReplicaRepository {
   async processingStatus() { throw new Error('ReplicaRepository.processingStatus() doit être implémenté.'); }
   async submit() { throw new Error('ReplicaRepository.submit() doit être implémenté.'); }
   async archive() { throw new Error('ReplicaRepository.archive() doit être implémenté.'); }
+  async listPublishedAdmin() { throw new Error('ReplicaRepository.listPublishedAdmin() doit être implémenté.'); }
+  async updateAdmin() { throw new Error('ReplicaRepository.updateAdmin() doit être implémenté.'); }
+  async archiveAdmin() { throw new Error('ReplicaRepository.archiveAdmin() doit être implémenté.'); }
+  async restoreAdmin() { throw new Error('ReplicaRepository.restoreAdmin() doit être implémenté.'); }
 }
 
 export class HttpApiClient {
@@ -122,6 +126,16 @@ export class HttpReplicaRepository extends ReplicaRepository {
   submit(id, version, { signal } = {}) { return this.client.request(`/replicas/${encodeURIComponent(id)}/submit`, { method: 'POST', body: { version }, signal }); }
   archive(id, version, { signal } = {}) {
     return this.client.request(`/replicas/${encodeURIComponent(id)}`, { method: 'DELETE', body: { version }, signal });
+  }
+  listPublishedAdmin({ signal } = {}) { return this.client.request('/admin/replicas/published', { signal }); }
+  updateAdmin(id, data, { signal } = {}) {
+    return this.client.request(`/admin/replicas/${encodeURIComponent(id)}`, { method: 'PATCH', body: data, signal });
+  }
+  archiveAdmin(id, version, { signal } = {}) {
+    return this.client.request(`/admin/replicas/${encodeURIComponent(id)}`, { method: 'DELETE', body: { version }, signal });
+  }
+  restoreAdmin(id, version, { signal } = {}) {
+    return this.client.request(`/admin/replicas/${encodeURIComponent(id)}/restore`, { method: 'POST', body: { version }, signal });
   }
 }
 
