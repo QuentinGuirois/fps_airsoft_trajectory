@@ -32,5 +32,5 @@ try {
 } finally {
   browser.kill();
   await new Promise((resolve) => setTimeout(resolve, 250));
-  await rm(profile, { recursive: true, force: true });
+  await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 }
