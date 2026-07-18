@@ -119,7 +119,8 @@ test('la galerie publique est publiée sans embarquer de données brouillon', as
     read('tu-joues-avec-quoi', 'index.html'),
     read('api', 'src', 'Controllers', 'PublicReplicaController.php'),
   ]);
-  assert.match(sitemap, /tu-joues-avec-quoi/);
+  assert.doesNotMatch(sitemap, /tu-joues-avec-quoi/);
+  assert.match(html, /name="robots" content="noindex,follow/);
   assert.match(html, /data-community-gallery/);
   assert.doesNotMatch(html, /fixture|blob:|data:image/i);
   assert.match(controller, /r\.state='published'/);

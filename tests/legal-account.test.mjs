@@ -12,17 +12,19 @@ test('les mentions identifient un éditeur personne physique et 3GK Software', a
   assert.match(legal, /<strong>3GK Software<\/strong>, 6 allée Jean Gabin, 37100 Tours, France/);
   assert.match(legal, /\+33 \(0\)6 34 45 84 06/);
   assert.match(legal, /contact@fps-airsoft-trajectory\.com/g);
-  assert.match(legal, /Adresse postale de l’éditeur : <strong>à compléter avant ouverture des comptes<\/strong>/);
+  assert.match(legal, /Adresse postale de l’éditeur : 35 rue Julie-Victoire Daubié, 37250 Veigné, France/);
 });
 
-test('la politique décrit les traitements, durées, droits et blocages avant ouverture', async () => {
+test('la politique décrit les traitements, durées et droits avec les informations complètes', async () => {
   const privacy = await read('politique-confidentialite/index.html');
   for (const expected of [
     'Calculateur sans compte', 'Données du compte facultatif', 'Cloudflare Turnstile',
     'session : jusqu’à 14 jours', 'ancienne image remplacée', 'délai de restauration de 14 jours',
     'journaux d’audit et journaux techniques', 'CNIL', 'contact@fps-airsoft-trajectory.com',
   ]) assert.ok(privacy.includes(expected), expected);
-  assert.match(privacy, /boîte[\s\S]*adresse postale[\s\S]*journaux techniques et d’audit[\s\S]*avant de rendre l’inscription visible/);
+  assert.match(privacy, /Adresse postale : 35 rue Julie-Victoire Daubié, 37250 Veigné, France/);
+  assert.match(privacy, /journaux d’audit et journaux techniques : 180 jours, puis purge automatique/);
+  assert.doesNotMatch(privacy, /bloquée|à compléter avant ouverture|durée à arrêter/);
   assert.match(privacy, /<strong>3GK Software<\/strong>, 6 allée Jean Gabin, 37100 Tours, France/);
 });
 

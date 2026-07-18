@@ -34,6 +34,9 @@ final class AuthController
 
     public function register(Request $request): never
     {
+        if (!$this->config->bool('ACCOUNT_REGISTRATION_ENABLED', true)) {
+            throw new HttpException(503, 'registration_closed', 'Les nouvelles inscriptions sont temporairement fermées. Les comptes existants peuvent toujours se connecter.');
+        }
         $body = $request->json();
         Validator::keys($body, ['pseudo','email','password','legalAccepted','turnstileToken'], ['pseudo','email','password','legalAccepted','turnstileToken']);
         $this->limits->hit('register', $request->ip(), 4, 3600);
@@ -64,7 +67,7 @@ final class AuthController
             }
             throw $error;
         }
-        $link = $this->config->get('APP_ORIGIN') . '/compte/?verify=' . $token;
+        $link = $this->config->get('APP_ORIGIN') . '/compte/#verify=' . $token;
         $this->mailer->send($email, 'Vérifie ton compte F.A.T.', "Confirme ton adresse dans les 24 heures :\n{$link}\n");
         $this->audit->write($request->requestId, $userId, 'auth.register', 'user', $userId);
         Response::json([
@@ -101,7 +104,8 @@ final class AuthController
         $body = $request->json();
         Validator::keys($body, ['identity','password','turnstileToken'], ['identity','password','turnstileToken']);
         $identity = mb_strtolower(trim((string) $body['identity']));
-        $this->limits->hit('login', $request->ip() . "\0" . $identity, 8, 900);
+        $this->limits->hit('login_ip', $request->ip(), 40, 900);
+        $this->limits->hit('login_identity', $identity, 8, 900);
         $this->turnstile->verify($body['turnstileToken'], 'login', $request);
         $statement = $this->db->prepare('SELECT * FROM users WHERE (email=? OR LOWER(pseudo)=?) AND deletion_requested_at IS NULL LIMIT 1');
         $statement->execute([$identity, $identity]);
@@ -147,7 +151,7 @@ final class AuthController
             $this->db->prepare('UPDATE password_reset_tokens SET consumed_at=UTC_TIMESTAMP() WHERE user_id=? AND consumed_at IS NULL')->execute([$userId]);
             $this->db->prepare('INSERT INTO password_reset_tokens (id,user_id,token_hash,expires_at) VALUES (?,?,?,UTC_TIMESTAMP()+INTERVAL 30 MINUTE)')
                 ->execute([Support::uuid(), $userId, Support::tokenHash($token)]);
-            $link = $this->config->get('APP_ORIGIN') . '/compte/?reset=' . $token;
+            $link = $this->config->get('APP_ORIGIN') . '/compte/#reset=' . $token;
             $this->mailer->send($email, 'Réinitialise ton mot de passe F.A.T.', "Ce lien expire dans 30 minutes :\n{$link}\n");
         }
         Response::json(['accepted' => true, 'message' => 'Si ce compte existe, un email a été envoyé.'], 202);
@@ -182,7 +186,9 @@ final class AuthController
 
     public function turnstileConfig(): never
     {
-        Response::json(['turnstile' => $this->turnstile->publicConfig()]);
+        $config = $this->turnstile->publicConfig();
+        $config['registrationEnabled'] = $this->config->bool('ACCOUNT_REGISTRATION_ENABLED', true);
+        Response::json(['turnstile' => $config]);
     }
 
     private function passwordAlgorithm(): string|int

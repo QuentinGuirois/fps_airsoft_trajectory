@@ -10,8 +10,8 @@
   <link rel="canonical" href="https://fps-airsoft-trajectory.com/">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
-  <script data-cfasync="false">(()=>{const e=document.documentElement;let m='system';try{m=localStorage.getItem('fat-theme')||m}catch{}if(!['system','dark','light'].includes(m))m='system';const d=m==='dark'||(m==='system'&&(!window.matchMedia||matchMedia('(prefers-color-scheme: dark)').matches));const t=d?'dark':'light';e.dataset.themeMode=m;e.dataset.theme=t;e.style.colorScheme=t;document.querySelector('meta[name="theme-color"]').content=d?'#10140c':'#eef0e2'})()</script>
-  <link rel="stylesheet" href="/assets/site.css?v=20260718-38">
+  <script src="/theme-bootstrap.js?v=20260718-40" data-cfasync="false"></script>
+  <link rel="stylesheet" href="/assets/site.css?v=20260718-40">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="fr_FR">
   <meta property="og:site_name" content="F.A.T.">
@@ -20,6 +20,7 @@
   <meta property="og:url" content="https://fps-airsoft-trajectory.com/">
   <meta property="og:image" content="https://fps-airsoft-trajectory.com/assets/img/partage-fat.png">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://fps-airsoft-trajectory.com/assets/img/partage-fat.png">
   <script type="application/ld+json">
   {
     "@context":"https://schema.org",
@@ -43,14 +44,6 @@
         "isAccessibleForFree":true,
         "offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},
         "author":{"@type":"Person","name":"Quentin Guirois","alternateName":"Keep"}
-      },
-      {
-        "@type":"FAQPage",
-        "mainEntity":[
-          {"@type":"Question","name":"Comment convertir des Joules en FPS en airsoft ?","acceptedAnswer":{"@type":"Answer","text":"Il faut connaître la masse réelle de la bille. La vitesse est obtenue à partir de l'énergie cinétique E = 1/2 × m × v², puis convertie de mètres par seconde en feet per second."}},
-          {"@type":"Question","name":"Le simulateur prédit-il exactement la portée d'une réplique ?","acceptedAnswer":{"@type":"Answer","text":"Non. Il calcule un tir théorique à partir des paramètres saisis. La régularité de la réplique, le joint hop-up, les billes, le vent variable et le tireur créent des écarts sur le terrain."}},
-          {"@type":"Question","name":"Quel modèle physique est utilisé ?","acceptedAnswer":{"@type":"Answer","text":"F.A.T. applique le modèle documenté par l'Airsoft Trajectory Project de Mackila : traînée d'une sphère, effet Magnus, spin decay, gravité, densité de l'air et vent."}}
-        ]
       }
     ]
   }
@@ -65,7 +58,7 @@
       <div class="shell hero-grid">
         <div>
           <p class="eyebrow">Calculateur balistique airsoft</p>
-          <h1>Ta bille ne ment pas.<br><span>Les maths non plus.</span></h1>
+          <h1>Ta bille ne ment pas.<br><span>La physique non plus.</span></h1>
           <p class="hero-lead">Convertis Joules et FPS, règle le hop-up, ajoute le vent et visualise la trajectoire réelle de ta bille. F.A.T. transforme le modèle ATP de Mackila en outil de terrain gratuit et installable.</p>
           <div class="button-row">
             <a class="button button-primary" href="#calculateur">Passer mon setup au banc</a>
@@ -89,7 +82,7 @@
       <div class="shell trust-grid">
         <div><strong>Modèle ATP</strong><span>Traînée, Magnus et rotation documentés par Mackila.</span></div>
         <div><strong>Calcul 3D</strong><span>Hauteur, énergie, temps de vol et dérive au vent.</span></div>
-        <div><strong>100 % gratuit</strong><span>Aucun compte. Ton setup reste dans ton navigateur.</span></div>
+        <div><strong>100 % gratuit</strong><span>Le calculateur reste sans compte. Un compte facultatif permet d’enregistrer et publier tes setups.</span></div>
         <div><strong>Mode terrain</strong><span>PWA installable et calculateur disponible hors connexion.</span></div>
       </div>
     </section>
@@ -271,7 +264,7 @@
 
     <section class="section-tight">
       <div class="shell about-profile">
-        <div class="about-portrait"><img src="/assets/img/quentin-guirois.jpg" width="2051" height="2478" loading="lazy" decoding="async" alt="Keep en tenue d’airsoft sur le terrain"><span class="stencil-patch">Keep · développeur & airsofteur</span></div>
+        <div class="about-portrait"><img src="/assets/img/quentin-guirois-320.webp?v=20260718-40" srcset="/assets/img/quentin-guirois-320.webp?v=20260718-40 320w, /assets/img/quentin-guirois-640.webp?v=20260718-40 640w" sizes="(max-width: 767px) 288px, 304px" width="640" height="773" loading="lazy" decoding="async" alt="Keep en tenue d’airsoft sur le terrain"><span class="stencil-patch">Keep · développeur & airsofteur</span></div>
         <div><h2>Keep, derrière le clavier et sur le terrain</h2><p>Quentin Guirois est développeur web et airsofteur. Il a créé F.A.T. pour rendre les travaux de Mackila manipulables sans ouvrir MATLAB entre deux parties — parce qu’un sac d’hydratation est déjà assez lourd.</p><a href="/a-propos/">Qui est Keep et pourquoi cet outil ? →</a></div>
       </div>
     </section>
@@ -325,8 +318,8 @@
     </div>
   </footer>
   <a class="mobile-cta" href="#calculateur">Simuler mon setup</a>
-  <script type="module" data-cfasync="false" src="/site.js?v=20260718-38"></script>
-  <script type="module" data-cfasync="false" src="/app.js?v=20260718-38"></script>
-  <script type="module" data-cfasync="false" src="/calculator-tutorial.js?v=20260718-38"></script>
+  <script type="module" data-cfasync="false" src="/site.js?v=20260718-40"></script>
+  <script type="module" data-cfasync="false" src="/app.js?v=20260718-40"></script>
+  <script type="module" data-cfasync="false" src="/calculator-tutorial.js?v=20260718-40"></script>
 </body>
 </html>

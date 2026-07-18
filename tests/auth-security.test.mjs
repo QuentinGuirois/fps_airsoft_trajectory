@@ -57,6 +57,38 @@ test('inscription et récupération ne divulguent pas l’existence d’un compt
   assert.match(auth, /expires_at>UTC_TIMESTAMP\(\)/);
 });
 
+test('l’inscription reste ouverte par défaut mais dispose d’un coupe-circuit serveur avant toute mutation', async () => {
+  const [auth, example, login, entry] = await Promise.all([
+    read('api/src/Controllers/AuthController.php'),
+    read('config/.env.example'),
+    read('assets/js/account-login.js'),
+    read('assets/js/account-login-entry.js'),
+  ]);
+  const guard = auth.indexOf("ACCOUNT_REGISTRATION_ENABLED', true");
+  assert.ok(guard > 0 && guard < auth.indexOf('$request->json()'));
+  assert.match(auth, /registration_closed/);
+  assert.match(example, /^ACCOUNT_REGISTRATION_ENABLED=true$/m);
+  assert.match(login, /registrationEnabled = true/);
+  assert.match(entry, /registrationEnabled !== false/);
+});
+
+test('les jetons transmis par email utilisent un fragment et le client nettoie l’historique', async () => {
+  const [auth, login] = await Promise.all([
+    read('api/src/Controllers/AuthController.php'),
+    read('assets/js/account-login.js'),
+  ]);
+  assert.match(auth, /\/compte\/#verify=/);
+  assert.match(auth, /\/compte\/#reset=/);
+  assert.doesNotMatch(auth, /\/compte\/\?(?:verify|reset)=/);
+  assert.match(login, /historyRef\?\.replaceState/);
+});
+
+test('la connexion combine des quotas séparés par IP et identité normalisée', async () => {
+  const auth = await read('api/src/Controllers/AuthController.php');
+  assert.match(auth, /hit\('login_ip', \$request->ip\(\), 40, 900\)/);
+  assert.match(auth, /hit\('login_identity', \$identity, 8, 900\)/);
+});
+
 test('quotas et journaux utilisent des empreintes sans secret ni IP brute', async () => {
   const [limits, audit, application] = await Promise.all([
     read('api/src/Services/RateLimiter.php'),

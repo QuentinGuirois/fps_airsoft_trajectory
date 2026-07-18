@@ -73,7 +73,8 @@ test('Apache protège les sources PHP, les shells privés et le site sans CDN', 
   assert.match(rootRules, /Strict-Transport-Security/);
   assert.match(rootRules, /Content-Security-Policy/);
   assert.match(rootRules, /default-src 'self'/);
-  assert.match(rootRules, /script-src 'self' 'unsafe-inline' https:\/\/challenges\.cloudflare\.com/);
+  assert.match(rootRules, /script-src 'self' https:\/\/challenges\.cloudflare\.com/);
+  assert.doesNotMatch(rootRules, /script-src[^;\n"]*'unsafe-inline'/);
   assert.match(rootRules, /frame-src https:\/\/challenges\.cloudflare\.com/);
   assert.doesNotMatch(rootRules, /challenges\.cloudflare\.com\/\*|unsafe-eval/);
   assert.match(rootRules, /SetEnvIf Request_URI "\^\/compte/);
@@ -120,7 +121,9 @@ test('Cloudflare ne transforme ni le thème avant paint ni les modules F.A.T.', 
   ];
   for (const page of pages) {
     const html = await read(page);
-    assert.match(html, /<script data-cfasync="false">\(\(\)=>/, `${page}: thème protégé`);
+    const bootstrap = html.indexOf('<script src="/theme-bootstrap.js?v=20260718-40" data-cfasync="false"></script>');
+    const stylesheet = html.indexOf('<link rel="stylesheet" href="/assets/site.css?v=20260718-40">');
+    assert.ok(bootstrap > 0 && stylesheet > bootstrap, `${page}: thème externe protégé avant CSS`);
     for (const tag of html.match(/<script[^>]+type="module"[^>]*>/g) || []) {
       assert.match(tag, /data-cfasync="false"/, `${page}: module protégé`);
     }

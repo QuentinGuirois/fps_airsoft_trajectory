@@ -62,6 +62,7 @@ final class Application
         $admin = new AdminController($this->db, $this->config, $sessions, $limits, $audit);
         $router = new Router();
         $router->add('GET', '/health', static fn(): never => Response::json(['status' => 'ok']));
+        $router->add('HEAD', '/health', static fn(): never => Response::noContent(200));
         $router->add('GET', '/auth/turnstile-config', [$auth, 'turnstileConfig']);
         $router->add('POST', '/auth/register', [$auth, 'register']);
         $router->add('POST', '/auth/verify-email', [$auth, 'verifyEmail']);

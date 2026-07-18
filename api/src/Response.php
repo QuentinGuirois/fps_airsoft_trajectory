@@ -47,7 +47,7 @@ final class Response
         http_response_code(200);
         header('Content-Type: image/webp');
         header('Content-Length: ' . (string) filesize($path));
-        header('Cache-Control: public, max-age=86400, immutable');
+        header('Cache-Control: public, max-age=3600, stale-while-revalidate=86400');
         readfile($path);
         exit;
     }

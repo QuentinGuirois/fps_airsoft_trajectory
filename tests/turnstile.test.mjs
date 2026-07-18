@@ -121,7 +121,8 @@ test('le contrat serveur valide Turnstile sans élargir CSP ni cache PWA', async
   assert.match(verifier, /timeout-or-duplicate|SITEVERIFY_URL|siteverify/i);
   assert.match(config, /TURNSTILE_ENABLED/);
   assert.match(config, /clés de test Turnstile/);
-  assert.match(apache, /script-src 'self' 'unsafe-inline' https:\/\/challenges\.cloudflare\.com/);
+  assert.match(apache, /script-src 'self' https:\/\/challenges\.cloudflare\.com/);
+  assert.doesNotMatch(apache, /script-src[^;\n"]*'unsafe-inline'/);
   assert.match(apache, /frame-src https:\/\/challenges\.cloudflare\.com/);
   assert.doesNotMatch(apache, /challenges\.cloudflare\.com\/\*|unsafe-eval/);
   assert.ok(worker.includes("'/assets/js/turnstile-client.js?v=20260718-30'"));
@@ -130,8 +131,13 @@ test('le contrat serveur valide Turnstile sans élargir CSP ni cache PWA', async
   assert.doesNotMatch(example, /TURNSTILE_(?:SITE_KEY|SECRET_KEY)=\S+/);
 });
 
-test('les cas serveur PHP couvrent succès, expiration, rejeu et indisponibilité', () => {
+test('les cas serveur PHP couvrent succès, expiration, rejeu et indisponibilité', (t) => {
   const php = process.env.FAT_TEST_PHP || (process.platform === 'win32' ? 'C:\\tools\\php\\php.exe' : 'php');
+  const probe = spawnSync(php, ['-v'], { cwd: rootPath, encoding: 'utf8' });
+  if (probe.error?.code === 'ENOENT' || probe.status === null) {
+    t.skip(`PHP CLI 8.3+ requis (${php} introuvable ; définir FAT_TEST_PHP si nécessaire).`);
+    return;
+  }
   const result = spawnSync(php, ['tests/turnstile-unit.php'], { cwd: rootPath, encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.match(result.stdout, /Turnstile PHP:/);

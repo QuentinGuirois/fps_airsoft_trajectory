@@ -6,18 +6,64 @@ push sur `main` lorsque la variable GitHub `DEPLOY_LIVE_ENABLED` vaut `true`, ou
 depuis un lancement manuel explicite. Les commits et tests locaux ne contactent
 jamais Plesk.
 
-## Blocages avant activation
+## État préalable à l’activation
 
-Ne pas régler `DEPLOY_LIVE_ENABLED=true` et ne pas exposer le lien Compte tant
-que les points suivants ne sont pas tous validés :
+Les informations juridiques ont été confirmées le 18 juillet 2026 : la boîte
+`contact@fps-airsoft-trajectory.com` reçoit les messages, l’adresse de l’éditeur
+personne physique figure dans les pages légales et les journaux techniques et
+d’audit sont conservés 180 jours. Les inscriptions restent ouvertes par défaut
+avec `ACCOUNT_REGISTRATION_ENABLED=true`. Ce flag est un coupe-circuit
+d’exploitation : le passer à `false` ferme uniquement les nouvelles
+inscriptions, sans bloquer les connexions existantes.
 
-- la boîte `contact@fps-airsoft-trajectory.com` reçoit effectivement les
-  messages ;
-- l'adresse postale de Quentin Guirois, éditeur personne physique, est ajoutée
-  aux pages légales ;
-- la durée de conservation des journaux techniques et d'audit est décidée ;
-- les vraies clés Turnstile sont installées et testées sur le domaine ;
-- un dry-run distant et un rollback supervisé sont réussis.
+Avant chaque activation, les vraies clés Turnstile doivent rester installées
+dans le fichier privé, puis un dry-run distant et un rollback supervisé doivent
+être réussis.
+
+## IP visiteur derrière Cloudflare
+
+L’application n’accepte jamais directement `CF-Connecting-IP` : elle limite les
+requêtes avec `REMOTE_ADDR`. Sur une pile Plesk Nginx + Apache, vérifier d’abord
+quel proxy réécrit cette valeur. Cloudflare précise que l’origine voit sinon une
+adresse Cloudflare et recommande de restaurer l’IP visiteur uniquement depuis
+ses proxys de confiance :
+
+- documentation : https://developers.cloudflare.com/support/troubleshooting/restoring-visitor-ips/restoring-original-visitor-ips/ ;
+- plages autoritaires : https://www.cloudflare.com/ips/ (IPv4 et IPv6).
+
+Si Apache reçoit directement les connexions Cloudflare, activer `mod_remoteip`,
+définir `RemoteIPHeader CF-Connecting-IP` et ajouter une directive
+`RemoteIPTrustedProxy` pour **chaque plage officielle actuelle**, jamais pour
+`0.0.0.0/0`, `::/0` ou une source quelconque. Si Nginx précède Apache, restaurer
+l’IP au niveau Nginx/Plesk conformément à la pile réellement active et ne pas
+empiler deux réécritures non contrôlées.
+
+Procédure de preuve sans exposer d’IP dans l’interface publique :
+
+1. sauvegarder la configuration Plesk/vhost et garder une session SSH de secours ;
+2. relever temporairement, dans un journal privé, `REMOTE_ADDR` et le Ray ID
+   depuis deux connexions distinctes (par exemple réseau fixe et mobile) ;
+3. vérifier que les deux `REMOTE_ADDR` diffèrent et ne sont pas des adresses
+   Cloudflare, puis supprimer ce journal de diagnostic ;
+4. envoyer un faux `CF-Connecting-IP` en accédant directement à l’origine depuis
+   une source non autorisée : il ne doit jamais remplacer `REMOTE_ADDR` ;
+5. exécuter `apachectl configtest` ou l’équivalent Plesk avant rechargement, puis
+   vérifier que les quotas de deux visiteurs ne partagent plus la même empreinte.
+
+## Revue d’infrastructure avant mise en ligne
+
+- appliquer les mises à jour supportées de Plesk, de l’OS, de PHP et de MariaDB
+  après sauvegarde et fenêtre de retour arrière ;
+- conserver un compte MariaDB applicatif limité à sa seule base et sans droits
+  globaux, distinct du compte de sauvegarde/migration ;
+- autoriser SSH par clé, désactiver les accès inutiles et préserver une session
+  administrateur de secours pendant toute modification ;
+- vérifier les jails Fail2Ban Plesk/SSH et tester leur alerte sans verrouiller le
+  seul administrateur ;
+- produire une sauvegarde externe chiffrée de la base, des images finales et de
+  la configuration privée, puis documenter et tester une restauration ;
+- confirmer périodiquement que `expose_php=Off`, que `X-Powered-By` est absent
+  et que le vhost/Cloudflare ne divulgue pas une bannière détaillée `PleskLin`.
 
 ## Arborescence serveur
 

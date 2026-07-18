@@ -1,10 +1,24 @@
-const CACHE = 'fat-v3-2026-07-18-39';
-const CORE = [
+const CACHE = 'fat-v3-2026-07-18-40';
+const CRITICAL = [
   '/',
   '/index.html',
   '/offline.html',
   '/manifest.webmanifest',
-  '/assets/site.css?v=20260718-38',
+  '/theme-bootstrap.js?v=20260718-40',
+  '/assets/site.css?v=20260718-40',
+  '/app.js?v=20260718-40',
+  '/calculation-loader.js?v=20260718-28',
+  '/chart-data.js?v=20260718-28',
+  '/render-capabilities.js?v=20260718-28',
+  '/assets/js/curve-thumbnail.js?v=20260718-28',
+  '/assets/js/community-repositories.js?v=20260718-40',
+  '/site.js?v=20260718-40',
+  '/theme.js?v=20260718-28',
+  '/physics-core.js?v=20260718-28',
+  '/trajectory.worker.js?v=20260718-28'
+];
+
+const OPTIONAL = [
   '/assets/fonts/inter-var-latin.woff2',
   '/assets/fonts/saira-latin-400-900.woff2',
   '/assets/fonts/saira-stencil-one-latin-400.woff2',
@@ -18,31 +32,19 @@ const CORE = [
   '/assets/img/icon-512.png',
   '/assets/img/icon-maskable.svg',
   '/assets/img/icon-maskable-512.png',
-  '/assets/img/partage-fat.png',
-  '/assets/img/quentin-guirois.jpg',
-  '/app.js?v=20260718-38',
   '/advanced-3d-app.js?v=20260718-29',
   '/advanced-device.js?v=20260718-28',
   '/advanced-transition.js?v=20260718-28',
-  '/calculation-loader.js?v=20260718-28',
-  '/calculator-tutorial.js?v=20260718-38',
+  '/calculator-tutorial.js?v=20260718-40',
   '/replica-utils.js?v=20260718-28',
-  '/assets/js/community-repositories.js?v=20260718-38',
-  '/assets/js/curve-thumbnail.js?v=20260718-28',
   '/assets/js/share-link.js?v=20260718-29',
-  '/assets/js/replica-card.js?v=20260718-38',
-  '/assets/js/account-login.js?v=20260718-38',
-  '/assets/js/account-login-entry.js?v=20260718-38',
+  '/assets/js/replica-card.js?v=20260718-40',
+  '/assets/js/account-login.js?v=20260718-40',
+  '/assets/js/account-login-entry.js?v=20260718-40',
   '/assets/js/turnstile-client.js?v=20260718-30',
-  '/assets/js/armory.js?v=20260718-38',
-  '/assets/js/armory-entry.js?v=20260718-38',
-  '/assets/js/community-gallery.js?v=20260718-38',
-  '/chart-data.js?v=20260718-28',
-  '/render-capabilities.js?v=20260718-28',
-  '/site.js?v=20260718-38',
-  '/theme.js?v=20260718-28',
-  '/physics-core.js?v=20260718-28',
-  '/trajectory.worker.js?v=20260718-28',
+  '/assets/js/armory.js?v=20260718-40',
+  '/assets/js/armory-entry.js?v=20260718-40',
+  '/assets/js/community-gallery.js?v=20260718-40',
   '/convertisseur-joules-fps/',
   '/outils/',
   '/guides/',
@@ -71,7 +73,12 @@ const LAZY_3D = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(CORE)).then(() => self.skipWaiting()));
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    await cache.addAll(CRITICAL);
+    await Promise.allSettled(OPTIONAL.map((url) => cache.add(url)));
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', (event) => {
@@ -117,17 +124,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (['script', 'style', 'worker'].includes(event.request.destination)) {
+  const versioned = url.searchParams.has('v');
+  if (versioned && ['script', 'style', 'worker', 'font', 'image'].includes(event.request.destination)) {
     event.respondWith(
-      fetch(event.request)
-        .then((response) => {
+      caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
           if (response.ok) {
             const copy = response.clone();
             caches.open(CACHE).then((cache) => cache.put(event.request, copy));
           }
           return response;
-        })
-        .catch(() => caches.match(event.request)),
+        })),
     );
     return;
   }

@@ -8,6 +8,10 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url)).replace(/[\\\/]$/, '');
 const PHP = process.env.FAT_TEST_PHP || (process.platform === 'win32' ? 'C:\\tools\\php\\php.exe' : 'php');
+const phpProbe = spawnSync(PHP, ['-v'], { cwd: ROOT, encoding: 'utf8' });
+if (phpProbe.error?.code === 'ENOENT' || phpProbe.status === null) {
+  throw new Error(`PHP CLI 8.3+ est requis pour test:api (${PHP} introuvable). Installe PHP ou définis FAT_TEST_PHP.`);
+}
 const ORIGIN = 'http://127.0.0.1:8082';
 const env = {
   ...process.env,
@@ -23,6 +27,7 @@ const env = {
   TURNSTILE_EXPECTED_HOSTNAME: '127.0.0.1',
   TURNSTILE_TIMEOUT_SECONDS: '4',
   TURNSTILE_SITEVERIFY_URL: 'http://127.0.0.1:8083/siteverify',
+  ACCOUNT_REGISTRATION_ENABLED: 'true',
 };
 
 let turnstileSequence = 0;
@@ -133,14 +138,25 @@ async function waitForServer() {
   throw new Error(`Serveur PHP local indisponible (exit=${server.exitCode}, response=${lastResponse}): ${stderr}`);
 }
 
+async function waitForHealth(origin, process, readStderr) {
+  for (let index = 0; index < 40; index += 1) {
+    try {
+      const response = await fetch(`${origin}/api/v1/health`);
+      if (response.ok) return;
+    } catch {}
+    await delay(100);
+  }
+  throw new Error(`Serveur PHP local indisponible sur ${origin} (exit=${process.exitCode}): ${readStderr()}`);
+}
+
 async function latestMailToken(kind) {
   const log = join(ROOT, 'storage', 'logs', 'mail-test.jsonl');
   for (let index = 0; index < 20; index += 1) {
     try {
       const lines = (await readFile(log, 'utf8')).trim().split(/\r?\n/).filter(Boolean);
       const records = lines.map((line) => JSON.parse(line));
-      const record = [...records].reverse().find((item) => item.body.includes(`?${kind}=`));
-      const match = record?.body.match(new RegExp(`\\?${kind}=([a-f0-9]{64})`));
+      const record = [...records].reverse().find((item) => item.body.includes(`#${kind}=`));
+      const match = record?.body.match(new RegExp(`#${kind}=([a-f0-9]{64})`));
       if (match) return match[1];
     } catch {}
     await delay(50);
@@ -160,8 +176,44 @@ server.stderr.on('data', (chunk) => { stderr += chunk; });
 
 try {
   await waitForServer();
+
+  const closedOrigin = 'http://127.0.0.1:8084';
+  const closedEnv = {
+    ...env,
+    APP_ORIGIN: closedOrigin,
+    TRUSTED_HOST: '127.0.0.1:8084',
+    ACCOUNT_REGISTRATION_ENABLED: 'false',
+  };
+  const closedServer = spawn(PHP, ['-S', '127.0.0.1:8084', 'tests/api-router.php'], {
+    cwd: ROOT,
+    env: closedEnv,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let closedStderr = '';
+  closedServer.stderr.on('data', (chunk) => { closedStderr += chunk; });
+  try {
+    await waitForHealth(closedOrigin, closedServer, () => closedStderr);
+    const closedResponse = await fetch(`${closedOrigin}/api/v1/auth/register`, {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', Origin: closedOrigin },
+      body: '{}',
+    });
+    assert.equal(closedResponse.status, 503);
+    const closedPayload = await closedResponse.json();
+    assert.equal(closedPayload.code, 'registration_closed');
+    assert.equal(closedPayload.message, 'Les nouvelles inscriptions sont temporairement fermées. Les comptes existants peuvent toujours se connecter.');
+    assert.match(closedPayload.requestId, /^[a-f0-9]{24}$/);
+  } finally {
+    closedServer.kill('SIGTERM');
+    await delay(100);
+    if (closedServer.exitCode && closedServer.exitCode !== 0) console.error(closedStderr);
+  }
+
   const health = await api('/health');
   assert.deepEqual(health, { status: 'ok' });
+  const healthHead = await fetch(`${ORIGIN}/api/v1/health`, { method: 'HEAD' });
+  assert.equal(healthHead.status, 200);
+  assert.equal(await healthHead.text(), '');
   await api('/auth/reset-password', { method: 'POST', expected: 403, origin: 'https://evil.example', body: { token: 'a'.repeat(64), password: 'MotDePasseRefuse123' } });
   await api('/auth/register', { method: 'POST', expected: 422, body: { pseudo: 'Refus', email: 'refus@example.test', password: 'MotDePasseRefuse123', legalAccepted: false, turnstileToken: turnstileToken('register') } });
 

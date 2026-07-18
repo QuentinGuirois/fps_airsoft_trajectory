@@ -14,6 +14,20 @@ $db->exec('DELETE FROM sessions WHERE expires_at<UTC_TIMESTAMP()');
 $db->exec('DELETE FROM rate_limits WHERE expires_at<UTC_TIMESTAMP()');
 $db->exec('DELETE FROM email_verification_tokens WHERE expires_at<UTC_TIMESTAMP()-INTERVAL 7 DAY');
 $db->exec('DELETE FROM password_reset_tokens WHERE expires_at<UTC_TIMESTAMP()-INTERVAL 7 DAY');
+$auditRetentionDays = $config->int('AUDIT_RETENTION_DAYS', 180);
+$technicalLogRetentionDays = $config->int('TECHNICAL_LOG_RETENTION_DAYS', 180);
+if ($auditRetentionDays > 0) {
+    $purgeAudit = $db->prepare('DELETE FROM audit_log WHERE created_at<UTC_TIMESTAMP()-INTERVAL ' . $auditRetentionDays . ' DAY LIMIT 5000');
+    $purgeAudit->execute();
+}
+if ($technicalLogRetentionDays > 0) {
+    $logCutoff = time() - ($technicalLogRetentionDays * 86400);
+    foreach (glob($config->storagePath('logs') . '/*.log') ?: [] as $logPath) {
+        if (is_file($logPath) && filemtime($logPath) < $logCutoff) {
+            @unlink($logPath);
+        }
+    }
+}
 $expiredUsers = $db->query('SELECT id FROM users WHERE deletion_requested_at IS NOT NULL AND deletion_requested_at<=UTC_TIMESTAMP() ORDER BY deletion_requested_at LIMIT 100')->fetchAll(PDO::FETCH_COLUMN);
 foreach ($expiredUsers as $userId) {
     $paths = $db->prepare(

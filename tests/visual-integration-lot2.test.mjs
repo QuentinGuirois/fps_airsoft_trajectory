@@ -38,7 +38,7 @@ test('le shell rend un header, un sélecteur de thème et un footer cohérents p
   assert.match(theme, /Nuit/);
   assert.match(theme, /Jour/);
   assert.match(css, /\.site-footer > \.camo-strip/);
-  assert.match(offline, /src="\/site\.js\?v=20260718-38"/);
+  assert.match(offline, /src="\/site\.js\?v=20260718-40"/);
 });
 
 test('le cockpit, le mobile tactile et les rails de guide suivent le lot 2', async () => {
@@ -100,7 +100,8 @@ test('la galerie communautaire ne publie que les cards serveur validées', async
     read('assets', 'site.css'),
   ]);
   const gallery = await read('tu-joues-avec-quoi', 'index.html');
-  assert.match(sitemap, /tu-joues-avec-quoi/);
+  assert.doesNotMatch(sitemap, /tu-joues-avec-quoi/);
+  assert.match(gallery, /name="robots" content="noindex,follow/);
   assert.match(gallery, /data-community-gallery/);
   assert.match(gallery, /AJOUTER MA RÉPLIQUE/);
   assert.doesNotMatch(gallery, /fixture|profil vérifié|citation/i);
@@ -112,10 +113,12 @@ test('la galerie communautaire ne publie que les cards serveur validées', async
 
 test('la page À propos utilise la photo réelle, le patch Keep et l’attribution réutilisable', async () => {
   const [home, html, css] = await Promise.all([read('index.html'), read('a-propos', 'index.html'), read('assets', 'site.css')]);
-  const portrait = await stat(join(root, 'assets', 'img', 'quentin-guirois.jpg'));
-  assert.ok(portrait.size > 1_000_000);
+  const portrait320 = await stat(join(root, 'assets', 'img', 'quentin-guirois-320.webp'));
+  const portrait640 = await stat(join(root, 'assets', 'img', 'quentin-guirois-640.webp'));
+  assert.ok(portrait320.size < portrait640.size && portrait640.size <= 102_400);
   assert.match(html, /class="about-portrait"/);
   assert.match(html, /alt="Keep en tenue d’airsoft sur le terrain"/);
+  assert.match(html, /srcset="\/assets\/img\/quentin-guirois-320\.webp[^\"]+320w, \/assets\/img\/quentin-guirois-640\.webp[^\"]+640w"/);
   assert.match(css, /\.about-portrait \{[^}]*aspect-ratio: 1/);
   assert.match(css, /\.about-portrait img \{[^}]*height: 100%;[^}]*object-position: 50% 35%/);
   assert.match(html, /Keep · développeur & airsofteur/);
@@ -131,7 +134,7 @@ test('le cache et les ressources restent autonomes sans CDN', async () => {
   const [worker, css, site, gas] = await Promise.all([
     read('service-worker.js'), read('assets', 'site.css'), read('site.js'), read('gas-pressure-app.js'),
   ]);
-  assert.match(worker, /fat-v3-2026-07-18-39/);
+  assert.match(worker, /fat-v3-2026-07-18-40/);
   for (const source of [worker, css, site, gas]) {
     assert.doesNotMatch(source, /https?:\/\/(?:fonts\.|cdn\.|unpkg|jsdelivr)/i);
   }

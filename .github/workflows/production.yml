@@ -62,6 +62,24 @@ jobs:
           npm run test:browser:community
           npm run test:browser:drone
           npm run test:browser:advanced
+      - name: Installer Lighthouse CI (version figée)
+        run: npm install --global @lhci/cli@0.15.1 --no-audit --no-fund
+      - name: Lighthouse mobile et desktop
+        run: |
+          python -m http.server 8080 >"$RUNNER_TEMP/fat-lighthouse-http.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 40); do curl --fail --silent http://127.0.0.1:8080/ >/dev/null && break; sleep 0.25; done
+          npm run lighthouse:mobile
+          npm run lighthouse:desktop
+      - name: Archiver les rapports Lighthouse
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-${{ github.sha }}
+          path: .lighthouseci/
+          if-no-files-found: warn
+          retention-days: 14
 
   api:
     name: API et MariaDB
@@ -117,6 +135,7 @@ jobs:
           release_root="$RUNNER_TEMP/release"
           mkdir -p "$release_root"
           git archive HEAD | tar -x -C "$release_root"
+          RELEASE_ROOT="$release_root" node bin/build-sitemap.mjs
           RELEASE_ROOT="$release_root" node --input-type=module <<'NODE'
           import { readFile, writeFile } from 'node:fs/promises';
           import { join } from 'node:path';

@@ -172,7 +172,7 @@ await send('Page.addScriptToEvaluateOnNewDocument', { source: `
       let status = 200;
       let payload = { ok: true };
       if (requestUrl.pathname.endsWith('/auth/turnstile-config') && method === 'GET') {
-        payload = { turnstile: { enabled: true, siteKey: '1x00000000000000000000AA' } };
+        payload = { turnstile: { enabled: true, siteKey: '1x00000000000000000000AA', registrationEnabled: true } };
       } else if (requestUrl.pathname.endsWith('/me') && method === 'GET') {
         const armorySession = sessionStorage.getItem('__fatCommunityAdmin') === '1'
           ? { ...fixture.session, user: { ...fixture.session.user, role: 'admin' } }
@@ -264,7 +264,7 @@ await evaluate(`(()=>{const form=document.querySelector('[data-account-form="reg
 await waitFor(`location.pathname === '/compte/verifier-email.html'`);
 const emailConfirmation = await evaluate(`({robots:document.querySelector('meta[name="robots"]').content,title:document.querySelector('h1').textContent,overflow:document.documentElement.scrollWidth>innerWidth})`);
 if (!emailConfirmation.robots.includes('noindex') || !/Vérifie ton email/.test(emailConfirmation.title) || emailConfirmation.overflow) throw new Error(`Email confirmation mismatch ${JSON.stringify(emailConfirmation)}`);
-await navigate(`${base}compte/?verify=browser-verification-token`);
+await navigate(`${base}compte/#verify=browser-verification-token`);
 await waitFor(`location.pathname === '/compte/compte-active.html'`);
 const accountActive = await evaluate(`({robots:document.querySelector('meta[name="robots"]').content,title:document.querySelector('h1').textContent,login:document.querySelector('a[href="/compte/"]')?.textContent,overflow:document.documentElement.scrollWidth>innerWidth})`);
 if (!accountActive.robots.includes('noindex') || !/compte est activé/.test(accountActive.title) || !accountActive.login || accountActive.overflow) throw new Error(`Account activation mismatch ${JSON.stringify(accountActive)}`);
@@ -427,7 +427,7 @@ await navigate(base);
 await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await navigate(`${base}compte/armurerie.html?recipe=sw`);
 await waitFor(`Boolean(navigator.serviceWorker.controller)`);
-const cache = await evaluate(`Promise.all([caches.open('fat-v3-2026-07-18-39').then(cache=>cache.match('/assets/js/replica-card.js?v=20260718-38')).then(Boolean),caches.match('/api/v1/me').then(Boolean)]).then(([component,api])=>({component,api}))`, true);
+const cache = await evaluate(`Promise.all([caches.open('fat-v3-2026-07-18-40').then(cache=>cache.match('/assets/js/replica-card.js?v=20260718-40')).then(Boolean),caches.match('/api/v1/me').then(Boolean)]).then(([component,api])=>({component,api}))`, true);
 if (!cache.component || cache.api) throw new Error(`Private cache mismatch ${JSON.stringify(cache)}`);
 
 await evaluate(`sessionStorage.setItem('__fatDisableCommunityApi','1')`);

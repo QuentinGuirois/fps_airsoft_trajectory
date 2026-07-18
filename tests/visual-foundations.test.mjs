@@ -59,8 +59,8 @@ test('chaque page initialise le thème dans le head avant la feuille de style', 
   const files = (await walk(root)).filter((path) => path.endsWith('.html'));
   for (const path of files) {
     const html = await readFile(path, 'utf8');
-    const initPosition = html.indexOf("localStorage.getItem('fat-theme')");
-    const cssPosition = html.search(/href="\/assets\/site\.css\?v=20260718-38"/);
+    const initPosition = html.indexOf('<script src="/theme-bootstrap.js?v=20260718-40" data-cfasync="false"></script>');
+    const cssPosition = html.search(/href="\/assets\/site\.css\?v=20260718-40"/);
     assert.ok(initPosition > 0, path);
     assert.ok(cssPosition > initPosition, path);
     assert.match(html, /meta name="theme-color" content="#10140c"/);
@@ -202,10 +202,11 @@ test('les polices officielles, licences et modules visuels sont disponibles hors
   }
 
   const sw = await readFile(join(root, 'service-worker.js'), 'utf8');
-  for (const resource of [...fontFiles.map((file) => `/assets/fonts/${file}`), '/theme.js?v=20260718-28', '/calculation-loader.js?v=20260718-28', '/assets/img/icon-maskable-512.png', '/assets/img/quentin-guirois.jpg']) {
+  for (const resource of [...fontFiles.map((file) => `/assets/fonts/${file}`), '/theme.js?v=20260718-28', '/calculation-loader.js?v=20260718-28', '/assets/img/icon-maskable-512.png']) {
     assert.ok(sw.includes(`'${resource}'`), resource);
   }
-  assert.match(sw, /const CACHE = 'fat-v3-2026-07-18-39'/);
+  assert.doesNotMatch(sw, /quentin-guirois-(?:320|640)|quentin-guirois-social|partage-fat\.png/);
+  assert.match(sw, /const CACHE = 'fat-v3-2026-07-18-40'/);
 
   const production = (await walk(root)).filter((path) => /\.(?:html|css|js|webmanifest|svg)$/.test(path));
   for (const path of production) {

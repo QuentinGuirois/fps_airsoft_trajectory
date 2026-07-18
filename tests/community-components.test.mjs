@@ -19,7 +19,7 @@ import {
 } from '../assets/js/replica-card.js';
 import { COMMUNITY_FIXTURE, FIXTURE_SIMULATION_RESULT } from './fixtures/community.fixture.mjs';
 import { MockAccountRepository, MockReplicaRepository } from './helpers/mock-community-repositories.mjs';
-import { safeAccountReturn } from '../assets/js/account-login.js';
+import { consumeAccountTokenHash, safeAccountReturn } from '../assets/js/account-login.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (...parts) => readFile(join(root, ...parts), 'utf8');
@@ -80,6 +80,15 @@ test('le retour après connexion accepte uniquement un chemin local', () => {
   assert.equal(safeAccountReturn('?return=%2Fcompte%2Farmurerie.html%3Faction%3Dadd'), '/compte/armurerie.html?action=add');
   assert.equal(safeAccountReturn('?return=https%3A%2F%2Fevil.test'), '');
   assert.equal(safeAccountReturn('?return=%2F%2Fevil.test'), '');
+});
+
+test('les jetons email sont lus depuis le fragment puis retirés immédiatement de l’URL', () => {
+  const calls = [];
+  const locationRef = { hash: '#verify=' + 'a'.repeat(64), pathname: '/compte/', search: '?return=%2Fcompte%2Farmurerie.html' };
+  const tokens = consumeAccountTokenHash({ locationRef, historyRef: { replaceState: (...args) => calls.push(args) } });
+  assert.equal(tokens.verify, 'a'.repeat(64));
+  assert.equal(tokens.reset, '');
+  assert.deepEqual(calls, [[null, '', '/compte/?return=%2Fcompte%2Farmurerie.html']]);
 });
 
 test('le client lie fetch au contexte global requis par les navigateurs', async () => {
@@ -215,8 +224,8 @@ test('l’administration publiée est visible uniquement aux admins et archive s
 
 test('le service worker cache seulement les shells et contourne toutes les réponses API privées', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-39'/);
-  for (const path of ['/compte/', '/compte/verifier-email.html', '/compte/compte-active.html', '/compte/armurerie.html', '/tu-joues-avec-quoi/', '/assets/site.css?v=20260718-38', '/assets/js/replica-card.js?v=20260718-38', '/assets/js/armory.js?v=20260718-38', '/assets/js/armory-entry.js?v=20260718-38', '/assets/js/account-login.js?v=20260718-38', '/assets/js/account-login-entry.js?v=20260718-38', '/assets/js/community-repositories.js?v=20260718-38', '/assets/js/community-gallery.js?v=20260718-38', '/assets/js/turnstile-client.js?v=20260718-30']) {
+  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-40'/);
+  for (const path of ['/compte/', '/compte/verifier-email.html', '/compte/compte-active.html', '/compte/armurerie.html', '/tu-joues-avec-quoi/', '/assets/site.css?v=20260718-40', '/assets/js/replica-card.js?v=20260718-40', '/assets/js/armory.js?v=20260718-40', '/assets/js/armory-entry.js?v=20260718-40', '/assets/js/account-login.js?v=20260718-40', '/assets/js/account-login-entry.js?v=20260718-40', '/assets/js/community-repositories.js?v=20260718-40', '/assets/js/community-gallery.js?v=20260718-40', '/assets/js/turnstile-client.js?v=20260718-30']) {
     assert.ok(worker.includes(`'${path}'`), path);
   }
   assert.match(worker, /url\.pathname\.startsWith\('\/api\/'\)[\s\S]*event\.respondWith\(fetch\(event\.request\)\);[\s\S]*return;/);

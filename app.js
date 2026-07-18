@@ -13,7 +13,7 @@ import { fitChartDomain, prepareChartSeries } from './chart-data.js?v=20260718-2
 import { createCalculationLoader } from './calculation-loader.js?v=20260718-28';
 import { detectWebGL } from './render-capabilities.js?v=20260718-28';
 import { serializeCurveThumbnail } from './assets/js/curve-thumbnail.js?v=20260718-28';
-import { createProductionRepositories, RepositoryError } from './assets/js/community-repositories.js?v=20260718-38';
+import { createProductionRepositories, RepositoryError } from './assets/js/community-repositories.js?v=20260718-40';
 
 const root = document.querySelector('[data-trajectory-app]');
 

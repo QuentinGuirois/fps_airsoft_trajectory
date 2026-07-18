@@ -3,16 +3,15 @@
   <title>Politique de confidentialité et données du compte | F.A.T.</title>
   <meta name="description" content="Politique de confidentialité de F.A.T. : calculateur local, compte facultatif, cards, images, sécurité, Turnstile, durées et droits RGPD.">
   <meta name="robots" content="index,follow"><link rel="canonical" href="https://fps-airsoft-trajectory.com/politique-confidentialite/">
-  <link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml"><script data-cfasync="false">(()=>{const e=document.documentElement;let m='system';try{m=localStorage.getItem('fat-theme')||m}catch{}if(!['system','dark','light'].includes(m))m='system';const d=m==='dark'||(m==='system'&&(!window.matchMedia||matchMedia('(prefers-color-scheme: dark)').matches));const t=d?'dark':'light';e.dataset.themeMode=m;e.dataset.theme=t;e.style.colorScheme=t;document.querySelector('meta[name="theme-color"]').content=d?'#10140c':'#eef0e2'})()</script><link rel="stylesheet" href="/assets/site.css?v=20260718-38">
+  <link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml"><script src="/theme-bootstrap.js?v=20260718-40" data-cfasync="false"></script><link rel="stylesheet" href="/assets/site.css?v=20260718-40">
 </head><body>
   <a class="skip-link" href="#contenu">Aller au contenu</a>
   <header class="site-header" data-site-shell="header"><div class="shell nav-row"><a class="brand" href="/" aria-label="F.A.T., accueil"><svg class="brand-mark" viewBox="0 0 120 76" aria-hidden="true" focusable="false"><path class="brand-curve" d="M6 62C30 30 62 22 78 26C96 31 106 44 112 62"/><circle class="brand-ball" cx="78" cy="26" r="13"/><path class="brand-spin" d="M60 30A20 20 0 0 1 71 15"/><line class="brand-ground" x1="2" y1="68" x2="118" y2="68"/></svg><span><strong>F.A.T<span class="brand-dot">.</span></strong><small>FPS Airsoft Trajectory</small></span></a><nav class="primary-nav" aria-label="Navigation principale"><a href="/#calculateur">Calculateur</a><a href="/outils/">Outils</a><a href="/guides/">Guides</a></nav><span class="mobile-setup-context" data-mobile-setup-context aria-live="polite"></span><button class="button button-primary button-small nav-install" type="button" data-install-app hidden>Installer l’app</button><button class="menu-toggle menu-button" type="button" data-menu-button aria-expanded="false" aria-controls="briefing-menu" aria-label="Ouvrir le menu"><span class="menu-toggle-label" data-menu-label>MENU</span><span class="menu-toggle-box" aria-hidden="true"><span></span><span></span><span></span></span></button></div></header>
   <main id="contenu">
     <header class="article-hero"><div class="shell"><ol class="breadcrumbs"><li><a href="/">Accueil</a></li><li>Confidentialité</li></ol><p class="eyebrow">Tes données, clairement</p><h1>Politique de confidentialité</h1><p class="article-lead">Le calculateur fonctionne sans compte et conserve ses réglages dans le navigateur. Les traitements serveur décrits ici concernent uniquement le compte facultatif, sa sécurité et les cards enregistrées.</p></div></header>
     <section class="section-tight"><div class="shell content-grid"><article class="prose">
-      <div class="callout callout-warning"><strong>Ouverture du compte encore bloquée</strong><p>La boîte <a href="mailto:contact@fps-airsoft-trajectory.com">contact@fps-airsoft-trajectory.com</a>, l’adresse postale de l’éditeur et les durées de conservation des journaux techniques et d’audit doivent être confirmées avant de rendre l’inscription visible.</p></div>
       <h2 id="responsable">Responsable du traitement</h2>
-      <p><strong>Quentin Guirois</strong>, éditeur personne physique de F.A.T.<br>Contact : <a href="mailto:contact@fps-airsoft-trajectory.com">contact@fps-airsoft-trajectory.com</a>.<br>Adresse postale : <strong>à compléter avant ouverture des comptes</strong>.</p>
+      <p><strong>Quentin Guirois</strong>, éditeur personne physique de F.A.T.<br>Contact : <a href="mailto:contact@fps-airsoft-trajectory.com">contact@fps-airsoft-trajectory.com</a>.<br>Adresse postale : 35 rue Julie-Victoire Daubié, 37250 Veigné, France.</p>
 
       <h2 id="local">Calculateur sans compte</h2>
       <p>Les paramètres de tir, préférences de thème et derniers choix de l’outil gaz sont enregistrés localement dans le navigateur. Le calcul ATP s’exécute dans le navigateur et son Worker. Aucun compte n’est nécessaire, et ces réglages locaux ne sont pas envoyés à l’API de compte.</p>
@@ -48,7 +47,7 @@
         <li>compteurs de débit : durée de leur fenêtre, au maximum une heure dans les routes actuelles, plus une minute technique ;</li>
         <li>ancienne image remplacée : rétention de restauration de 7 jours ; l’upload temporaire et les intermédiaires sont supprimés dès la fin ou l’échec du traitement ;</li>
         <li>compte et cards : jusqu’à la demande de suppression ; la suppression est planifiée après un délai de restauration de 14 jours par défaut ;</li>
-        <li>journaux d’audit et journaux techniques : <strong>durée à arrêter avant l’ouverture des comptes</strong>.</li>
+        <li>journaux d’audit et journaux techniques : 180 jours, puis purge automatique ; cette durée correspond au seuil bas recommandé par la CNIL pour les journaux de sécurité standards.</li>
       </ul>
 
       <h2 id="droits">Tes droits</h2>
@@ -61,5 +60,5 @@
     </article><aside class="toc"><strong>Sur cette page</strong><ol><li><a href="#responsable">Responsable</a></li><li><a href="#local">Sans compte</a></li><li><a href="#donnees">Données</a></li><li><a href="#finalites">Finalités</a></li><li><a href="#turnstile">Turnstile</a></li><li><a href="#durees">Durées</a></li><li><a href="#droits">Droits</a></li></ol></aside></div></section>
   </main>
   <footer class="site-footer"><div class="shell"><div class="footer-bottom"><span>© 2026 Quentin Guirois — F.A.T.</span><span><a href="/mentions-legales/">Mentions légales</a></span></div></div></footer>
-  <script type="module" data-cfasync="false" src="/site.js?v=20260718-38"></script>
+  <script type="module" data-cfasync="false" src="/site.js?v=20260718-40"></script>
 </body></html>

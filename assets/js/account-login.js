@@ -1,4 +1,4 @@
-import { RepositoryError } from './community-repositories.js?v=20260718-38';
+import { RepositoryError } from './community-repositories.js?v=20260718-40';
 
 export function safeAccountReturn(search = globalThis.location?.search || '') {
   try {
@@ -7,15 +7,32 @@ export function safeAccountReturn(search = globalThis.location?.search || '') {
   } catch { return ''; }
 }
 
+export function consumeAccountTokenHash({
+  locationRef = globalThis.location,
+  historyRef = globalThis.history,
+} = {}) {
+  const hash = String(locationRef?.hash || '').replace(/^#/, '');
+  const parameters = new URLSearchParams(hash);
+  const verify = parameters.get('verify') || '';
+  const reset = parameters.get('reset') || '';
+  if (verify || reset) {
+    historyRef?.replaceState?.(null, '', `${locationRef.pathname || '/'}${locationRef.search || ''}`);
+  }
+  return { verify, reset };
+}
+
 const fieldValue = (form, name) => String(new FormData(form).get(name) || '').trim();
 
 export function initAccountLogin({
   root,
   accountRepository,
   turnstileController = null,
+  registrationEnabled = true,
+  tokenState = null,
   redirect = (url) => { globalThis.location.href = url; },
 } = {}) {
   if (!root || !accountRepository) return null;
+  const accountTokens = tokenState || consumeAccountTokenHash();
   const tabs = [...root.querySelectorAll('[data-account-tab]')];
   const forms = [...root.querySelectorAll('[data-account-form]')];
   const status = root.querySelector('[data-account-status]');
@@ -25,13 +42,20 @@ export function initAccountLogin({
   const returnTarget = safeAccountReturn();
   let mode = 'login';
 
+  const registerTab = root.querySelector('[data-account-tab="register"]');
+  const registerForm = root.querySelector('[data-account-form="register"]');
+  const registrationClosed = root.querySelector('[data-registration-closed]');
+  if (registerTab) registerTab.hidden = !registrationEnabled;
+  if (registerForm) registerForm.hidden = true;
+  if (registrationClosed) registrationClosed.hidden = registrationEnabled;
+
   function announce(message, tone = '') {
     status.textContent = message;
     status.dataset.tone = tone;
   }
 
   function selectMode(nextMode) {
-    mode = nextMode === 'register' ? 'register' : 'login';
+    mode = nextMode === 'register' && registrationEnabled ? 'register' : 'login';
     tabs.forEach((tab) => {
       const active = tab.dataset.accountTab === mode;
       tab.setAttribute('aria-selected', String(active));
@@ -123,7 +147,7 @@ export function initAccountLogin({
 
   resetForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const token = new URLSearchParams(location.search).get('reset') || '';
+    const token = accountTokens.reset;
     const submit = resetForm.querySelector('button[type="submit"]');
     submit.disabled = true;
     try {
@@ -136,13 +160,12 @@ export function initAccountLogin({
     finally { submit.disabled = false; }
   }, { signal: controller.signal });
 
-  const parameters = new URLSearchParams(location.search);
   selectMode('login');
-  if (parameters.get('reset')) {
+  if (accountTokens.reset) {
     forms.forEach((form) => { form.hidden = true; });
     resetForm.hidden = false;
   }
-  const verification = parameters.get('verify');
+  const verification = accountTokens.verify;
   if (verification) {
     accountRepository.verifyEmail(verification, { signal: controller.signal })
       .then(() => {
