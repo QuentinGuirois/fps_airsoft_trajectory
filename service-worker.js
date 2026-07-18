@@ -1,4 +1,4 @@
-const CACHE = 'fat-v3-2026-07-18-32';
+const CACHE = 'fat-v3-2026-07-18-33';
 const CORE = [
   '/',
   '/index.html',
@@ -31,8 +31,8 @@ const CORE = [
   '/assets/js/curve-thumbnail.js?v=20260718-28',
   '/assets/js/share-link.js?v=20260718-29',
   '/assets/js/replica-card.js?v=20260718-28',
-  '/assets/js/account-login.js?v=20260718-33',
-  '/assets/js/account-login-entry.js?v=20260718-33',
+  '/assets/js/account-login.js?v=20260718-34',
+  '/assets/js/account-login-entry.js?v=20260718-34',
   '/assets/js/turnstile-client.js?v=20260718-30',
   '/assets/js/armory.js?v=20260718-33',
   '/assets/js/armory-entry.js?v=20260718-33',
@@ -54,6 +54,8 @@ const CORE = [
   '/mentions-legales/',
   '/politique-confidentialite/',
   '/compte/',
+  '/compte/verifier-email.html',
+  '/compte/compte-active.html',
   '/compte/armurerie.html'
 ];
 

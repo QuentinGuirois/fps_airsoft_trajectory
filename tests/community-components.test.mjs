@@ -108,20 +108,30 @@ test('la miniature sérialise les points Worker reçus sans importer le moteur',
   assert.doesNotMatch(source, /physics-core|trajectory\.worker|simulateTrajectory|analyzeTrajectory/);
 });
 
-test('login et armurerie restent privés, sans faux OAuth, localStorage compte ou sitemap', async () => {
-  const [login, armory, sitemap, repositories, entry] = await Promise.all([
+test('login, confirmations email et armurerie restent privés, sans faux OAuth, localStorage compte ou sitemap', async () => {
+  const [login, emailConfirmation, accountActive, armory, sitemap, repositories, entry, loginApp] = await Promise.all([
     read('compte', 'index.html'),
+    read('compte', 'verifier-email.html'),
+    read('compte', 'compte-active.html'),
     read('compte', 'armurerie.html'),
     read('sitemap.xml'),
     read('assets', 'js', 'community-repositories.js'),
     read('assets', 'js', 'armory-entry.js'),
+    read('assets', 'js', 'account-login.js'),
   ]);
-  for (const html of [login, armory]) {
+  for (const html of [login, emailConfirmation, accountActive, armory]) {
     assert.match(html, /meta name="robots" content="noindex,nofollow,noarchive"/);
     assert.equal((html.match(/<h1[ >]/g) || []).length, 1);
     assert.doesNotMatch(html, /fat\.account\.v1|blob-url/);
   }
   assert.match(login, /data-oauth-unavailable hidden/);
+  assert.match(emailConfirmation, /Vérifie ton email/);
+  assert.match(emailConfirmation, /Clique sur le lien de vérification/);
+  assert.match(emailConfirmation, /href="\/compte\/"/);
+  assert.match(loginApp, /redirect\('\/compte\/verifier-email\.html'\)/);
+  assert.match(accountActive, /Ton compte est activé/);
+  assert.match(accountActive, /ME CONNECTER/);
+  assert.match(loginApp, /redirect\('\/compte\/compte-active\.html'\)/);
   assert.doesNotMatch(sitemap, /\/compte\//);
   assert.doesNotMatch(`${repositories}\n${entry}`, /localStorage|Mock|fixture/i);
 });
@@ -136,8 +146,8 @@ test('l’archivage est réversible dans les textes et aucune suppression physiq
 
 test('le service worker cache seulement les shells et contourne toutes les réponses API privées', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-32'/);
-  for (const path of ['/compte/', '/compte/armurerie.html', '/assets/js/replica-card.js?v=20260718-28', '/assets/js/community-repositories.js?v=20260718-33', '/assets/js/turnstile-client.js?v=20260718-30']) {
+  assert.match(worker, /const CACHE = 'fat-v3-2026-07-18-33'/);
+  for (const path of ['/compte/', '/compte/verifier-email.html', '/compte/compte-active.html', '/compte/armurerie.html', '/assets/js/replica-card.js?v=20260718-28', '/assets/js/account-login.js?v=20260718-34', '/assets/js/account-login-entry.js?v=20260718-34', '/assets/js/community-repositories.js?v=20260718-33', '/assets/js/turnstile-client.js?v=20260718-30']) {
     assert.ok(worker.includes(`'${path}'`), path);
   }
   assert.match(worker, /url\.pathname\.startsWith\('\/api\/'\)[\s\S]*event\.respondWith\(fetch\(event\.request\)\);[\s\S]*return;/);

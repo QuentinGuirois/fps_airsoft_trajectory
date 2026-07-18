@@ -73,6 +73,7 @@ export function initAccountLogin({
           ...await protectedPayload('register'),
         }, { signal: controller.signal });
         announce(registration?.message || 'Si la demande est valide, un email de vérification a été envoyé.', 'success');
+        redirect('/compte/verifier-email.html');
       }
     } catch (error) {
       const message = error instanceof RepositoryError || error instanceof Error
@@ -137,8 +138,7 @@ export function initAccountLogin({
   if (verification) {
     accountRepository.verifyEmail(verification, { signal: controller.signal })
       .then(() => {
-        history.replaceState(null, '', '/compte/');
-        announce('Email vérifié. Tu peux maintenant te connecter.', 'success');
+        redirect('/compte/compte-active.html');
       })
       .catch((error) => announce(error.message, 'error'));
   }

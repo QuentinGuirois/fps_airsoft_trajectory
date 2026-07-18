@@ -176,6 +176,11 @@ await send('Page.addScriptToEvaluateOnNewDocument', { source: `
           status = 422;
           payload = { code: 'turnstile_invalid', message: 'Contrôle anti-robot invalide.' };
         } else payload = { created: true, csrfToken: 'browser-csrf' };
+      } else if (requestUrl.pathname.endsWith('/auth/verify-email') && method === 'POST') {
+        payload = requestBody?.token === 'browser-verification-token'
+          ? { verified: true }
+          : { code: 'invalid_token', message: 'Lien invalide.' };
+        if (!payload.verified) status = 422;
       } else if (/\\/replicas\\?/.test(requestUrl.pathname + requestUrl.search)) {
         payload = { replicas: sessionStorage.getItem('__fatCommunityReplicaMode') === 'empty' ? [] : fixture.replicas };
       } else if (/\\/replicas\\/[^/]+$/.test(requestUrl.pathname) && method === 'DELETE') {
@@ -212,7 +217,16 @@ await capture('lot56-login-desktop-day.png');
 await evaluate(`document.querySelector('[data-account-tab="login"]').focus()`);
 await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 });
 await waitFor(`!document.querySelector('[data-account-form="register"]').hidden`);
-await evaluate(`document.querySelector('[data-account-tab="login"]').click()`);
+await evaluate(`(()=>{const form=document.querySelector('[data-account-form="register"]');form.querySelector('[name="pseudo"]').value='NouvelleRecrue';form.querySelector('[name="email"]').value='recrue@example.test';form.querySelector('[name="password"]').value='MotDePasseRecrue123';form.querySelector('[name="legalAccepted"]').checked=true;form.requestSubmit()})()`);
+await waitFor(`location.pathname === '/compte/verifier-email.html'`);
+const emailConfirmation = await evaluate(`({robots:document.querySelector('meta[name="robots"]').content,title:document.querySelector('h1').textContent,overflow:document.documentElement.scrollWidth>innerWidth})`);
+if (!emailConfirmation.robots.includes('noindex') || !/Vérifie ton email/.test(emailConfirmation.title) || emailConfirmation.overflow) throw new Error(`Email confirmation mismatch ${JSON.stringify(emailConfirmation)}`);
+await navigate(`${base}compte/?verify=browser-verification-token`);
+await waitFor(`location.pathname === '/compte/compte-active.html'`);
+const accountActive = await evaluate(`({robots:document.querySelector('meta[name="robots"]').content,title:document.querySelector('h1').textContent,login:document.querySelector('a[href="/compte/"]')?.textContent,overflow:document.documentElement.scrollWidth>innerWidth})`);
+if (!accountActive.robots.includes('noindex') || !/compte est activé/.test(accountActive.title) || !accountActive.login || accountActive.overflow) throw new Error(`Account activation mismatch ${JSON.stringify(accountActive)}`);
+await navigate(`${base}compte/?recipe=desktop`);
+await waitFor(`document.querySelectorAll('[data-account-tab]').length === 2`);
 
 await setViewport(390, 844, true);
 await setTheme('dark');
@@ -307,7 +321,7 @@ await navigate(base);
 await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await navigate(`${base}compte/armurerie.html?recipe=sw`);
 await waitFor(`Boolean(navigator.serviceWorker.controller)`);
-const cache = await evaluate(`Promise.all([caches.open('fat-v3-2026-07-18-32').then(cache=>cache.match('/assets/js/replica-card.js?v=20260718-28')).then(Boolean),caches.match('/api/v1/me').then(Boolean)]).then(([component,api])=>({component,api}))`, true);
+const cache = await evaluate(`Promise.all([caches.open('fat-v3-2026-07-18-33').then(cache=>cache.match('/assets/js/replica-card.js?v=20260718-28')).then(Boolean),caches.match('/api/v1/me').then(Boolean)]).then(([component,api])=>({component,api}))`, true);
 if (!cache.component || cache.api) throw new Error(`Private cache mismatch ${JSON.stringify(cache)}`);
 
 await evaluate(`sessionStorage.setItem('__fatDisableCommunityApi','1')`);
