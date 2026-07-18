@@ -23,6 +23,7 @@ const htmlFiles = (await walk(root)).filter((path) => path.endsWith('.html'));
 test('chaque page indexable possède un title, une description, une canonique et un H1 unique', async () => {
   for (const path of htmlFiles.filter((item) => !item.endsWith('offline.html'))) {
     const html = await readFile(path, 'utf8');
+    if (/<meta name="robots" content="[^"]*noindex/i.test(html)) continue;
     assert.match(html, /<title>[^<]{15,70}<\/title>/, path);
     assert.match(html, /<meta name="description" content="[^"]{80,180}">/, path);
     assert.match(html, /<link rel="canonical" href="https:\/\/fps-airsoft-trajectory\.com\//, path);

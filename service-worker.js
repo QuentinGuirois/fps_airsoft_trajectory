@@ -1,4 +1,4 @@
-const CACHE = 'fat-v3-2026-07-18-24';
+const CACHE = 'fat-v3-2026-07-18-25';
 const CORE = [
   '/',
   '/index.html',
@@ -26,6 +26,14 @@ const CORE = [
   '/advanced-transition.js',
   '/calculation-loader.js',
   '/calculator-tutorial.js',
+  '/replica-utils.js',
+  '/assets/js/community-repositories.js',
+  '/assets/js/curve-thumbnail.js',
+  '/assets/js/replica-card.js',
+  '/assets/js/account-login.js',
+  '/assets/js/account-login-entry.js',
+  '/assets/js/armory.js',
+  '/assets/js/armory-entry.js',
   '/chart-data.js',
   '/render-capabilities.js',
   '/site.js',
@@ -40,7 +48,9 @@ const CORE = [
   '/data/green-gas-pressure-curves.json',
   '/gas-pressure-tool.js',
   '/gas-pressure-app.js',
-  '/modele-physique-atp/'
+  '/modele-physique-atp/',
+  '/compte/',
+  '/compte/armurerie.html'
 ];
 
 // Ces ressources restent hors du pré-cache pour préserver le lazy-load réseau.
@@ -77,6 +87,12 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   if (url.origin !== location.origin) return;
+
+  // Les réponses authentifiées et mutations privées ne rejoignent jamais le cache PWA.
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
 
   if (event.request.mode === 'navigate') {
     event.respondWith(

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <meta name="description" content="Connexion sécurisée à l’espace joueur F.A.T. pour retrouver ses répliques et ses trajectoires enregistrées.">
+  <meta name="theme-color" content="#10140c">
+  <title>Connexion au compte joueur | F.A.T.</title>
+  <script>(()=>{const e=document.documentElement;let m='system';try{m=localStorage.getItem('fat-theme')||m}catch{}if(!['system','dark','light'].includes(m))m='system';const d=m==='dark'||(m==='system'&&(!window.matchMedia||matchMedia('(prefers-color-scheme: dark)').matches));const t=d?'dark':'light';e.dataset.themeMode=m;e.dataset.theme=t;e.style.colorScheme=t;document.querySelector('meta[name="theme-color"]').content=d?'#10140c':'#eef0e2'})()</script>
+  <link rel="stylesheet" href="/assets/site.css">
+</head>
+<body class="account-page">
+  <a class="skip-link" href="#connexion">Aller au formulaire de connexion</a>
+  <main class="account-checkin" data-account-login>
+    <div class="account-atmosphere" aria-hidden="true"><span class="account-grid"></span><span class="account-tracer"></span></div>
+    <section class="account-promise" aria-labelledby="account-title">
+      <a class="account-brand" href="/" aria-label="F.A.T., retour au calculateur">
+        <svg class="brand-mark" viewBox="0 0 120 76" aria-hidden="true"><path class="brand-curve" d="M6 62C30 30 62 22 78 26C96 31 106 44 112 62"/><circle class="brand-ball" cx="78" cy="26" r="13"/><line class="brand-ground" x1="2" y1="68" x2="118" y2="68"/></svg>
+        <span>F.A.T<span>.</span></span>
+      </a>
+      <h1 id="account-title">Ton armurerie<br><span>t’attend.</span></h1>
+      <p>Enregistre tes répliques, garde tes courbes et partage tes setups lorsque le service de compte est disponible.</p>
+      <ul class="account-chips" aria-label="Engagements du compte"><li>GRATUIT</li><li>SANS PUB</li><li>TES DONNÉES = À TOI</li></ul>
+      <a class="account-back-link" href="/">← Continuer sans compte</a>
+    </section>
+
+    <section class="account-panel" id="connexion" aria-labelledby="account-panel-title">
+      <h2 class="visually-hidden" id="account-panel-title">Accès au compte joueur</h2>
+      <div class="account-tabs" role="tablist" aria-label="Accès au compte">
+        <button type="button" role="tab" id="tab-login" aria-controls="panel-login" data-account-tab="login">CONNEXION</button>
+        <button type="button" role="tab" id="tab-register" aria-controls="panel-register" data-account-tab="register">S’ENRÔLER</button>
+      </div>
+
+      <form class="account-form" id="panel-login" role="tabpanel" aria-labelledby="tab-login" data-account-form="login">
+        <label for="account-identity">PSEUDO OU EMAIL</label>
+        <input id="account-identity" name="identity" autocomplete="username" required maxlength="254">
+        <div class="account-label-row"><label for="account-password">MOT DE PASSE</label><button type="button" data-forgot-password>OUBLIÉ ?</button></div>
+        <input id="account-password" name="password" type="password" autocomplete="current-password" required minlength="10">
+        <button class="button button-primary account-submit" type="submit">ENTRER SUR LE TERRAIN →</button>
+      </form>
+
+      <form class="account-form" id="panel-register" role="tabpanel" aria-labelledby="tab-register" data-account-form="register" hidden>
+        <label for="account-pseudo">PSEUDO PUBLIC</label>
+        <input id="account-pseudo" name="pseudo" autocomplete="nickname" required minlength="2" maxlength="32">
+        <label for="account-email">EMAIL</label>
+        <input id="account-email" name="email" type="email" autocomplete="email" required maxlength="254">
+        <label for="account-new-password">MOT DE PASSE</label>
+        <input id="account-new-password" name="password" type="password" autocomplete="new-password" required minlength="10">
+        <button class="button button-primary account-submit" type="submit">CRÉER MON COMPTE →</button>
+      </form>
+
+      <div class="account-oauth" data-oauth-unavailable hidden aria-hidden="true">
+        <button type="button" disabled>Google — indisponible</button><button type="button" disabled>Discord — indisponible</button>
+      </div>
+      <p class="account-status" data-account-status aria-live="polite"></p>
+      <p class="account-loyalty">Le calculateur reste 100 % utilisable sans compte. Le compte sert uniquement à garder tes setups.</p>
+      <div class="account-theme" data-theme-slot></div>
+    </section>
+  </main>
+  <script type="module" src="/assets/js/account-login-entry.js"></script>
+</body>
+</html>

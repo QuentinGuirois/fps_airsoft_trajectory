@@ -1275,3 +1275,179 @@ thead th { color: var(--muted); font-size: .66rem; text-transform: uppercase; }
   body { background: white; color: black; }
   .card, .control-panel, .result-panel, .chart-frame { border-color: #aaa; background: white; color: black; box-shadow: none; }
 }
+
+/* Compte joueur — shells statiques, données exclusivement via repositories injectés. */
+.account-page, .armory-page { min-width: 0; background: var(--ink-0); }
+.account-checkin { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr) 26rem; gap: clamp(2rem, 6vw, 6rem); align-items: center; min-height: 100dvh; overflow: hidden; padding: clamp(1.5rem, 5vw, 4rem); }
+.account-atmosphere { position: absolute; z-index: -1; inset: 0; overflow: hidden; background: radial-gradient(ellipse at 18% 18%, color-mix(in srgb, var(--ranger) 18%, transparent), transparent 52%); pointer-events: none; }
+.account-grid { position: absolute; top: 55%; left: 50%; width: 110rem; height: 70rem; transform: translate(-50%, -22%) rotateX(64deg) rotateZ(-14deg); background: repeating-linear-gradient(0deg, color-mix(in srgb, var(--ranger) 18%, transparent) 0 1px, transparent 1px 5rem), repeating-linear-gradient(90deg, color-mix(in srgb, var(--ranger) 18%, transparent) 0 1px, transparent 1px 5rem); }
+.account-tracer { position: absolute; top: 48%; left: 0; width: .7rem; height: .7rem; margin: -.35rem; border-radius: 50%; background: var(--paper); box-shadow: 0 0 1rem color-mix(in srgb, var(--acid) 60%, transparent); offset-path: path("M -10 300 C 200 170, 480 130, 640 155 C 760 174, 850 230, 1100 360"); animation: fatTracer 4.4s linear infinite; }
+.account-promise { align-self: end; max-width: 36rem; }
+.account-brand { display: inline-flex; min-height: 44px; align-items: center; gap: .65rem; color: var(--paper); font: 900 1rem/1 var(--font-display); letter-spacing: .12em; text-decoration: none; }
+.account-brand .brand-mark { width: 3.4rem; height: auto; }
+.account-brand > span > span { color: var(--acid-text); }
+.account-promise h1 { margin: 1.5rem 0 .75rem; font: 900 clamp(2.5rem, 5vw, 4.8rem)/.95 var(--font-display); text-transform: uppercase; }
+.account-promise h1 span { color: var(--acid-text); }
+.account-promise > p { max-width: 42ch; margin: 0; color: var(--muted); }
+.account-chips { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1.25rem 0; padding: 0; list-style: none; }
+.account-chips li { border-radius: 99rem; background: var(--ink-2); padding: .45rem .7rem; color: var(--muted-strong); font: 500 .58rem/1 var(--font-mono); letter-spacing: .06em; }
+.account-back-link { display: inline-flex; min-height: 44px; align-items: center; color: var(--muted-strong); font: 600 .7rem/1 var(--font-mono); text-decoration: none; }
+.account-panel { width: 100%; border: 1px solid var(--line); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--ink-1) 94%, transparent); box-shadow: var(--shadow); padding: clamp(1.25rem, 3vw, 1.75rem); }
+.account-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; border: 1px solid var(--line); border-radius: .65rem; background: var(--ink-0); padding: 3px; }
+.account-tabs button { min-height: 44px; border: 0; border-radius: .5rem; background: transparent; color: var(--muted); font: 600 .64rem/1 var(--font-mono); cursor: pointer; }
+.account-tabs button[aria-selected="true"] { background: var(--acid); color: var(--on-acid); }
+.account-form { display: grid; gap: .55rem; margin-top: 1.15rem; }
+.account-form[hidden] { display: none; }
+.account-form label, .account-label-row button { color: var(--muted); font: 500 .58rem/1 var(--font-mono); letter-spacing: .14em; }
+.account-label-row { display: flex; align-items: center; justify-content: space-between; margin-top: .35rem; }
+.account-label-row button { min-height: 44px; border: 0; background: transparent; color: var(--muted-dim); cursor: pointer; letter-spacing: 0; }
+.account-form input { width: 100%; min-height: 46px; border: 1px solid var(--line); border-radius: .6rem; background: var(--ink-0); color: var(--paper); padding: .75rem .85rem; font: 500 .8rem/1 var(--font-mono); }
+.account-form input:not(:placeholder-shown), .account-form input:focus { border-color: var(--acid); }
+.account-submit { width: 100%; min-height: 48px; margin-top: .75rem; }
+.account-status { min-height: 1.5rem; margin: .8rem 0 0; color: var(--muted); font-size: .72rem; text-align: center; }
+.account-status[data-tone="error"] { color: var(--danger); }
+.account-status[data-tone="success"] { color: var(--acid-text); }
+.account-loyalty { margin: .65rem 0 0; color: var(--muted-dim); font-size: .64rem; line-height: 1.55; text-align: center; }
+.account-theme { display: flex; justify-content: center; margin-top: 1rem; }
+.account-theme .theme-switcher { position: static; }
+
+replica-card { display: block; min-width: 0; }
+.replica-card-shell { max-width: 25rem; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--ink-1); box-shadow: 0 14px 32px color-mix(in srgb, var(--ink-0) 35%, transparent); }
+.replica-card-shell.replica-state-draft { opacity: .82; }
+.replica-card-shell.replica-state-archived { filter: saturate(.45); opacity: .72; }
+.replica-card-header { display: flex; align-items: center; gap: .55rem; min-height: 46px; padding: .55rem .8rem; background: linear-gradient(135deg, #2c3520 0 20%, #4a5537 20% 45%, #222b18 45% 70%, #3a4529 70% 100%); }
+.replica-avatar { display: grid; flex: 0 0 1.75rem; width: 1.75rem; height: 1.75rem; overflow: hidden; place-items: center; border: 1px solid color-mix(in srgb, var(--paper) 42%, transparent); border-radius: 50%; background: var(--ink-2); color: var(--muted-strong); font: 500 .55rem/1 var(--font-mono); }
+.replica-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.replica-pseudo { color: var(--paper); font: 400 .7rem/1 var(--font-stencil); letter-spacing: .14em; }
+.replica-trust, .replica-youtube, .replica-state-badge { border-radius: 99rem; background: color-mix(in srgb, var(--ink-0) 82%, transparent); padding: .32rem .48rem; font: 500 .52rem/1 var(--font-mono); text-decoration: none; white-space: nowrap; }
+.replica-trust[data-trust="measured"] { color: var(--acid); }
+.replica-trust[data-trust="declared"] { color: var(--curve-3-text); }
+.replica-youtube { margin-left: auto; color: var(--curve-4-text); }
+.replica-state-badge { margin-left: auto; }
+.replica-state-badge[data-tone="published"] { color: var(--acid); }
+.replica-state-badge[data-tone="draft"] { color: var(--curve-3-text); }
+.replica-state-badge[data-tone="pending"] { color: var(--curve-2-text); }
+.replica-state-badge[data-tone="rejected"] { color: var(--danger); }
+.replica-state-badge[data-tone="archived"] { color: var(--muted-strong); }
+.replica-card-media { position: relative; overflow: hidden; background: var(--ink-3); touch-action: pan-y; }
+.replica-card-track { display: flex; width: 200%; transform: translateX(0); transition: transform .5s cubic-bezier(.2,.8,.3,1); }
+.replica-card-track.show-curve { transform: translateX(-50%); }
+.replica-card-pane { display: grid; flex: 0 0 50%; width: 50%; height: 12rem; box-sizing: border-box; place-items: center; padding: 1rem; }
+.replica-card-photo { background: radial-gradient(ellipse at 50% 62%, color-mix(in srgb, var(--ranger) 20%, transparent), transparent 62%), var(--ink-3); }
+.replica-card-photo img { width: 94%; height: 100%; object-fit: contain; }
+.replica-card-curve svg { width: 100%; height: 100%; }
+.curve-thumb-envelope { fill: var(--chart-envelope); }
+.curve-thumb-sight { stroke: var(--chart-sight); stroke-width: 1; stroke-dasharray: 4 4; }
+.curve-thumb-ground { stroke: var(--chart-ground); stroke-width: 1.5; }
+.curve-thumb-path { fill: none; stroke: var(--chart-active); stroke-width: 2.8; }
+.curve-thumb-useful { fill: var(--chart-marker-useful); }
+.curve-thumb-impact { fill: var(--chart-marker-impact); }
+.curve-thumb-useful-label, .curve-thumb-impact-label { font: 600 9px var(--font-mono); }
+.curve-thumb-useful-label { fill: var(--chart-marker-useful); }
+.curve-thumb-impact-label { fill: var(--chart-marker-impact); }
+.replica-media-placeholder { max-width: 24ch; color: var(--muted-dim); font: 500 .58rem/1.55 var(--font-mono); text-align: center; }
+.replica-card-toggle { position: absolute; right: .65rem; bottom: .65rem; display: inline-flex; gap: 2px; border: 1px solid var(--line); border-radius: .55rem; background: var(--ink-0); padding: 3px; }
+.replica-card-toggle button { min-height: 44px; border: 0; border-radius: .4rem; background: transparent; color: var(--muted); padding: .45rem .55rem; font: 600 .52rem/1 var(--font-mono); cursor: pointer; }
+.replica-card-toggle button[aria-pressed="true"] { background: var(--acid); color: var(--on-acid); }
+.replica-card-toggle button:disabled { cursor: not-allowed; opacity: .45; }
+.replica-card-body { padding: .9rem 1rem 1rem; }
+.replica-card-heading { display: flex; align-items: baseline; gap: .5rem; }
+.replica-card-heading h2 { margin: 0; color: var(--paper); font: 800 1.18rem/1.15 var(--font-display); }
+.replica-card-heading > span { margin-left: auto; color: var(--muted-dim); font: 500 .54rem/1 var(--font-mono); white-space: nowrap; }
+.replica-card-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .35rem; margin: .75rem 0; }
+.replica-card-stats > div { min-width: 0; border: 1px solid var(--line); border-radius: .5rem; background: var(--ink-0); padding: .48rem .55rem; }
+.replica-card-stats dt { overflow: hidden; color: var(--muted); font: 500 .47rem/1 var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
+.replica-card-stats dd { margin: .32rem 0 0; color: var(--paper); font: 600 .73rem/1 var(--font-mono); white-space: nowrap; }
+.replica-card-stats [data-metric="energy"] dd { color: var(--acid-text); }
+.replica-card-actions { display: flex; gap: .4rem; }
+.replica-card-actions a, .replica-card-actions button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; border: 1px solid var(--line-strong); border-radius: .55rem; background: transparent; color: var(--muted-strong); padding: .55rem .7rem; font: 600 .56rem/1 var(--font-mono); text-decoration: none; cursor: pointer; }
+.replica-card-actions .button-primary { flex: 1; border-color: var(--acid); background: var(--acid); color: var(--on-acid); }
+.replica-card-actions .replica-archive { border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); color: var(--danger); }
+replica-card[mode="management"] .replica-card-media { min-height: 8.6rem; }
+replica-card[mode="management"] .replica-card-pane { height: 8.6rem; }
+replica-card[mode="management"] .replica-card-header .replica-avatar, replica-card[mode="management"] .replica-card-header .replica-pseudo, replica-card[mode="management"] .replica-card-header .replica-trust, replica-card[mode="management"] .replica-card-header .replica-youtube { display: none; }
+replica-card[mode="management"] .replica-state-badge { margin-left: 0; }
+
+.armory-app { min-height: 100dvh; background: var(--ink-0); }
+.account-header { position: sticky; z-index: 20; top: 0; display: flex; align-items: center; gap: 1.25rem; min-height: 68px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--ink-0) 94%, transparent); padding: .65rem clamp(1rem, 3vw, 2.25rem); backdrop-filter: blur(14px); }
+.account-header .account-brand .brand-mark { width: 2rem; }
+.account-header > p { margin: 0; color: var(--muted-dim); font: 500 .6rem/1 var(--font-mono); }
+.account-user-menu { position: relative; margin-left: auto; }
+.account-user-menu summary { display: flex; min-height: 44px; align-items: center; gap: .5rem; color: var(--paper); font: 600 .72rem/1 var(--font); cursor: pointer; list-style: none; }
+.account-user-menu summary::-webkit-details-marker { display: none; }
+.account-user-menu > div { position: absolute; top: calc(100% + .5rem); right: 0; display: grid; min-width: 13rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--ink-1); box-shadow: var(--shadow); padding: .4rem; }
+.account-user-menu button { min-height: 44px; border: 0; background: transparent; color: var(--muted-strong); text-align: left; cursor: pointer; }
+.account-user-menu button:disabled { color: var(--muted-dim); cursor: not-allowed; }
+.armory-layout { display: grid; grid-template-columns: 14.5rem minmax(0, 1fr); min-height: calc(100dvh - 68px); }
+.armory-rail { position: sticky; top: 68px; display: flex; flex-direction: column; gap: .35rem; height: calc(100dvh - 68px); border-right: 1px solid var(--line); background: color-mix(in srgb, var(--ink-0) 96%, var(--ink-1)); padding: 1.4rem 1.1rem; }
+.armory-rail > p { margin: 0 0 .5rem; color: var(--muted-dim); font: 500 .55rem/1 var(--font-mono); letter-spacing: .2em; }
+.armory-rail nav { display: grid; gap: .2rem; }
+.armory-rail nav a, .armory-rail nav button { display: flex; min-height: 46px; align-items: center; gap: .65rem; border: 1px solid transparent; border-radius: .6rem; background: transparent; color: var(--muted); padding: .7rem .75rem; font: 500 .72rem/1 var(--font); text-decoration: none; text-align: left; }
+.armory-rail nav .is-active { border-color: var(--line); border-left: 3px solid var(--acid); background: var(--ink-1); color: var(--paper); }
+.armory-rail nav strong { margin-left: auto; color: var(--acid-text); font: 500 .58rem/1 var(--font-mono); }
+.armory-rail nav button:disabled { cursor: not-allowed; }
+.armory-tutorial { display: grid; gap: .6rem; margin-top: auto; border: 1px dashed var(--olive); border-radius: .7rem; padding: .8rem; color: var(--muted); text-decoration: none; }
+.armory-tutorial span { font: 500 .55rem/1.5 var(--font-mono); }
+.armory-tutorial strong { color: var(--acid-text); font: 600 .58rem/1 var(--font-mono); }
+.armory-main { min-width: 0; padding: clamp(1.25rem, 3vw, 2rem); }
+.armory-title-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.1rem; }
+.armory-title-row h1 { margin: 0; font: 800 clamp(1.8rem, 3vw, 2.5rem)/1 var(--font-display); text-transform: uppercase; }
+.armory-title-row p { margin: .4rem 0 0; color: var(--muted-dim); font: 500 .58rem/1.5 var(--font-mono); }
+.armory-title-row > .button { min-height: 46px; margin-left: auto; box-shadow: 0 0 1.2rem color-mix(in srgb, var(--acid) 20%, transparent); }
+.armory-state { margin-bottom: 1rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--ink-1); padding: .8rem 1rem; color: var(--muted); font-size: .8rem; }
+.armory-state[hidden] { display: none; }
+.armory-state[data-tone="error"] { border-color: color-mix(in srgb, var(--danger) 50%, var(--line)); color: var(--danger); }
+.armory-state[data-tone="success"] { border-color: color-mix(in srgb, var(--acid) 45%, var(--line)); color: var(--acid-text); }
+.armory-login-link { margin-bottom: 1rem; }
+.armory-grid { display: grid; grid-template-columns: repeat(3, minmax(16rem, 1fr)); gap: .9rem; align-items: start; }
+.armory-grid .replica-card-shell { max-width: none; }
+.armory-add-tile, .armory-empty { display: grid; min-height: 12rem; align-content: center; justify-items: center; gap: .5rem; border: 1.5px dashed var(--olive); border-radius: var(--radius-lg); background: transparent; color: var(--muted); padding: 1.25rem; text-align: center; }
+.armory-add-tile { cursor: pointer; }
+.armory-add-tile > span:first-child, .armory-empty > span { color: var(--acid-text); font: 400 2rem/1 var(--font-mono); }
+.armory-add-tile strong, .armory-empty strong { color: var(--muted-strong); font: 700 .72rem/1.3 var(--font-mono); }
+.armory-add-tile span:last-child, .armory-empty p { margin: 0; font-size: .72rem; }
+.armory-empty { grid-column: 1 / -1; }
+.armory-youtube { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--ink-1); padding: 1rem 1.1rem; }
+.armory-youtube > span { color: var(--curve-4-text); font: 800 1.4rem/1 var(--font-display); }
+.armory-youtube p { margin: 0; color: var(--muted); font-size: .76rem; }
+.armory-youtube button { min-height: 44px; margin-left: auto; border: 1px solid var(--line-strong); border-radius: .55rem; background: transparent; color: var(--muted-dim); font: 600 .55rem/1 var(--font-mono); }
+.archive-dialog { width: min(30rem, calc(100% - 2rem)); border: 1px solid var(--line-strong); border-radius: var(--radius-lg); background: var(--ink-1); box-shadow: var(--shadow); color: var(--paper); padding: 1.4rem; }
+.archive-dialog::backdrop { background: color-mix(in srgb, var(--ink-0) 82%, transparent); }
+.archive-dialog h2 { margin: 1rem 0 .5rem; font: 800 1.5rem/1.1 var(--font-display); }
+.archive-dialog p { color: var(--muted); }
+.archive-dialog .button-row { justify-content: flex-end; }
+.archive-confirm { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 16%, var(--ink-1)); color: var(--danger); }
+
+@media (max-width: 1100px) {
+  .armory-grid { grid-template-columns: repeat(2, minmax(15rem, 1fr)); }
+}
+
+@media (max-width: 760px) {
+  .account-checkin { grid-template-columns: 1fr; align-content: center; gap: 1.5rem; min-height: auto; padding: 1rem; }
+  .account-promise { align-self: auto; padding-top: 1.5rem; }
+  .account-promise h1 { font-size: clamp(2.2rem, 12vw, 3.2rem); }
+  .account-panel { padding: 1rem; }
+  .account-chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: .25rem; }
+  .account-chips li { flex: none; }
+  .account-grid { top: 38%; }
+  .account-header { gap: .7rem; min-height: 64px; }
+  .account-header > p { display: none; }
+  .account-user-menu [data-account-pseudo] { max-width: 8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .armory-layout { display: block; }
+  .armory-rail { position: sticky; z-index: 15; top: 64px; display: block; width: 100%; height: auto; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: .45rem .7rem; }
+  .armory-rail > p, .armory-tutorial, .armory-rail .account-theme { display: none; }
+  .armory-rail nav { display: flex; width: max-content; }
+  .armory-rail nav a, .armory-rail nav button { flex: none; min-height: 44px; white-space: nowrap; }
+  .armory-main { padding: 1rem; }
+  .armory-title-row { align-items: flex-start; flex-direction: column; }
+  .armory-title-row > .button { width: 100%; margin-left: 0; }
+  .armory-grid { grid-template-columns: 1fr; }
+  .armory-youtube { align-items: flex-start; flex-wrap: wrap; }
+  .armory-youtube button { width: 100%; margin-left: 0; }
+  .replica-card-shell { max-width: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-tracer { display: none; }
+  .replica-card-track { transition: none; }
+}

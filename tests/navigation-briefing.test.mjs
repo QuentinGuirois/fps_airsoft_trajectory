@@ -24,6 +24,7 @@ test('toutes les pages indexables gardent le même header progressif et trois li
   assert.ok(paths.length >= 14);
   for (const path of paths) {
     const html = await readFile(path, 'utf8');
+    if (/<meta name="robots" content="[^"]*noindex/i.test(html)) continue;
     const header = html.match(/<header class="site-header"[\s\S]*?<\/header>/)?.[0];
     assert.ok(header, relative(root, path));
     assert.equal((header.match(/<nav class="primary-nav"/g) || []).length, 1, relative(root, path));
@@ -87,7 +88,7 @@ test('animations, reduced motion, PWA et fond CSS respectent la salle de briefin
   assert.doesNotMatch(`${site}\n${css}`, /three\.js|three-r185/i);
   assert.match(site, /SERVICE WORKER EN INITIALISATION/);
   assert.match(site, /HORS CONNEXION PRÊT/);
-  assert.match(worker, /fat-v3-2026-07-18-24/);
+  assert.match(worker, /fat-v3-2026-07-18-25/);
   assert.match(worker, /'\/outils\/'/);
   assert.match(worker, /'\/guides\/'/);
 });
