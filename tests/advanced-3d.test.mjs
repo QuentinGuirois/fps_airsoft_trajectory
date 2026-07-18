@@ -79,7 +79,7 @@ test('la home garde son CTA compact et ajoute le lien 3D explicite exact', async
   assert.match(home, /href="#calculateur">Passer mon setup au banc<\/a>/);
   assert.match(home, /href="\/simulateur-3d-airsoft\/" data-advanced-entry>Passer au simulateur 3D avancé<\/a>/);
   assert.match(site, /markAdvancedTransition\(\)/);
-  assert.match(site, /href: '\/simulateur-3d-airsoft\/', label: 'Simulateur 3D'/);
+  assert.doesNotMatch(site, /href: '\/simulateur-3d-airsoft\/', label: 'Simulateur 3D'/);
 });
 
 test('la transition de cinq secondes ne s’active que pour une entrée explicite et peut être passée', async () => {
@@ -201,7 +201,7 @@ test('la scène occupe le viewport, reste locale et rejoint la PWA sans préchar
   assert.doesNotMatch(core, /three-r185|drone-3d\.js/);
   assert.match(lazy, /three-r185/);
   assert.match(lazy, /drone-3d\.js/);
-  assert.match(worker, /fat-v3-2026-07-18-16/);
+  assert.match(worker, /fat-v3-2026-07-18-19/);
 });
 
 test('WebGL, Worker et import cassé débouchent sur un panneau utile sans moteur bis', async () => {

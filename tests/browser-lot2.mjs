@@ -151,6 +151,8 @@ for (const theme of ['dark', 'light']) {
 
   await navigate(`${base}a-propos/`);
   await waitFor(`Boolean(document.querySelector('.about-portrait img'))`);
+  const portraitBox = await evaluate(`(()=>{const box=document.querySelector('.about-portrait').getBoundingClientRect();const image=document.querySelector('.about-portrait img').getBoundingClientRect();return{boxWidth:box.width,boxHeight:box.height,imageWidth:image.width,imageHeight:image.height}})()`);
+  if (Math.abs(portraitBox.boxWidth - portraitBox.boxHeight) > 1 || Math.abs(portraitBox.imageWidth - portraitBox.imageHeight) > 1) throw new Error(`About portrait is not square: ${JSON.stringify(portraitBox)}`);
   await evaluate(`document.querySelector('.about-profile').scrollIntoView({block:'start'})`);
   await wait(60);
   await capture(`lot2-about-1440-${theme}.png`);

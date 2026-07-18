@@ -4,7 +4,6 @@ import { markAdvancedTransition } from './advanced-transition.js';
 const gasToolPath = '/outils/choisir-gaz-airsoft-pression-temperature/';
 const navigationItems = [
   { href: '/#calculateur', label: 'Calculateur', matches: (path) => path === '/' },
-  { href: '/simulateur-3d-airsoft/', label: 'Simulateur 3D' },
   { href: '/convertisseur-joules-fps/', label: 'Joules ↔ FPS' },
   { href: gasToolPath, label: 'Gaz / température' },
   { href: '/guides/choisir-poids-bille-airsoft/', label: 'Guides', matches: (path) => path.startsWith('/guides/') || path === '/simulateur-trajectoire-airsoft/' },

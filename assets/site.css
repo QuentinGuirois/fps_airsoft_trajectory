@@ -609,7 +609,7 @@ thead th { color: var(--muted); font-size: .66rem; text-transform: uppercase; }
 .cta-panel p { max-width: 40rem; margin-block: 1rem 1.4rem; color: var(--muted-strong); }
 
 .author-card { display: grid; align-items: center; grid-template-columns: 7rem minmax(0, 1fr); gap: 1.3rem; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--ink-1); padding: 1.3rem; }
-.author-card img { width: 7rem; aspect-ratio: 1; border: 2px solid var(--acid); border-radius: 50%; object-fit: cover; }
+.author-card img { width: 7rem; aspect-ratio: 1; border: 2px solid var(--acid); border-radius: 50%; object-fit: cover; object-position: 45% 25%; }
 .author-card p { margin: .55rem 0; color: var(--muted); }
 .author-card small { color: var(--muted); }
 
@@ -832,8 +832,8 @@ thead th { color: var(--muted); font-size: .66rem; text-transform: uppercase; }
 .guide-rail-reminder { border: 1px dashed var(--line-strong); border-radius: var(--radius); margin: 0; padding: .85rem 1rem; color: var(--muted); font-family: var(--font-mono); font-size: .62rem; line-height: 1.55; }
 
 .about-profile { display: grid; grid-template-columns: minmax(14rem, 19rem) minmax(0, 1fr); align-items: center; gap: clamp(1.5rem, 5vw, 3.5rem); }
-.about-portrait { position: relative; }
-.about-portrait img { width: 100%; aspect-ratio: 1; border: 1px solid var(--line); border-radius: var(--radius-lg); object-fit: cover; box-shadow: var(--shadow); }
+.about-portrait { position: relative; aspect-ratio: 1; }
+.about-portrait img { display: block; width: 100%; height: 100%; border: 1px solid var(--line); border-radius: var(--radius-lg); object-fit: cover; object-position: 50% 35%; box-shadow: var(--shadow); }
 .about-portrait .stencil-patch { position: absolute; bottom: -.65rem; left: 50%; border-color: rgb(233 236 221 / 52%); background: var(--olive); color: #e9ecdd; white-space: nowrap; transform: translateX(-50%); }
 .mackila-attribution { margin-top: 1.5rem; }
 

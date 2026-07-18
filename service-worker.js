@@ -1,4 +1,4 @@
-const CACHE = 'fat-v3-2026-07-18-16';
+const CACHE = 'fat-v3-2026-07-18-19';
 const CORE = [
   '/',
   '/index.html',
@@ -19,7 +19,7 @@ const CORE = [
   '/assets/img/icon-maskable.svg',
   '/assets/img/icon-maskable-512.png',
   '/assets/img/partage-fat.png',
-  '/assets/img/quentin-guirois.webp',
+  '/assets/img/quentin-guirois.jpg',
   '/app.js',
   '/advanced-3d-app.js',
   '/advanced-device.js',

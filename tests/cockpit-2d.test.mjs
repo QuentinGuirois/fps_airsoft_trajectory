@@ -45,7 +45,7 @@ test('la géométrie et les traits du cockpit suivent la charte 2D', async () =>
 
 test('le cache PWA contient les modules 2D avec une nouvelle version', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /fat-v3-2026-07-18-16/);
+  assert.match(worker, /fat-v3-2026-07-18-19/);
   assert.match(worker, /'\/chart-data\.js'/);
   assert.match(worker, /'\/app\.js'/);
   assert.match(worker, /'\/assets\/site\.css'/);
