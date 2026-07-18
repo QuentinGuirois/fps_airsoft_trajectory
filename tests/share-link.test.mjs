@@ -96,7 +96,7 @@ test('le libellé de partage reflète la capacité tactile sans user-agent', () 
   assert.equal(button.textContent, 'Partager');
 });
 
-test('les outils de partage conservent le helper et le calculateur principal enregistre côté compte', async () => {
+test('le gaz conserve le partage tandis que les calculateurs enregistrent côté compte', async () => {
   const [app, gas, advanced, home, gasHtml, advancedHtml] = await Promise.all([
     read('app.js'),
     read('gas-pressure-app.js'),
@@ -105,14 +105,15 @@ test('les outils de partage conservent le helper et le calculateur principal enr
     read('outils', 'choisir-gaz-airsoft-pression-temperature', 'index.html'),
     read('simulateur-3d-airsoft', 'index.html'),
   ]);
-  for (const source of [gas, advanced]) {
-    assert.match(source, /assets\/js\/share-link\.js/);
-    assert.doesNotMatch(source, /navigator\.share\s*\(/);
-  }
+  assert.match(gas, /assets\/js\/share-link\.js/);
+  assert.doesNotMatch(gas, /navigator\.share\s*\(/);
   assert.doesNotMatch(app, /assets\/js\/share-link\.js/);
+  assert.doesNotMatch(advanced, /assets\/js\/share-link\.js/);
   assert.match(app, /trajectoryRepository\.create/);
+  assert.match(advanced, /trajectoryRepository\.create/);
   assert.match(home, /id="share-shot"[^>]*>ENREGISTRER/);
   assert.doesNotMatch(home, /id="share-url"/);
   assert.match(gasHtml, /id="gas-share-url" type="url" readonly/);
-  assert.match(advancedHtml, /id="advanced-share-url"[^>]*type="url" readonly/);
+  assert.match(advancedHtml, /data-advanced-save>Enregistrer<\/button>/);
+  assert.doesNotMatch(advancedHtml, /advanced-share-url|Copier le lien/);
 });

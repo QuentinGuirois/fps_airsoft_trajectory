@@ -165,7 +165,7 @@ test('le pipeline fige Lighthouse, archive ses rapports et differe HSTS includeS
   assert.match(desktop, /require\('\.\/lighthouserc-mobile\.cjs'\)/);
   assert.match(desktop, /preset: 'desktop'/);
   assert.match(htaccess, /Strict-Transport-Security "max-age=31536000"/);
-  assert.match(htaccess, /Header add Link "<\/assets\/site\.css\?v=20260718-43>; rel=preload; as=style"/);
+  assert.match(htaccess, /Header add Link "<\/assets\/site\.css\?v=20260719-44>; rel=preload; as=style"/);
   assert.doesNotMatch(htaccess, /Strict-Transport-Security "[^"]*includeSubDomains/);
 });
 
@@ -181,8 +181,8 @@ test('les correctifs Lighthouse conservent des noms accessibles et une region pu
   assert.doesNotMatch(home, /id="spin-auto"[^>]+aria-label/);
   assert.match(gallery, /data-community-grid role="region" aria-label="Cards de répliques publiées"/);
   for (const html of [home, gas, advanced, gallery]) {
-    const preload = html.indexOf('<link rel="preload" href="/assets/site.css?v=20260718-43" as="style">');
-    const bootstrap = html.indexOf('<script src="/theme-bootstrap.js?v=20260718-43" data-cfasync="false"></script>');
+    const preload = html.indexOf('<link rel="preload" href="/assets/site.css?v=20260719-44" as="style">');
+    const bootstrap = html.indexOf('<script src="/theme-bootstrap.js?v=20260719-44" data-cfasync="false"></script>');
     assert.ok(preload >= 0 && preload < bootstrap);
     assert.match(html, /rel="preload" href="\/assets\/fonts\/saira-latin-400-900\.woff2" as="font" type="font\/woff2" crossorigin/);
   }

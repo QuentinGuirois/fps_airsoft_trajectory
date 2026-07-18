@@ -74,6 +74,16 @@ test('la page avancée expose le SEO exact, une landing utile et aucune vue 2D',
   assert.match(sitemap, /<loc>https:\/\/fps-airsoft-trajectory\.com\/simulateur-3d-airsoft\/<\/loc>/);
 });
 
+test('la page avancée enregistre la courbe privée au lieu de copier un lien', async () => {
+  const [html, app] = await Promise.all([read('simulateur-3d-airsoft', 'index.html'), read('advanced-3d-app.js')]);
+  assert.match(html, /data-advanced-save>Enregistrer<\/button>/);
+  assert.doesNotMatch(html, /data-advanced-share|Copier le lien|data-advanced-share-output/);
+  assert.match(app, /trajectoryRepository\.create\(\{/);
+  assert.match(app, /curveThumbnailSvg: serializeCurveThumbnail\(state\.latestResult\)/);
+  assert.match(app, /return `\$\{location\.origin\}\/\?\$\{query\}#calculateur`/);
+  assert.doesNotMatch(app, /shareLink|configureShareButton/);
+});
+
 test('la home garde son CTA compact et ajoute le lien 3D explicite exact', async () => {
   const [home, site] = await Promise.all([read('index.html'), read('site.js')]);
   assert.match(home, /href="#calculateur">Passer mon setup au banc<\/a>/);
@@ -202,13 +212,13 @@ test('la scène occupe le viewport, reste locale et rejoint la PWA sans préchar
   assert.doesNotMatch(html, /three\.module|OrbitControls|<script[^>]+(?:https?:)?\/\//i);
   const core = worker.match(/const OPTIONAL = \[[\s\S]*?\n\];/)?.[0] || '';
   const lazy = worker.match(/const LAZY_3D = \[[\s\S]*?\n\];/)?.[0] || '';
-  for (const resource of ['/simulateur-3d-airsoft/', '/advanced-3d-app.js?v=20260718-43', '/advanced-device.js?v=20260718-28', '/advanced-transition.js?v=20260718-28']) {
+  for (const resource of ['/simulateur-3d-airsoft/', '/advanced-3d-app.js?v=20260719-44', '/advanced-device.js?v=20260718-28', '/advanced-transition.js?v=20260718-28']) {
     assert.ok(core.includes(`'${resource}'`), resource);
   }
   assert.doesNotMatch(core, /three-r185|drone-3d\.js/);
   assert.match(lazy, /three-r185/);
   assert.match(lazy, /drone-3d\.js/);
-  assert.match(worker, /fat-v3-2026-07-18-43/);
+  assert.match(worker, /fat-v3-2026-07-19-44/);
 });
 
 test('WebGL, Worker et import cassé débouchent sur un panneau utile sans moteur bis', async () => {

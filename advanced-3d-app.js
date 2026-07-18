@@ -1,8 +1,9 @@
 import { DEFAULT_SHOT, normalizeShot } from './physics-core.js?v=20260718-28';
-import { detectWebGL, mobile3DDisabled } from './render-capabilities.js?v=20260718-43';
+import { detectWebGL, mobile3DDisabled } from './render-capabilities.js?v=20260719-44';
 import { advancedDeviceAdvice } from './advanced-device.js?v=20260718-28';
 import { consumeAdvancedTransition, createAdvancedTransition } from './advanced-transition.js?v=20260718-28';
-import { configureShareButton, shareLink } from './assets/js/share-link.js?v=20260718-29';
+import { serializeCurveThumbnail } from './assets/js/curve-thumbnail.js?v=20260718-28';
+import { createProductionRepositories, RepositoryError } from './assets/js/community-repositories.js?v=20260719-44';
 
 const root = document.querySelector('[data-advanced-3d-app]');
 
@@ -25,8 +26,8 @@ if (root) {
   const legend = root.querySelector('[data-advanced-legend]');
   const metricContext = root.querySelector('[data-advanced-metric-context]');
   const feedback = root.querySelector('[data-advanced-feedback]');
-  const shareOutput = root.querySelector('[data-advanced-share-output]');
-  const shareUrlInput = root.querySelector('[data-advanced-share-url]');
+  const saveButton = root.querySelector('[data-advanced-save]');
+  const { accountRepository, trajectoryRepository } = createProductionRepositories();
   const cameraButtons = [...root.querySelectorAll('[data-advanced-camera]')];
   const pauseButton = root.querySelector('[data-advanced-pause]');
   const mobileNotice = root.querySelector('[data-advanced-mobile-notice]');
@@ -138,7 +139,7 @@ if (root) {
     } catch { /* Stockage facultatif. */ }
   }
 
-  function shareUrl(shot = readShot()) {
+  function simulationUrl(shot = readShot()) {
     const query = new URLSearchParams({
       m: shot.massG, j: shot.energyJ.toFixed(2), rpm: shot.initialRpm,
       z: shot.zeroDistanceM, w: shot.windSpeedKmh, wd: shot.windAngleDeg,
@@ -146,7 +147,7 @@ if (root) {
       sh: shot.shootingHeightM, oh: shot.scopeHeightM,
       lat: shot.latitudeDeg, d: shot.diameterMm,
     });
-    return `${location.origin}${location.pathname}?${query}`;
+    return `${location.origin}/?${query}#calculateur`;
   }
 
   function resultSeries() {
@@ -292,17 +293,38 @@ if (root) {
     updateDrone();
   }
 
-  async function shareShot() {
-    const url = shareUrl();
-    history.replaceState(history.state, '', url);
-    await shareLink({
-      url,
-      title: 'Mon setup F.A.T. 3D',
-      text: 'Passe ce setup au simulateur 3D F.A.T.',
-      output: shareOutput,
-      input: shareUrlInput,
-      feedback,
-    });
+  async function saveShot() {
+    if (!state.latestResult || saveButton.disabled) return;
+    const { config } = state.latestResult.simulation;
+    const url = simulationUrl(config);
+    saveButton.disabled = true;
+    feedback.textContent = 'Enregistrement dans ton espace privé…';
+    try {
+      const session = await accountRepository.getSession();
+      if (!session?.authenticated) throw new RepositoryError('Connexion requise.', { status: 401 });
+      const formatter = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+      await trajectoryRepository.create({
+        name: `${format(config.massG, 2)} g · ${format(config.energyJ, 2)} J · ${formatter.format(new Date())}`,
+        simulationUrl: url,
+        massG: config.massG,
+        energyJ: config.energyJ,
+        usefulRangeM: state.latestResult.metrics?.usefulRangeM ?? null,
+        maximumRangeM: state.latestResult.metrics?.maximumRangeM ?? null,
+        curveThumbnailSvg: serializeCurveThumbnail(state.latestResult),
+      });
+      feedback.textContent = 'Courbe enregistrée. Tu peux la retrouver dans Mes courbes et l’associer à une card.';
+      saveButton.textContent = 'ENREGISTRÉE ✓';
+      window.setTimeout(() => { saveButton.textContent = 'ENREGISTRER'; }, 2200);
+    } catch (error) {
+      if (error instanceof RepositoryError && error.status === 401) {
+        const returnPath = `${location.pathname}${location.search}`;
+        location.href = `/compte/?return=${encodeURIComponent(returnPath)}`;
+        return;
+      }
+      feedback.textContent = error?.message || 'La courbe n’a pas pu être enregistrée.';
+    } finally {
+      saveButton.disabled = false;
+    }
   }
 
   function setCamera(name) {
@@ -352,9 +374,7 @@ if (root) {
     button.addEventListener('click', () => state.droneApi?.zoom(Number(button.dataset.advancedZoom)));
   });
   root.querySelector('[data-advanced-compare]').addEventListener('click', addComparison);
-  const shareButton = root.querySelector('[data-advanced-share]');
-  configureShareButton(shareButton);
-  shareButton.addEventListener('click', shareShot);
+  saveButton.addEventListener('click', saveShot);
   root.querySelector('[data-advanced-reset]').addEventListener('click', () => {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(SUMMARY_STORAGE_KEY);

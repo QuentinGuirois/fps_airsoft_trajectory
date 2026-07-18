@@ -124,7 +124,21 @@ await send('Page.enable');
 await send('Runtime.enable');
 await send('Network.enable');
 await send('Page.addScriptToEvaluateOnNewDocument', {
-  source: `if(location.search.includes('no-webgl')){const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return String(type).startsWith('webgl')?null:original.call(this,type,...args)}}`,
+  source: `
+    if(location.search.includes('no-webgl')){const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return String(type).startsWith('webgl')?null:original.call(this,type,...args)}}
+    const nativeFetch = globalThis.fetch.bind(globalThis);
+    globalThis.__advancedSavedTrajectory = null;
+    globalThis.fetch = async (input, init = {}) => {
+      const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url, location.href);
+      const method = String(init.method || 'GET').toUpperCase();
+      if (url.pathname === '/api/v1/me' && method === 'GET') return new Response(JSON.stringify({authenticated:true,csrfToken:'advanced-csrf',user:{pseudo:'Drone'}}),{headers:{'Content-Type':'application/json'}});
+      if (url.pathname === '/api/v1/trajectories' && method === 'POST') {
+        globalThis.__advancedSavedTrajectory = JSON.parse(init.body);
+        return new Response(JSON.stringify({trajectory:{id:'10000000-0000-4000-8000-000000000003',...globalThis.__advancedSavedTrajectory}}),{status:201,headers:{'Content-Type':'application/json'}});
+      }
+      return nativeFetch(input, init);
+    };
+  `,
 });
 
 await setViewport(1440, 900);
@@ -145,11 +159,11 @@ await waitForScene();
 const dedicatedRequests = [...new Set(requests.filter((url) => lazyPaths.some((path) => url.includes(path))).map((url) => new URL(url).pathname))];
 for (const path of lazyPaths) if (!dedicatedRequests.includes(path)) throw new Error(`Actif 3D dédié absent: ${path}`);
 
-console.log('[advanced] partage, stockage, reset et URL historique');
-await evaluate(`(()=>{window.__advancedShare=null;window.__advancedCopied='';Object.defineProperty(navigator,'share',{configurable:true,value:async payload=>{window.__advancedShare=payload}});Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async value=>{window.__advancedCopied=value}}});document.querySelector('[data-advanced-share]').click()})()`);
-await waitFor(`Boolean(window.__advancedCopied)`);
-const shared = await evaluate(`({native:window.__advancedShare,label:document.querySelector('[data-advanced-share]').textContent,url:window.__advancedCopied,params:Object.fromEntries(new URL(window.__advancedCopied).searchParams),field:document.querySelector('[data-advanced-share-url]').value})`);
-if (shared.native !== null || shared.label !== 'Copier le lien' || shared.params.m !== '0.36' || shared.params.rpm !== '100000' || shared.params.wd !== '90' || shared.field !== shared.url) throw new Error(`Partage avancé desktop: ${JSON.stringify(shared)}`);
+console.log('[advanced] enregistrement, stockage, reset et URL historique');
+await evaluate(`document.querySelector('[data-advanced-save]').click()`);
+await waitFor(`window.__advancedSavedTrajectory !== null && document.querySelector('[data-advanced-feedback]').textContent.includes('Courbe enregistrée')`);
+const saved = await evaluate(`(()=>{const payload=window.__advancedSavedTrajectory;const url=new URL(payload.simulationUrl);return{payload,label:document.querySelector('[data-advanced-save]').textContent,feedback:document.querySelector('[data-advanced-feedback]').textContent,path:url.pathname,hash:url.hash,params:Object.fromEntries(url.searchParams),currentPath:location.pathname}})()`);
+if (!saved.payload.curveThumbnailSvg.startsWith('<svg') || saved.path !== '/' || saved.hash !== '#calculateur' || saved.params.m !== '0.36' || saved.params.rpm !== '100000' || saved.params.wd !== '90' || saved.currentPath !== '/simulateur-3d-airsoft/' || !saved.feedback.includes('Mes courbes')) throw new Error(`Enregistrement avancé: ${JSON.stringify(saved)}`);
 const storedPrevious = await evaluate(`document.querySelector('[data-advanced-3d-app]').dataset.lastRequestId`);
 await evaluate(`(()=>{const input=document.querySelector('[data-advanced-field="massG"]');input.value='0.43';input.dispatchEvent(new Event('input',{bubbles:true}))})()`);
 await waitFor(`document.querySelector('[data-advanced-3d-app]').dataset.lastRequestId !== '${storedPrevious}'`);
@@ -299,7 +313,7 @@ await waitForScene();
 await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await waitFor(`navigator.serviceWorker.controller !== null`);
 await wait(800);
-const cached = await evaluate(`Promise.all(${JSON.stringify(lazyPaths)}.map(async path=>Boolean(await (await caches.open('fat-v3-2026-07-18-43')).match(path.endsWith('three.core.min.js')?path:path+'?v=20260718-28'))))`, true);
+const cached = await evaluate(`Promise.all(${JSON.stringify(lazyPaths)}.map(async path=>Boolean(await (await caches.open('fat-v3-2026-07-19-44')).match(path.endsWith('three.core.min.js')?path:path+'?v=20260718-28'))))`, true);
 if (cached.some((value) => !value)) throw new Error(`Cache 3D incomplet: ${JSON.stringify(cached)}`);
 await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0, connectionType: 'none' });
 await navigate(`${advancedUrl}?offline=1`);
@@ -312,7 +326,7 @@ if (runtimeErrors.length) throw new Error(`Erreurs runtime: ${JSON.stringify(run
 
 console.log(JSON.stringify({
   directNavigation: direct,
-  shared,
+  saved,
   storedMass,
   legacy,
   dedicatedRequests,
