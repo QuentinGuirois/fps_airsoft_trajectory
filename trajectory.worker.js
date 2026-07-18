@@ -1,4 +1,4 @@
-import { analyzeTrajectory, holdoverTable, simulateTrajectory } from './physics-core.js';
+import { analyzeTrajectory, holdoverTable, simulateTrajectory } from './physics-core.js?v=20260718-28';
 
 self.addEventListener('message', (event) => {
   if (event.data?.type !== 'simulate') return;
@@ -19,4 +19,3 @@ self.addEventListener('message', (event) => {
     });
   }
 });
-

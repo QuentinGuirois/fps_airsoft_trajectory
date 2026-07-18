@@ -38,7 +38,7 @@ test('le shell rend un header, un sélecteur de thème et un footer cohérents p
   assert.match(theme, /Nuit/);
   assert.match(theme, /Jour/);
   assert.match(css, /\.site-footer > \.camo-strip/);
-  assert.match(offline, /src="\/site\.js"/);
+  assert.match(offline, /src="\/site\.js\?v=20260718-28"/);
 });
 
 test('le cockpit, le mobile tactile et les rails de guide suivent le lot 2', async () => {
@@ -124,7 +124,7 @@ test('le cache et les ressources restent autonomes sans CDN', async () => {
   const [worker, css, site, gas] = await Promise.all([
     read('service-worker.js'), read('assets', 'site.css'), read('site.js'), read('gas-pressure-app.js'),
   ]);
-  assert.match(worker, /fat-v3-2026-07-18-27/);
+  assert.match(worker, /fat-v3-2026-07-18-28/);
   for (const source of [worker, css, site, gas]) {
     assert.doesNotMatch(source, /https?:\/\/(?:fonts\.|cdn\.|unpkg|jsdelivr)/i);
   }

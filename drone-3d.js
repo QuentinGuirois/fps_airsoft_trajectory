@@ -1,5 +1,5 @@
-import * as THREE from './assets/vendor/three-r185/build/three.module.min.js';
-import { OrbitControls } from './assets/vendor/three-r185/examples/jsm/controls/OrbitControls.js';
+import * as THREE from './assets/vendor/three-r185/build/three.module.min.js?v=20260718-28';
+import { OrbitControls } from './assets/vendor/three-r185/examples/jsm/controls/OrbitControls.js?v=20260718-28';
 
 const PLAYBACK_MS = 2200;
 

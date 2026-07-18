@@ -1,5 +1,5 @@
-import { initTheme } from './theme.js';
-import { markAdvancedTransition } from './advanced-transition.js';
+import { initTheme } from './theme.js?v=20260718-28';
+import { markAdvancedTransition } from './advanced-transition.js?v=20260718-28';
 
 const SHOT_STORAGE_KEY = 'fat-shot-v3';
 const SUMMARY_STORAGE_KEY = 'fat-last-summary-v3';
@@ -331,7 +331,7 @@ document.querySelectorAll('[data-converter]').forEach((converter) => {
 });
 
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  const registerServiceWorker = () => navigator.serviceWorker.register('/service-worker.js').catch(() => null);
+  const registerServiceWorker = () => navigator.serviceWorker.register('/service-worker.js?v=20260718-28').catch(() => null);
   if (document.readyState === 'complete') registerServiceWorker();
   else window.addEventListener('load', registerServiceWorker, { once: true });
 }

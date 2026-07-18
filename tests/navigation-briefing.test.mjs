@@ -88,7 +88,7 @@ test('animations, reduced motion, PWA et fond CSS respectent la salle de briefin
   assert.doesNotMatch(`${site}\n${css}`, /three\.js|three-r185/i);
   assert.match(site, /SERVICE WORKER EN INITIALISATION/);
   assert.match(site, /HORS CONNEXION PRÊT/);
-  assert.match(worker, /fat-v3-2026-07-18-27/);
+  assert.match(worker, /fat-v3-2026-07-18-28/);
   assert.match(worker, /'\/outils\/'/);
   assert.match(worker, /'\/guides\/'/);
 });

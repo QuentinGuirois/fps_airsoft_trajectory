@@ -1,5 +1,5 @@
-import './replica-card.js';
-import { RepositoryError } from './community-repositories.js';
+import './replica-card.js?v=20260718-28';
+import { RepositoryError } from './community-repositories.js?v=20260718-28';
 
 export function summarizeReplicas(replicas = []) {
   return replicas.reduce((summary, replica) => {

@@ -1,7 +1,7 @@
-import { DEFAULT_SHOT, normalizeShot } from './physics-core.js';
-import { detectWebGL } from './render-capabilities.js';
-import { advancedDeviceAdvice } from './advanced-device.js';
-import { consumeAdvancedTransition, createAdvancedTransition } from './advanced-transition.js';
+import { DEFAULT_SHOT, normalizeShot } from './physics-core.js?v=20260718-28';
+import { detectWebGL } from './render-capabilities.js?v=20260718-28';
+import { advancedDeviceAdvice } from './advanced-device.js?v=20260718-28';
+import { consumeAdvancedTransition, createAdvancedTransition } from './advanced-transition.js?v=20260718-28';
 
 const root = document.querySelector('[data-advanced-3d-app]');
 
@@ -212,7 +212,7 @@ if (root) {
   async function prepareDrone() {
     if (state.droneApi || !state.latestResult) return;
     try {
-      state.droneModulePromise ||= import('./drone-3d.js');
+      state.droneModulePromise ||= import('./drone-3d.js?v=20260718-28');
       const { createDroneView } = await state.droneModulePromise;
       state.droneApi = createDroneView({
         host,
@@ -220,7 +220,9 @@ if (root) {
         comparisons: state.comparisons,
         colors: droneThemeColors(),
       });
-      navigator.serviceWorker?.controller?.postMessage({ type: 'CACHE_3D' });
+      navigator.serviceWorker?.ready
+        ?.then((registration) => registration.active?.postMessage({ type: 'CACHE_3D' }))
+        .catch(() => null);
       await transitionGate;
       stage.removeAttribute('data-loading');
       root.dataset.ready = 'true';
@@ -414,7 +416,7 @@ if (root) {
     showFallback('Le Web Worker ATP n’est pas disponible. Aucun moteur de remplacement n’est chargé.');
     transition.fail('Web Worker indisponible.');
   } else {
-    state.worker = new Worker('/trajectory.worker.js', { type: 'module' });
+    state.worker = new Worker('/trajectory.worker.js?v=20260718-28', { type: 'module' });
     state.worker.addEventListener('message', (event) => receiveResult(event.data));
     state.worker.addEventListener('error', () => {
       state.worker?.terminate();

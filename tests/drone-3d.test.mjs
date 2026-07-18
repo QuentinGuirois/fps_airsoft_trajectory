@@ -40,7 +40,7 @@ test('les marqueurs et la signature 3D utilisent exactement les points Worker re
 
 test('le chunk 3D est uniquement importé au premier clic et partage latestResult', async () => {
   const [app, html, worker] = await Promise.all([read('app.js'), read('index.html'), read('service-worker.js')]);
-  assert.match(app, /droneModulePromise \|\|= import\('\.\/drone-3d\.js'\)/);
+  assert.match(app, /droneModulePromise \|\|= import\('\.\/drone-3d\.js\?v=20260718-28'\)/);
   assert.doesNotMatch(app, /^import .*drone-3d/m);
   assert.doesNotMatch(html, /drone-3d\.js|three\.module|OrbitControls/);
   assert.match(app, /result: state\.latestResult/);
@@ -73,14 +73,20 @@ test('Three.js r185.1 et OrbitControls sont auto-hébergés avec licence', async
 });
 
 test('le cache différé référence tous les modules 3D sans les précacher', async () => {
-  const worker = await read('service-worker.js');
-  assert.match(worker, /fat-v3-2026-07-18-27/);
+  const [worker, app, advancedApp] = await Promise.all([
+    read('service-worker.js'),
+    read('app.js'),
+    read('advanced-3d-app.js'),
+  ]);
+  assert.match(worker, /fat-v3-2026-07-18-28/);
   for (const path of [
-    '/drone-3d.js',
-    '/assets/vendor/three-r185/build/three.module.min.js',
+    '/drone-3d.js?v=20260718-28',
+    '/assets/vendor/three-r185/build/three.module.min.js?v=20260718-28',
     '/assets/vendor/three-r185/build/three.core.min.js',
-    '/assets/vendor/three-r185/examples/jsm/controls/OrbitControls.js',
+    '/assets/vendor/three-r185/examples/jsm/controls/OrbitControls.js?v=20260718-28',
   ]) assert.ok(worker.includes(`'${path}'`), path);
   assert.match(worker, /event\.data\?\.type !== 'CACHE_3D'/);
   assert.match(worker, /if \(!await cache\.match\(url\)\) await cache\.add\(url\)/);
+  assert.match(app, /serviceWorker\?\.ready[\s\S]*?registration\.active\?\.postMessage\(\{ type: 'CACHE_3D' \}\)/);
+  assert.match(advancedApp, /serviceWorker\?\.ready[\s\S]*?registration\.active\?\.postMessage\(\{ type: 'CACHE_3D' \}\)/);
 });

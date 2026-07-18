@@ -8,11 +8,11 @@ import {
   mpsToFps,
   normalizeShot,
   simulateTrajectory,
-} from './physics-core.js';
-import { fitChartDomain, prepareChartSeries } from './chart-data.js';
-import { createCalculationLoader } from './calculation-loader.js';
-import { detectWebGL } from './render-capabilities.js';
-import { serializeCurveThumbnail } from './assets/js/curve-thumbnail.js';
+} from './physics-core.js?v=20260718-28';
+import { fitChartDomain, prepareChartSeries } from './chart-data.js?v=20260718-28';
+import { createCalculationLoader } from './calculation-loader.js?v=20260718-28';
+import { detectWebGL } from './render-capabilities.js?v=20260718-28';
+import { serializeCurveThumbnail } from './assets/js/curve-thumbnail.js?v=20260718-28';
 
 const root = document.querySelector('[data-trajectory-app]');
 
@@ -154,7 +154,7 @@ if (root) {
     }
 
     try {
-      state.droneModulePromise ||= import('./drone-3d.js');
+      state.droneModulePromise ||= import('./drone-3d.js?v=20260718-28');
       const { createDroneView } = await state.droneModulePromise;
       if (!state.droneActive) return;
       state.droneApi = createDroneView({
@@ -164,7 +164,9 @@ if (root) {
         colors: droneThemeColors(),
         profileVerticalExaggeration: Number(verticalScaleChip.textContent.split('×')[1]?.replace(',', '.')) || 1,
       });
-      navigator.serviceWorker?.controller?.postMessage({ type: 'CACHE_3D' });
+      navigator.serviceWorker?.ready
+        ?.then((registration) => registration.active?.postMessage({ type: 'CACHE_3D' }))
+        .catch(() => null);
       droneView?.removeAttribute('data-loading');
       setDroneCamera('drone');
       if (droneStatus) droneStatus.textContent = 'Vue drone 3D chargée.';
@@ -852,7 +854,7 @@ if (root) {
   });
 
   try {
-    state.worker = new Worker('./trajectory.worker.js', { type: 'module' });
+    state.worker = new Worker('./trajectory.worker.js?v=20260718-28', { type: 'module' });
     state.worker.addEventListener('message', (event) => receiveResult(event.data));
     state.worker.addEventListener('error', (event) => {
       event.currentTarget?.terminate?.();

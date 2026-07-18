@@ -57,8 +57,8 @@ test('le partage expose toujours une URL complète et restaure les paramètres a
 
 test('le cache PWA contient les modules 2D avec une nouvelle version', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /fat-v3-2026-07-18-27/);
-  assert.match(worker, /'\/chart-data\.js'/);
-  assert.match(worker, /'\/app\.js'/);
-  assert.match(worker, /'\/assets\/site\.css'/);
+  assert.match(worker, /fat-v3-2026-07-18-28/);
+  assert.match(worker, /'\/chart-data\.js\?v=20260718-28'/);
+  assert.match(worker, /'\/app\.js\?v=20260718-28'/);
+  assert.match(worker, /'\/assets\/site\.css\?v=20260718-28'/);
 });

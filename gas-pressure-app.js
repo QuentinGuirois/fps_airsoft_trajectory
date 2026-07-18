@@ -12,9 +12,9 @@ import {
   resultForSelection,
   selectionSearchParams,
   siliconePresentation,
-} from './gas-pressure-tool.js';
+} from './gas-pressure-tool.js?v=20260718-28';
 
-const DATA_URL = '/data/green-gas-pressure-curves.json';
+const DATA_URL = '/data/green-gas-pressure-curves.json?v=20260718-28';
 const STORAGE_KEY = 'fat-green-gas-selection-v1';
 const REQUIRED_DISCLAIMER = 'La pression affichée est une estimation théorique calculée à partir des valeurs publiées par les fabricants ou distributeurs. Elle ne garantit ni la pression réelle dans un chargeur, ni la compatibilité avec une réplique, ni la puissance obtenue.';
 

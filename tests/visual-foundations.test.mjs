@@ -60,7 +60,7 @@ test('chaque page initialise le thème dans le head avant la feuille de style', 
   for (const path of files) {
     const html = await readFile(path, 'utf8');
     const initPosition = html.indexOf("localStorage.getItem('fat-theme')");
-    const cssPosition = html.indexOf('href="/assets/site.css"');
+    const cssPosition = html.indexOf('href="/assets/site.css?v=20260718-28"');
     assert.ok(initPosition > 0, path);
     assert.ok(cssPosition > initPosition, path);
     assert.match(html, /meta name="theme-color" content="#10140c"/);
@@ -202,10 +202,10 @@ test('les polices officielles, licences et modules visuels sont disponibles hors
   }
 
   const sw = await readFile(join(root, 'service-worker.js'), 'utf8');
-  for (const resource of [...fontFiles.map((file) => `/assets/fonts/${file}`), '/theme.js', '/calculation-loader.js', '/assets/img/icon-maskable-512.png', '/assets/img/quentin-guirois.jpg']) {
+  for (const resource of [...fontFiles.map((file) => `/assets/fonts/${file}`), '/theme.js?v=20260718-28', '/calculation-loader.js?v=20260718-28', '/assets/img/icon-maskable-512.png', '/assets/img/quentin-guirois.jpg']) {
     assert.ok(sw.includes(`'${resource}'`), resource);
   }
-  assert.match(sw, /const CACHE = 'fat-v3-2026-07-18-27'/);
+  assert.match(sw, /const CACHE = 'fat-v3-2026-07-18-28'/);
 
   const production = (await walk(root)).filter((path) => /\.(?:html|css|js|webmanifest|svg)$/.test(path));
   for (const path of production) {

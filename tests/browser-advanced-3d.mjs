@@ -280,7 +280,7 @@ await waitForScene();
 await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await waitFor(`navigator.serviceWorker.controller !== null`);
 await wait(800);
-const cached = await evaluate(`Promise.all(${JSON.stringify(lazyPaths)}.map(async path=>Boolean(await (await caches.open('fat-v3-2026-07-18-27')).match(path))))`, true);
+const cached = await evaluate(`Promise.all(${JSON.stringify(lazyPaths)}.map(async path=>Boolean(await (await caches.open('fat-v3-2026-07-18-28')).match(path.endsWith('three.core.min.js')?path:path+'?v=20260718-28'))))`, true);
 if (cached.some((value) => !value)) throw new Error(`Cache 3D incomplet: ${JSON.stringify(cached)}`);
 await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0, connectionType: 'none' });
 await navigate(`${advancedUrl}?offline=1`);

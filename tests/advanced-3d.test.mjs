@@ -190,18 +190,18 @@ test('la scène occupe le viewport, reste locale et rejoint la PWA sans préchar
   ]);
   assert.match(css, /\.advanced-stage \{[\s\S]*?min-height: calc\(100dvh - 4\.5rem\)/);
   assert.match(css, /env\(safe-area-inset-top\)/);
-  assert.match(app, /import\('\.\/drone-3d\.js'\)/);
+  assert.match(app, /import\('\.\/drone-3d\.js\?v=20260718-28'\)/);
   assert.doesNotMatch(app, /^import .*drone-3d/m);
   assert.doesNotMatch(html, /three\.module|OrbitControls|<script[^>]+(?:https?:)?\/\//i);
   const core = worker.match(/const CORE = \[[\s\S]*?\n\];/)?.[0] || '';
   const lazy = worker.match(/const LAZY_3D = \[[\s\S]*?\n\];/)?.[0] || '';
-  for (const resource of ['/simulateur-3d-airsoft/', '/advanced-3d-app.js', '/advanced-device.js', '/advanced-transition.js']) {
+  for (const resource of ['/simulateur-3d-airsoft/', '/advanced-3d-app.js?v=20260718-28', '/advanced-device.js?v=20260718-28', '/advanced-transition.js?v=20260718-28']) {
     assert.ok(core.includes(`'${resource}'`), resource);
   }
   assert.doesNotMatch(core, /three-r185|drone-3d\.js/);
   assert.match(lazy, /three-r185/);
   assert.match(lazy, /drone-3d\.js/);
-  assert.match(worker, /fat-v3-2026-07-18-27/);
+  assert.match(worker, /fat-v3-2026-07-18-28/);
 });
 
 test('WebGL, Worker et import cassé débouchent sur un panneau utile sans moteur bis', async () => {
