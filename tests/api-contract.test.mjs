@@ -63,3 +63,15 @@ test('le service worker contourne toujours les API et ne publie aucune donnée a
   assert.match(worker, /url\.pathname\.startsWith\('\/api\/'\)[\s\S]*respondWith\(fetch\(event\.request\)\)/);
   assert.doesNotMatch(worker, /api\/v1\/(?:me|replicas|admin)/);
 });
+
+test('Apache protège les sources PHP, les shells privés et le site sans CDN', async () => {
+  const [rootRules, sourceRules, accountRules] = await Promise.all([
+    read('.htaccess'), read('api/src/.htaccess'), read('compte/.htaccess'),
+  ]);
+  assert.match(rootRules, /Strict-Transport-Security/);
+  assert.match(rootRules, /Content-Security-Policy/);
+  assert.match(rootRules, /default-src 'self'/);
+  assert.match(sourceRules, /Require all denied/);
+  assert.match(accountRules, /no-store, private/);
+  assert.match(accountRules, /noindex, nofollow/);
+});
