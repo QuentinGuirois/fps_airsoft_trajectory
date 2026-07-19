@@ -121,6 +121,29 @@ Le secret ne doit être collé ni dans un terminal partagé, ni dans GitHub, ni
 dans un ticket ou une conversation. Après sauvegarde, vérifier uniquement la
 présence des quatre variables et les droits du fichier, jamais leurs valeurs.
 
+## Emails transactionnels
+
+Les confirmations d’inscription et demandes de nouveau mot de passe sont
+envoyées en `multipart/alternative` : une version texte et une version HTML en
+tableaux, sans JavaScript, police distante, pixel de suivi ou pièce jointe. Le
+logo public est servi depuis `/assets/img/fat-logo-email.png`; les secrets et
+jetons restent uniquement dans les liens à usage limité.
+
+La configuration privée de production doit conserver :
+
+```text
+MAIL_MODE=native
+MAIL_FROM=noreply@fps-airsoft-trajectory.com
+MAIL_REPLY_TO=contact@fps-airsoft-trajectory.com
+```
+
+`MAIL_FROM` doit appartenir au domaine aligné SPF/DKIM. `MAIL_REPLY_TO` est une
+boîte réellement surveillée. Ces emails sont strictement transactionnels : ils
+n’emploient ni en-tête de campagne ni faux lien de désinscription. Tester après
+chaque changement dans au moins Gmail, Outlook et Apple Mail, en contrôlant le
+contenu texte, le bouton, le lien de secours et l’authentification SPF/DKIM/DMARC
+dans les en-têtes reçus.
+
 ## GitHub Environment `production`
 
 Dans **Settings → Environments → New environment**, créer `production`, limiter

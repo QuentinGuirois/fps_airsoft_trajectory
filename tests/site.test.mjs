@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdir, readFile, stat } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -18,7 +18,8 @@ async function walk(directory) {
   return files;
 }
 
-const htmlFiles = (await walk(root)).filter((path) => path.endsWith('.html'));
+const emailTemplateSegment = `${sep}api${sep}templates${sep}`;
+const htmlFiles = (await walk(root)).filter((path) => path.endsWith('.html') && !path.includes(emailTemplateSegment));
 
 test('chaque page indexable possède un title, une description, une canonique et un H1 unique', async () => {
   for (const path of htmlFiles.filter((item) => !item.endsWith('offline.html'))) {

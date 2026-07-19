@@ -12,10 +12,12 @@ use Fat\Api\Controllers\UserController;
 use Fat\Api\Middleware\Security;
 use Fat\Api\Services\AuditLogger;
 use Fat\Api\Services\MailerFactory;
+use Fat\Api\Services\ModerationNotifier;
 use Fat\Api\Services\RateLimiter;
 use Fat\Api\Services\SessionService;
 use Fat\Api\Services\UploadService;
 use Fat\Api\Services\TurnstileVerifier;
+use Fat\Api\Services\TransactionalEmailFactory;
 use PDO;
 
 final class Application
@@ -54,9 +56,11 @@ final class Application
         $limits = new RateLimiter($this->db, $this->config);
         $audit = new AuditLogger($this->db);
         $turnstile = new TurnstileVerifier($this->config);
-        $auth = new AuthController($this->db, $this->config, $sessions, $limits, $audit, MailerFactory::create($this->config), $turnstile);
+        $mailer = MailerFactory::create($this->config);
+        $emails = new TransactionalEmailFactory($this->config);
+        $auth = new AuthController($this->db, $this->config, $sessions, $limits, $audit, $mailer, $emails, $turnstile);
         $user = new UserController($this->db, $this->config, $sessions, $audit);
-        $replicas = new ReplicaController($this->db, $this->config, $sessions, $limits, $audit, new UploadService($this->db, $this->config));
+        $replicas = new ReplicaController($this->db, $this->config, $sessions, $limits, $audit, new UploadService($this->db, $this->config), new ModerationNotifier($this->db, $mailer, $emails));
         $trajectories = new TrajectoryController($this->db, $this->config, $sessions, $limits, $audit);
         $publicReplicas = new PublicReplicaController($this->db, $this->config);
         $admin = new AdminController($this->db, $this->config, $sessions, $limits, $audit);

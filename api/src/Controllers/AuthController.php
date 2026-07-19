@@ -12,6 +12,7 @@ use Fat\Api\Services\Mailer;
 use Fat\Api\Services\RateLimiter;
 use Fat\Api\Services\SessionService;
 use Fat\Api\Services\TurnstileVerifier;
+use Fat\Api\Services\TransactionalEmailFactory;
 use Fat\Api\Support;
 use Fat\Api\Validation\Validator;
 use PDO;
@@ -28,6 +29,7 @@ final class AuthController
         private readonly RateLimiter $limits,
         private readonly AuditLogger $audit,
         private readonly Mailer $mailer,
+        private readonly TransactionalEmailFactory $emails,
         private readonly TurnstileVerifier $turnstile,
     ) {
     }
@@ -68,7 +70,7 @@ final class AuthController
             throw $error;
         }
         $link = $this->config->get('APP_ORIGIN') . '/compte/#verify=' . $token;
-        $this->mailer->send($email, 'Vérifie ton compte F.A.T.', "Confirme ton adresse dans les 24 heures :\n{$link}\n");
+        $this->mailer->send($email, $this->emails->registration($pseudo, $link));
         $this->audit->write($request->requestId, $userId, 'auth.register', 'user', $userId);
         Response::json([
             'accepted' => true,
@@ -152,7 +154,7 @@ final class AuthController
             $this->db->prepare('INSERT INTO password_reset_tokens (id,user_id,token_hash,expires_at) VALUES (?,?,?,UTC_TIMESTAMP()+INTERVAL 30 MINUTE)')
                 ->execute([Support::uuid(), $userId, Support::tokenHash($token)]);
             $link = $this->config->get('APP_ORIGIN') . '/compte/#reset=' . $token;
-            $this->mailer->send($email, 'Réinitialise ton mot de passe F.A.T.', "Ce lien expire dans 30 minutes :\n{$link}\n");
+            $this->mailer->send($email, $this->emails->passwordReset($email, $link, $request->ip()));
         }
         Response::json(['accepted' => true, 'message' => 'Si ce compte existe, un email a été envoyé.'], 202);
     }

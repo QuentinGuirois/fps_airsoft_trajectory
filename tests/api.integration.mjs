@@ -78,6 +78,18 @@ function forceReplicaPending(id) {
   return Number(command(PHP, ['-r', script, id]).trim());
 }
 
+function forceReplicaReady(id) {
+  const script = [
+    '$pdo = new PDO(getenv("DB_DSN"), getenv("DB_USER"), getenv("DB_PASSWORD"));',
+    '$statement = $pdo->prepare("UPDATE replica_posts SET image_status = \'ready\', image_path = \'bbbbbbbbbbbbbbbbbbbbbbbb.webp\', image_mime = \'image/webp\', image_bytes = 1000, image_width = 1000, image_height = 500, image_sha256 = REPEAT(\'b\', 64), image_generated_at = UTC_TIMESTAMP() WHERE id = :id");',
+    '$statement->execute([":id" => $argv[1]]);',
+    '$read = $pdo->prepare("SELECT version FROM replica_posts WHERE id = :id");',
+    '$read->execute([":id" => $argv[1]]);',
+    'echo (string) $read->fetchColumn();',
+  ].join(' ');
+  return Number(command(PHP, ['-r', script, id]).trim());
+}
+
 function resetDatabase() {
   if (process.env.FAT_TEST_SKIP_DB_RESET !== 'true') {
     command('docker', ['exec', 'fat-mariadb-test', 'mariadb', '-uroot', '-pfat_local_root_only', '-e',
@@ -149,7 +161,7 @@ async function waitForHealth(origin, process, readStderr) {
   throw new Error(`Serveur PHP local indisponible sur ${origin} (exit=${process.exitCode}): ${readStderr()}`);
 }
 
-async function latestMailToken(kind) {
+async function latestMail(kind) {
   const log = join(ROOT, 'storage', 'logs', 'mail-test.jsonl');
   for (let index = 0; index < 20; index += 1) {
     try {
@@ -157,11 +169,24 @@ async function latestMailToken(kind) {
       const records = lines.map((line) => JSON.parse(line));
       const record = [...records].reverse().find((item) => item.body.includes(`#${kind}=`));
       const match = record?.body.match(new RegExp(`#${kind}=([a-f0-9]{64})`));
-      if (match) return match[1];
+      if (match) return { token: match[1], record };
     } catch {}
     await delay(50);
   }
-  throw new Error(`Token ${kind} absent du mailer local.`);
+  throw new Error(`Email ${kind} absent du mailer local.`);
+}
+
+async function latestMailBySubject(prefix) {
+  const log = join(ROOT, 'storage', 'logs', 'mail-test.jsonl');
+  for (let index = 0; index < 20; index += 1) {
+    try {
+      const lines = (await readFile(log, 'utf8')).trim().split(/\r?\n/).filter(Boolean);
+      const record = lines.map((line) => JSON.parse(line)).reverse().find((item) => item.subject.startsWith(prefix));
+      if (record) return record;
+    } catch {}
+    await delay(50);
+  }
+  throw new Error(`Email absent : ${prefix}`);
 }
 
 resetDatabase();
@@ -220,7 +245,14 @@ try {
   const registrationAlpha = await api('/auth/register', { method: 'POST', expected: 202, body: { pseudo: 'Alpha', email: 'alpha@example.test', password: 'MotDePasseAlpha123', legalAccepted: true, turnstileToken: turnstileToken('register') } });
   const duplicateRegistration = await api('/auth/register', { method: 'POST', expected: 202, body: { pseudo: 'AlphaBis', email: 'alpha@example.test', password: 'MotDePasseAlpha123', legalAccepted: true, turnstileToken: turnstileToken('register') } });
   assert.deepEqual(duplicateRegistration, registrationAlpha);
-  const verifyAlpha = await latestMailToken('verify');
+  const alphaVerificationMail = await latestMail('verify');
+  assert.match(alphaVerificationMail.record.subject, /^Bienvenue au râtelier, Alpha/);
+  assert.match(alphaVerificationMail.record.body, /Confirme ton adresse email/i);
+  assert.match(alphaVerificationMail.record.html, /<table role="presentation"/);
+  assert.match(alphaVerificationMail.record.html, /fat-logo-email\.png/);
+  assert.match(alphaVerificationMail.record.html, /CONFIRMER MON EMAIL/);
+  assert.doesNotMatch(alphaVerificationMail.record.html, /{{[A-Z_]+}}|REMPLACER-PAR|fat-airsoft\.fr/);
+  const verifyAlpha = alphaVerificationMail.token;
   await api('/auth/verify-email', { method: 'POST', body: { token: verifyAlpha } });
   await api('/auth/verify-email', { method: 'POST', expected: 422, body: { token: verifyAlpha } });
   const fixedCookie = `fat_session=${'a'.repeat(64)}`;
@@ -274,7 +306,7 @@ try {
 
   cookie = ''; csrf = '';
   await api('/auth/register', { method: 'POST', expected: 202, body: { pseudo: 'Bravo', email: 'bravo@example.test', password: 'MotDePasseBravo123', legalAccepted: true, turnstileToken: turnstileToken('register') } });
-  const verifyBravo = await latestMailToken('verify');
+  const verifyBravo = (await latestMail('verify')).token;
   await api('/auth/verify-email', { method: 'POST', body: { token: verifyBravo } });
   await api('/auth/login', { method: 'POST', body: { identity: 'bravo@example.test', password: 'MotDePasseBravo123', turnstileToken: turnstileToken('login') } });
   await api(`/replicas/${cardId}`, { auth: true, expected: 404 });
@@ -329,14 +361,31 @@ try {
   assert.equal(adminEdited.replica.name, 'Réplique Alpha administrée');
   const restored = await api(`/admin/replicas/${cardId}/restore`, { method: 'POST', auth: true, body: { version: adminEdited.replica.version } });
   assert.equal(restored.replica.state, 'draft');
-  const adminArchived = await api(`/admin/replicas/${cardId}`, { method: 'DELETE', auth: true, body: { version: restored.replica.version } });
+  cookie = alphaCookie; csrf = alphaCsrf;
+  const submittableVersion = forceReplicaReady(cardId);
+  const submittedCard = await api(`/replicas/${cardId}/submit`, { method: 'POST', auth: true, body: { version: submittableVersion } });
+  assert.equal(submittedCard.replica.state, 'pending');
+  const moderationMail = await latestMailBySubject('Card à modérer :');
+  assert.equal(moderationMail.to, 'bravo@example.test');
+  assert.match(moderationMail.body, /Joueur : Alpha/);
+  assert.match(moderationMail.html, /Réplique Alpha administrée/);
+  assert.match(moderationMail.html, /OUVRIR LA MODÉRATION/);
+  assert.doesNotMatch(moderationMail.html, /{{[A-Z_]+}}/);
+  cookie = adminCookie; csrf = adminCsrf;
+  const adminArchived = await api(`/admin/replicas/${cardId}`, { method: 'DELETE', auth: true, body: { version: submittedCard.replica.version } });
   assert.equal(adminArchived.replica.state, 'archived');
   cookie = alphaCookie; csrf = alphaCsrf;
 
   const forgotKnown = await api('/auth/forgot-password', { method: 'POST', expected: 202, body: { email: 'alpha@example.test', turnstileToken: turnstileToken('forgot_password') } });
   const forgotUnknown = await api('/auth/forgot-password', { method: 'POST', expected: 202, body: { email: 'absent@example.test', turnstileToken: turnstileToken('forgot_password') } });
   assert.deepEqual(forgotUnknown, forgotKnown);
-  const reset = await latestMailToken('reset');
+  const resetMail = await latestMail('reset');
+  assert.equal(resetMail.record.subject, 'Réinitialisation de ton mot de passe F.A.T. (30 min)');
+  assert.match(resetMail.record.body, /30 minutes/);
+  assert.match(resetMail.record.html, /RÉINITIALISER MON MOT DE PASSE/);
+  assert.match(resetMail.record.html, /IP 127\.0\.—\.—/);
+  assert.doesNotMatch(resetMail.record.html, /{{[A-Z_]+}}|REMPLACER-PAR|fat-airsoft\.fr/);
+  const reset = resetMail.token;
   await api('/auth/reset-password', { method: 'POST', body: { token: reset, password: 'NouveauMotDePasse123' } });
   cookie = ''; csrf = '';
   const replay = turnstileToken('login');

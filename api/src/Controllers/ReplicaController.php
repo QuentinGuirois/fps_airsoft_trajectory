@@ -9,6 +9,7 @@ use Fat\Api\Request;
 use Fat\Api\Response;
 use Fat\Api\Services\AuditLogger;
 use Fat\Api\Services\RateLimiter;
+use Fat\Api\Services\ModerationNotifier;
 use Fat\Api\Services\SessionService;
 use Fat\Api\Services\UploadService;
 use Fat\Api\Support;
@@ -26,6 +27,7 @@ final class ReplicaController
         private readonly RateLimiter $limits,
         private readonly AuditLogger $audit,
         private readonly UploadService $uploads,
+        private readonly ModerationNotifier $moderationNotifier,
     ) {
     }
 
@@ -141,6 +143,9 @@ final class ReplicaController
             throw new HttpException(409, 'version_conflict', 'La card a été modifiée ailleurs. Recharge la page.');
         }
         $this->audit->write($request->requestId, $session['id'], 'replica.update', 'replica', $params['id'], ['pending' => $state === 'pending']);
+        if ($state === 'pending' && $current['state'] !== 'pending') {
+            $this->moderationNotifier->replicaPending($params['id']);
+        }
         Response::json(['replica' => $this->owned($params['id'], $session)]);
     }
 
@@ -192,6 +197,7 @@ final class ReplicaController
             throw new HttpException(409, 'submit_conflict', 'La card doit être en brouillon, posséder une photo prête et utiliser sa version actuelle.');
         }
         $this->audit->write($request->requestId, $session['id'], 'replica.submit', 'replica', $params['id']);
+        $this->moderationNotifier->replicaPending($params['id']);
         Response::json(['replica' => $this->owned($params['id'], $session)]);
     }
 

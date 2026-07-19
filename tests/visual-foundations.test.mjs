@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   applyTheme,
@@ -56,7 +56,8 @@ test('le thème normalise Système, Nuit et Jour avec un repli système sombre',
 });
 
 test('chaque page initialise le thème dans le head avant la feuille de style', async () => {
-  const files = (await walk(root)).filter((path) => path.endsWith('.html'));
+  const emailTemplateSegment = `${sep}api${sep}templates${sep}`;
+  const files = (await walk(root)).filter((path) => path.endsWith('.html') && !path.includes(emailTemplateSegment));
   for (const path of files) {
     const html = await readFile(path, 'utf8');
     const initPosition = html.indexOf('<script src="/theme-bootstrap.js?v=20260719-45" data-cfasync="false"></script>');
