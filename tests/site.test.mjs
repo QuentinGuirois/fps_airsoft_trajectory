@@ -87,3 +87,13 @@ test('l’outil gaz reste accessible depuis le hub et le menu briefing', async (
   assert.match(site, /href: gasToolPath, label: 'Gaz & température'/);
   assert.match(site, /briefingNavigation/);
 });
+
+test('le formulaire de réplique explique le fond clair recommandé pour le détourage', async () => {
+  const html = await readFile(join(root, 'compte', 'armurerie.html'), 'utf8');
+  const css = await readFile(join(root, 'assets', 'site.css'), 'utf8');
+
+  assert.match(html, /class="replica-photo-hint"[^>]*role="note"/);
+  assert.match(html, /fond clair, uni et bien éclairé/);
+  assert.match(html, /src="\/assets\/img\/replica-photo-example\.webp"/);
+  assert.match(css, /\.replica-editor-dialog \.replica-photo-hint/);
+});

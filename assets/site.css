@@ -1480,6 +1480,11 @@ replica-card[mode="management"] .replica-state-badge { margin-left: 0; }
 .replica-editor-dialog h2, .replica-editor-dialog > form > p, .replica-editor-dialog .patch-stencil, .replica-editor-dialog .button-row, .replica-rights { grid-column: 1 / -1; }
 .replica-editor-dialog h2 { margin: .35rem 0 0; font: 800 1.5rem/1.1 var(--font-display); }
 .replica-editor-dialog p { margin: 0 0 .35rem; color: var(--muted); font-size: .75rem; }
+.replica-editor-dialog .replica-photo-hint { display: flex; align-items: center; gap: .75rem; margin: -.25rem 0 0; border: 1px solid color-mix(in srgb, var(--acid) 35%, var(--line)); border-left: 3px solid var(--acid); border-radius: .55rem; background: color-mix(in srgb, var(--acid) 7%, var(--ink-1)); padding: .65rem .75rem; color: var(--muted); font-size: .7rem; line-height: 1.55; }
+.replica-editor-dialog .replica-photo-hint > div { min-width: 0; flex: 1; }
+.replica-editor-dialog .replica-photo-hint strong { display: block; margin-bottom: .2rem; color: var(--acid-text); font: 700 .56rem/1 var(--font-mono); letter-spacing: .08em; }
+.replica-editor-dialog .replica-photo-hint span { display: block; }
+.replica-editor-dialog .replica-photo-hint img { flex: 0 0 4.5rem; width: 4.5rem; height: 6rem; border: 1px solid var(--line-strong); border-radius: .4rem; object-fit: cover; }
 .replica-editor-dialog label { color: var(--muted); font: 500 .56rem/1.2 var(--font-mono); letter-spacing: .08em; }
 .replica-editor-dialog input, .replica-editor-dialog select { width: 100%; min-height: 46px; border: 1px solid var(--line); border-radius: .55rem; background: var(--ink-0); color: var(--paper); padding: .65rem .75rem; }
 .replica-editor-dialog .replica-rights { display: flex; min-height: 44px; align-items: center; gap: .6rem; letter-spacing: 0; }
