@@ -109,23 +109,6 @@ async function captureHeader(name) {
   await capture(name, rect);
 }
 
-async function selectThemeByKeyboard(value) {
-  const openedMenu = await evaluate(`(()=>{const input=document.querySelector('input[name="fat-theme"][value="${value}"]');if(input.getClientRects().length)return false;document.querySelector('[data-menu-button]').click();return true})()`);
-  if (openedMenu) {
-    await waitFor(`!document.querySelector('[data-briefing-menu]').hidden`);
-    await wait(80);
-  }
-  await evaluate(`document.querySelector('input[name="fat-theme"][value="${value}"]').focus()`);
-  const key = { key: ' ', code: 'Space', windowsVirtualKeyCode: 32, nativeVirtualKeyCode: 32 };
-  await send('Input.dispatchKeyEvent', { type: 'keyDown', ...key });
-  await send('Input.dispatchKeyEvent', { type: 'keyUp', ...key });
-  await wait(60);
-  if (openedMenu) {
-    await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
-    await waitFor(`document.querySelector('[data-briefing-menu]').hidden`);
-  }
-}
-
 await mkdir(captureDir, { recursive: true });
 await send('Page.enable');
 await send('Runtime.enable');
@@ -142,35 +125,17 @@ await send('Emulation.setEmulatedMedia', { features: [
 await navigate(`${base}?visual-lot1=1`);
 await evaluate('document.fonts.ready', true);
 await waitFor(`Boolean(document.querySelector('[data-trajectory-app]')?.dataset.lastRequestId)`);
-const initial = await evaluate(`(()=>{const account=document.querySelector('.account-access');const rect=account.getBoundingClientRect();return{theme:document.documentElement.dataset.theme,mode:document.documentElement.dataset.themeMode,controls:document.querySelectorAll('input[name="fat-theme"]').length,themeColor:document.querySelector('meta[name="theme-color"]').content,account:{label:account.textContent.trim(),href:account.pathname,height:rect.height}}})()`);
-if (initial.theme !== 'dark' || initial.mode !== 'system' || initial.controls !== 3 || initial.account.label !== 'Mon compte' || initial.account.href !== '/compte/' || initial.account.height < 43.5) {
+const initial = await evaluate(`(()=>{const account=document.querySelector('.account-access');const rect=account.getBoundingClientRect();return{theme:document.documentElement.dataset.theme,mode:document.documentElement.dataset.themeMode||null,controls:document.querySelectorAll('input[name="fat-theme"]').length,themeColor:document.querySelector('meta[name="theme-color"]').content,account:{label:account.textContent.trim(),href:account.pathname,height:rect.height}}})()`);
+if (initial.theme !== 'dark' || initial.mode !== null || initial.controls !== 0 || initial.themeColor !== '#10140c' || initial.account.label !== 'Mon compte' || initial.account.href !== '/compte/' || initial.account.height < 43.5) {
   throw new Error(`Initial theme mismatch ${JSON.stringify(initial)}`);
 }
-const darkCanvas = await evaluate(`document.querySelector('#trajectory-chart').toDataURL()`);
 await captureHeader('lot1-header-night.png');
 
-await selectThemeByKeyboard('light');
-const lightState = await evaluate(`({theme:document.documentElement.dataset.theme,stored:localStorage.getItem('fat-theme'),checked:document.querySelector('input[value="light"]').checked,themeColor:document.querySelector('meta[name="theme-color"]').content})`);
-if (lightState.theme !== 'light' || lightState.stored !== 'light' || !lightState.checked || lightState.themeColor !== '#eef0e2') {
-  throw new Error(`Keyboard light mismatch ${JSON.stringify(lightState)}`);
-}
-const lightCanvas = await evaluate(`document.querySelector('#trajectory-chart').toDataURL()`);
-if (darkCanvas === lightCanvas) throw new Error('Canvas was not redrawn on theme change');
-await captureHeader('lot1-header-day.png');
-
-await navigate(`${base}?visual-lot1=persist`);
-await waitFor(`document.querySelectorAll('input[name="fat-theme"]').length === 3`);
-if (await evaluate(`document.documentElement.dataset.theme`) !== 'light') throw new Error('Theme did not persist after reload');
-
-await evaluate(`document.querySelector('input[value="dark"]').click()`);
 await evaluate(`import('/calculation-loader.js').then(m=>{window.__lot1Loader=m.createCalculationLoader({element:document.querySelector('[data-calculation-loader]'),busyTarget:document.querySelector('[data-trajectory-app]')});window.__lot1Loader.start(9001,{initial:true})})`, true);
 await wait(360);
 const loaderPending = await evaluate(`window.__lot1Loader.getState()`);
 if (!loaderPending.visible || loaderPending.progress > 99) throw new Error(`Loader pending mismatch ${JSON.stringify(loaderPending)}`);
 await capture('lot1-loader-night.png');
-await evaluate(`document.querySelector('input[value="light"]').click()`);
-await wait(80);
-await capture('lot1-loader-day.png');
 const completed = await evaluate(`(()=>{window.__lot1Loader.complete(9001);return window.__lot1Loader.getState().progress})()`);
 if (completed !== 100) throw new Error('Loader did not reach 100 on response');
 await wait(50);
@@ -199,9 +164,8 @@ await send('Emulation.setDeviceMetricsOverride', {
   width: 390, height: 844, screenWidth: 390, screenHeight: 844, deviceScaleFactor: 1, mobile: true,
 });
 await navigate(`${base}?visual-lot1=mobile`);
-await waitFor(`document.querySelectorAll('input[name="fat-theme"]').length === 3`);
-const mobile = await evaluate(`({innerWidth,scrollWidth:document.documentElement.scrollWidth,themeVisible:getComputedStyle(document.querySelector('[data-theme-control]')).display})`);
-if (mobile.innerWidth !== 390 || mobile.scrollWidth > mobile.innerWidth || mobile.themeVisible === 'none') throw new Error(`Mobile overflow ${JSON.stringify(mobile)}`);
+const mobile = await evaluate(`({innerWidth,scrollWidth:document.documentElement.scrollWidth,theme:document.documentElement.dataset.theme,themeControls:document.querySelectorAll('input[name="fat-theme"]').length})`);
+if (mobile.innerWidth !== 390 || mobile.scrollWidth > mobile.innerWidth || mobile.theme !== 'dark' || mobile.themeControls !== 0) throw new Error(`Mobile overflow ${JSON.stringify(mobile)}`);
 const mobileAccount = await evaluate(`(()=>{const account=document.querySelector('.account-access');const rect=account.getBoundingClientRect();return{href:account.pathname,label:account.getAttribute('aria-label'),width:rect.width,height:rect.height,visible:Boolean(account.getClientRects().length)}})()`);
 if (!mobileAccount.visible || mobileAccount.href !== '/compte/' || mobileAccount.label !== 'Mon compte' || mobileAccount.width < 43.5 || mobileAccount.height < 43.5) throw new Error(`Mobile account action missing ${JSON.stringify(mobileAccount)}`);
 const mobileInstall = await evaluate(`(()=>{const button=document.querySelector('.nav-install');const style=getComputedStyle(button);const rect=button.getBoundingClientRect();return{hidden:button.hidden,display:style.display,height:rect.height,mode:button.dataset.installMode}})()`);
@@ -223,7 +187,7 @@ await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await navigate(`${base}?visual-lot1=sw-control`);
 await waitFor(`Boolean(navigator.serviceWorker.controller)`);
 const cache = await evaluate(`caches.keys().then(keys=>({keys,controller:Boolean(navigator.serviceWorker.controller)}))`, true);
-if (!cache.keys.includes('fat-v3-2026-07-19-45') || !cache.controller) throw new Error(`PWA cache mismatch ${JSON.stringify(cache)}`);
+if (!cache.keys.includes('fat-v3-2026-07-23-47') || !cache.controller) throw new Error(`PWA cache mismatch ${JSON.stringify(cache)}`);
 await navigate(`${base}simulateur-trajectoire-airsoft/`);
 await navigate(`${base}outils/choisir-gaz-airsoft-pression-temperature/`);
 await waitFor(`document.documentElement.dataset.gasPressureReady === 'true'`);
@@ -242,8 +206,6 @@ if (!offlinePages[0].title.includes('Calculateur Airsoft') || !offlinePages[1].t
 
 const result = {
   initial,
-  lightState,
-  canvasRedrawn: darkCanvas !== lightCanvas,
   loaderPending,
   reducedMotion: reducedBefore,
   mobile,

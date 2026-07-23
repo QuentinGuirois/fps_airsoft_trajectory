@@ -30,6 +30,7 @@ Promesse éditoriale : **mesurer, comprendre, comparer, valider sur cible**.
 | Priorité | URL | Requête principale | Intention | CTA principal |
 |---|---|---|---|---|
 | P0 | `/` | calculateur airsoft | Utiliser un outil complet | Simuler un setup |
+| P0 | `/parties-airsoft/` | partie airsoft France | Trouver une partie publiée | Explorer le Radar |
 | P0 | `/convertisseur-joules-fps/` | convertisseur joules fps airsoft | Convertir immédiatement | Ouvrir le simulateur |
 | P0 | `/simulateur-trajectoire-airsoft/` | simulateur trajectoire airsoft | Comprendre/utiliser l’outil | Lancer une simulation |
 | P0 | `/guides/choisir-poids-bille-airsoft/` | quel poids bille airsoft choisir | Choisir un grammage | Comparer deux billes |

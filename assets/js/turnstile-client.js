@@ -1,5 +1,8 @@
 export const TURNSTILE_SCRIPT_URL = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
-export const TURNSTILE_ACTIONS = Object.freeze(['login', 'register', 'forgot_password']);
+export const TURNSTILE_ACTIONS = Object.freeze([
+  'login', 'register', 'forgot_password',
+  'radar_publish', 'radar_cancel', 'radar_delete', 'radar_report',
+]);
 
 export class TurnstileClientError extends Error {
   constructor(message, code = 'turnstile_client') {
@@ -103,7 +106,7 @@ export function createTurnstileController({
     const widgetId = api.render(container, {
       sitekey: config.siteKey,
       action,
-      theme: documentRef.documentElement?.dataset?.theme === 'light' ? 'light' : 'dark',
+      theme: 'dark',
       size: 'flexible',
       appearance: 'always',
       callback: (token) => {

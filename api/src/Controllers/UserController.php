@@ -8,6 +8,7 @@ use Fat\Api\HttpException;
 use Fat\Api\Request;
 use Fat\Api\Response;
 use Fat\Api\Services\AuditLogger;
+use Fat\Api\Services\SensitiveData;
 use Fat\Api\Services\SessionService;
 use Fat\Api\Validation\Validator;
 use PDO;
@@ -63,11 +64,27 @@ final class UserController
         $this->sessions->requireCsrf($request, $session);
         $replicas = $this->db->prepare('SELECT id,model_name,replica_type,mass_g,energy_j,simulation_url,youtube_url,state,image_status,created_at,updated_at FROM replica_posts WHERE user_id=? ORDER BY created_at');
         $replicas->execute([$session['id']]);
+        $radar = $this->db->prepare(
+            'SELECT id,slug,state,moderation_state,title,venue_name,short_description,starts_at_utc,'
+            . 'ends_at_utc,scenario,level_label,beginners_welcome,max_capacity,price_cents,minimum_age,'
+            . 'rental_details,catering_details,toilets_available,latitude,longitude,location_method,location_confirmed_at,location_visibility,'
+            . 'exact_address,public_location_label,city,postal_code,department_code,department,region,registration_url,'
+            . 'contact_email_ciphertext,published_at,cancelled_at,expires_at,created_at,updated_at '
+            . 'FROM radar_events WHERE user_id=? ORDER BY created_at'
+        );
+        $radar->execute([$session['id']]);
+        $sensitive = new SensitiveData($this->config);
+        $radarEvents = array_map(static function (array $row) use ($sensitive): array {
+            $row['contact_email'] = $sensitive->decrypt($row['contact_email_ciphertext']);
+            unset($row['contact_email_ciphertext']);
+            return $row;
+        }, $radar->fetchAll());
         $this->audit->write($request->requestId, $session['id'], 'user.export', 'user', $session['id']);
         Response::json([
             'exportedAt' => gmdate(DATE_ATOM),
             'user' => $this->user($session),
             'replicas' => $replicas->fetchAll(),
+            'radarEvents' => $radarEvents,
         ], 200, ['Content-Disposition' => 'attachment; filename="fat-export.json"']);
     }
 

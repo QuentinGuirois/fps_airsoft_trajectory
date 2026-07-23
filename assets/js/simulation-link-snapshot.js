@@ -1,5 +1,5 @@
-import { validateSimulationUrl } from '../../replica-utils.js?v=20260718-28';
-import { serializeCurveThumbnail } from './curve-thumbnail.js?v=20260718-28';
+import { validateSimulationUrl } from '../../replica-utils.js?v=20260723-47';
+import { serializeCurveThumbnail } from './curve-thumbnail.js?v=20260723-47';
 
 const QUERY_ALIASES = Object.freeze({
   massG: 'm',
@@ -64,7 +64,7 @@ export function simulationUrlsMatch(first, second, origin = globalThis.location?
 
 export async function createSimulationSnapshot(value, {
   origin = globalThis.location?.origin || 'https://fps-airsoft-trajectory.com',
-  workerFactory = () => new Worker('/trajectory.worker.js?v=20260718-28', { type: 'module' }),
+  workerFactory = () => new Worker('/trajectory.worker.js?v=20260723-47', { type: 'module' }),
   signal,
   timeoutMs = 15_000,
 } = {}) {

@@ -1,5 +1,5 @@
-import { initTheme } from './theme.js?v=20260718-28';
-import { markAdvancedTransition } from './advanced-transition.js?v=20260718-28';
+import { initTheme } from './theme.js?v=20260723-47';
+import { markAdvancedTransition } from './advanced-transition.js?v=20260723-47';
 
 const SHOT_STORAGE_KEY = 'fat-shot-v3';
 const SUMMARY_STORAGE_KEY = 'fat-last-summary-v3';
@@ -13,6 +13,7 @@ const primaryNavigation = [
 
 const briefingNavigation = [
   { href: '/#calculateur', label: 'Calculateur', description: 'Trajectoire 2D/3D · le banc complet' },
+  { href: '/parties-airsoft/', label: 'Radar des parties', description: 'Carte de France · parties réellement publiées' },
   { href: '/tu-joues-avec-quoi/', label: 'Tu joues avec quoi ?', description: 'Répliques et courbes publiées par les joueurs' },
   { href: '/convertisseur-joules-fps/', label: 'Joules ↔ FPS', description: 'Conversion rapide · tous grammages' },
   { href: gasToolPath, label: 'Gaz & température', description: 'Pression théorique normalisée' },
@@ -112,7 +113,6 @@ function ensureBriefingMenu() {
       <aside class="briefing-sidebar">
         <section class="last-setup-card" data-last-setup-card aria-labelledby="last-setup-title"></section>
         <nav class="briefing-secondary" aria-label="Liens du projet"><a href="/compte/">Mon compte</a><a href="/modele-physique-atp/">Le modèle ATP</a><a href="/a-propos/">À propos / Keep</a><a href="/faq-airsoft-balistique/">FAQ</a><a href="/#tutoriel-calculateur" data-tutorial-launch>Relancer le tutoriel</a><button type="button" data-install-app hidden>Installer l’app ↓</button></nav>
-        <div class="briefing-theme" data-theme-slot></div>
         <p class="briefing-install-help" data-install-help hidden>L’installation dépend du navigateur. Utilise son menu « Installer l’application » ou « Ajouter à l’écran d’accueil ».</p>
         <div class="briefing-pwa-status"><span aria-hidden="true"></span><p data-pwa-status>SERVICE WORKER EN INITIALISATION</p></div>
       </aside>
@@ -135,7 +135,7 @@ function normalizeFooter() {
       <div>${brandMarkup()}<p>La physique airsoft rendue lisible, du chrony à la trajectoire.</p></div>
       <div><h2>Outils</h2><ul><li><a href="/outils/">Tous les outils</a></li><li><a href="/#calculateur">Simulateur de trajectoire</a></li><li><a href="/simulateur-3d-airsoft/" data-advanced-entry>Simulateur 3D avancé</a></li><li><a href="/convertisseur-joules-fps/">Convertisseur Joules/FPS</a></li><li><a href="${gasToolPath}">Gaz / température</a></li></ul></div>
       <div><h2>Guides</h2><ul><li><a href="/guides/">Tous les guides</a></li><li><a href="/guides/choisir-poids-bille-airsoft/">Poids de bille</a></li><li><a href="/guides/regler-hop-up-airsoft/">Réglage hop-up</a></li><li><a href="/guides/portee-airsoft/">Portée airsoft</a></li><li><a href="/guides/joule-creep-airsoft/">Joule Creep</a></li></ul></div>
-      <div><h2>Projet</h2><ul><li><a href="/tu-joues-avec-quoi/">Tu joues avec quoi ?</a></li><li><a href="/modele-physique-atp/">Modèle ATP & Mackila</a></li><li><a href="/a-propos/">À propos de Keep</a></li><li><a href="/faq-airsoft-balistique/">FAQ</a></li><li><a href="/mentions-legales/">Mentions légales</a></li><li><a href="/politique-confidentialite/">Confidentialité</a></li></ul></div>
+      <div><h2>Projet</h2><ul><li><a href="/parties-airsoft/">Radar des parties</a></li><li><a href="/tu-joues-avec-quoi/">Tu joues avec quoi ?</a></li><li><a href="/modele-physique-atp/">Modèle ATP & Mackila</a></li><li><a href="/a-propos/">À propos de Keep</a></li><li><a href="/faq-airsoft-balistique/">FAQ</a></li><li><a href="/mentions-legales/">Mentions légales</a></li><li><a href="/politique-confidentialite/">Confidentialité</a></li></ul></div>
     </div>
     <div class="footer-bottom"><span>© 2026 Quentin Guirois — F.A.T.</span><span>Mesure au chrony &gt; portée racontée.</span></div>
   </div>`;
@@ -434,7 +434,7 @@ document.querySelectorAll('[data-converter]').forEach((converter) => {
 });
 
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  const registerServiceWorker = () => navigator.serviceWorker.register('/service-worker.js?v=20260719-45').catch(() => null);
+  const registerServiceWorker = () => navigator.serviceWorker.register('/service-worker.js?v=20260723-47').catch(() => null);
   if (document.readyState === 'complete') registerServiceWorker();
   else window.addEventListener('load', registerServiceWorker, { once: true });
 }

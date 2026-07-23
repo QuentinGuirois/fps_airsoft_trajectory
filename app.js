@@ -8,12 +8,12 @@ import {
   mpsToFps,
   normalizeShot,
   simulateTrajectory,
-} from './physics-core.js?v=20260718-28';
-import { fitChartDomain, prepareChartSeries } from './chart-data.js?v=20260718-28';
-import { createCalculationLoader } from './calculation-loader.js?v=20260718-28';
-import { detectWebGL, mobile3DDisabled } from './render-capabilities.js?v=20260719-45';
-import { serializeCurveThumbnail } from './assets/js/curve-thumbnail.js?v=20260718-28';
-import { createProductionRepositories, RepositoryError } from './assets/js/community-repositories.js?v=20260719-45';
+} from './physics-core.js?v=20260723-47';
+import { fitChartDomain, prepareChartSeries } from './chart-data.js?v=20260723-47';
+import { createCalculationLoader } from './calculation-loader.js?v=20260723-47';
+import { detectWebGL, mobile3DDisabled } from './render-capabilities.js?v=20260723-47';
+import { serializeCurveThumbnail } from './assets/js/curve-thumbnail.js?v=20260723-47';
+import { createProductionRepositories, RepositoryError } from './assets/js/community-repositories.js?v=20260723-47';
 
 const root = document.querySelector('[data-trajectory-app]');
 
@@ -92,7 +92,7 @@ if (root) {
       fireline: color('--scene-fireline', '#6b7a4f'),
       ball: color('--scene-ball', '#e9ecdd'),
       impact: color('--chart-marker-impact', '#e07856'),
-      groundOpacity: document.documentElement.dataset.theme === 'light' ? 0.58 : 0.38,
+      groundOpacity: 0.38,
     };
   }
 
@@ -153,7 +153,7 @@ if (root) {
     }
 
     try {
-      state.droneModulePromise ||= import('./drone-3d.js?v=20260718-28');
+      state.droneModulePromise ||= import('./drone-3d.js?v=20260723-47');
       const { createDroneView } = await state.droneModulePromise;
       if (!state.droneActive) return;
       state.droneApi = createDroneView({
@@ -824,18 +824,13 @@ if (root) {
     cancelAnimationFrame(state.resizeFrame);
     state.resizeFrame = requestAnimationFrame(drawChart);
   });
-  window.addEventListener('fat:themechange', () => {
-    cancelAnimationFrame(state.resizeFrame);
-    if (state.droneApi) state.droneApi.setTheme(droneThemeColors());
-    else state.resizeFrame = requestAnimationFrame(drawChart);
-  });
   window.addEventListener('pagehide', () => {
     state.droneApi?.destroy();
     state.droneApi = null;
   });
 
   try {
-    state.worker = new Worker('./trajectory.worker.js?v=20260718-28', { type: 'module' });
+    state.worker = new Worker('./trajectory.worker.js?v=20260723-47', { type: 'module' });
     state.worker.addEventListener('message', (event) => receiveResult(event.data));
     state.worker.addEventListener('error', (event) => {
       event.currentTarget?.terminate?.();

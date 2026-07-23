@@ -45,11 +45,12 @@ final class Request
             throw new HttpException(415, 'content_type', 'Le corps doit être envoyé en JSON.');
         }
         try {
+            $shape = json_decode($this->rawBody, false, 32, JSON_THROW_ON_ERROR);
             $value = json_decode($this->rawBody, true, 32, JSON_THROW_ON_ERROR);
         } catch (\JsonException) {
             throw new HttpException(400, 'invalid_json', 'Le JSON est invalide.');
         }
-        if (!is_array($value) || array_is_list($value)) {
+        if (!is_object($shape) || !is_array($value)) {
             throw new HttpException(400, 'invalid_json', 'Un objet JSON est attendu.');
         }
         return $value;
@@ -58,6 +59,14 @@ final class Request
     public function header(string $name): string
     {
         return $this->headers[strtolower($name)] ?? '';
+    }
+
+    /** @return array<string,string> */
+    public function query(): array
+    {
+        $values = [];
+        parse_str((string) ($this->server['QUERY_STRING'] ?? ''), $values);
+        return array_filter($values, static fn(mixed $value): bool => is_string($value));
     }
 
     public function ip(): string

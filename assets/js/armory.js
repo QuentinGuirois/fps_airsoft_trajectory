@@ -1,5 +1,5 @@
-import { sanitizedCurveSvg } from './replica-card.js?v=20260719-45';
-import { RepositoryError } from './community-repositories.js?v=20260719-45';
+import { sanitizedCurveSvg } from './replica-card.js?v=20260723-47';
+import { RepositoryError } from './community-repositories.js?v=20260723-47';
 
 export function summarizeReplicas(replicas = []) {
   return replicas.reduce((summary, replica) => {

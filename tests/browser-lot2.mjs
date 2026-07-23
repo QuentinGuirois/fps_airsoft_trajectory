@@ -98,21 +98,15 @@ async function setViewport(width, height = width <= 390 ? 844 : 900) {
   await send('Emulation.setDeviceMetricsOverride', { width, height, screenWidth: width, screenHeight: height, deviceScaleFactor: 1, mobile: width <= 768 });
 }
 
-async function setTheme(theme) {
-  await evaluate(`localStorage.setItem('fat-theme','${theme}')`);
-}
-
-async function checkLayout(width, theme) {
+async function checkLayout(width) {
   await setViewport(width);
-  await setTheme(theme);
-  await navigate(`${base}?lot2=${width}-${theme}`);
-  await waitFor(`document.querySelectorAll('input[name="fat-theme"]').length === 3`);
+  await navigate(`${base}?lot2=${width}-dark`);
   await waitFor(`Boolean(document.querySelector('[data-trajectory-app]')?.dataset.lastRequestId)`);
-  const state = await evaluate(`(()=>{const targets=[...document.querySelectorAll('.brand,.menu-button,.theme-option span,.preset-row button,.field input,.field select,.spin-stepper button,.control-actions .button,.mobile-cta')].filter(e=>e.offsetParent&&getComputedStyle(e).visibility!=='hidden');const small=targets.filter(e=>e.getBoundingClientRect().height<43.5).slice(0,8).map(e=>({tag:e.tagName,id:e.id,cls:e.className,h:e.getBoundingClientRect().height}));return{width:innerWidth,scroll:document.documentElement.scrollWidth,theme:document.documentElement.dataset.theme,controls:document.querySelectorAll('input[name="fat-theme"]').length,small}})()`);
-  if (state.scroll > state.width) throw new Error(`Overflow ${width}/${theme}: ${JSON.stringify(state)}`);
-  if (state.theme !== theme || state.controls !== 3) throw new Error(`Theme ${width}/${theme}: ${JSON.stringify(state)}`);
-  if (width <= 390 && state.small.length) throw new Error(`Hit target ${width}/${theme}: ${JSON.stringify(state.small)}`);
-  await capture(`lot2-home-${width}-${theme}.png`);
+  const state = await evaluate(`(()=>{const targets=[...document.querySelectorAll('.brand,.menu-button,.preset-row button,.field input,.field select,.spin-stepper button,.control-actions .button,.mobile-cta')].filter(e=>e.offsetParent&&getComputedStyle(e).visibility!=='hidden');const small=targets.filter(e=>e.getBoundingClientRect().height<43.5).slice(0,8).map(e=>({tag:e.tagName,id:e.id,cls:e.className,h:e.getBoundingClientRect().height}));return{width:innerWidth,scroll:document.documentElement.scrollWidth,theme:document.documentElement.dataset.theme,controls:document.querySelectorAll('input[name="fat-theme"]').length,small}})()`);
+  if (state.scroll > state.width) throw new Error(`Overflow ${width}: ${JSON.stringify(state)}`);
+  if (state.theme !== 'dark' || state.controls !== 0) throw new Error(`Theme ${width}: ${JSON.stringify(state)}`);
+  if (width <= 390 && state.small.length) throw new Error(`Hit target ${width}: ${JSON.stringify(state.small)}`);
+  await capture(`lot2-home-${width}-dark.png`);
   return state;
 }
 
@@ -130,12 +124,11 @@ await send('Emulation.setEmulatedMedia', { features: [
 const layouts = [];
 await navigate(base);
 for (const width of [360, 390, 768, 1024, 1440]) {
-  for (const theme of ['dark', 'light']) layouts.push(await checkLayout(width, theme));
+  layouts.push(await checkLayout(width));
 }
 
 await setViewport(1440);
-for (const theme of ['dark', 'light']) {
-  await setTheme(theme);
+for (const theme of ['dark']) {
   await navigate(`${base}outils/choisir-gaz-airsoft-pression-temperature/?t=12&brand=Nimrod%20Tactical&gas=nimrod-green-145`);
   await waitFor(`!document.querySelector('#gas-result').hidden`);
   const gasState = await evaluate(`({temperature:document.querySelector('#gas-temperature').value,brand:document.querySelector('#gas-brand').value,gas:document.querySelector('#gas-product').value,path:document.querySelector('#gas-chart-primary').getAttribute('d'),scroll:document.documentElement.scrollWidth,width:innerWidth})`);
@@ -161,12 +154,9 @@ for (const theme of ['dark', 'light']) {
 const briefingStates = [];
 for (const { width, height, theme, setup } of [
   { width: 1440, height: 900, theme: 'dark', setup: 'empty' },
-  { width: 1440, height: 900, theme: 'light', setup: 'present' },
   { width: 390, height: 844, theme: 'dark', setup: 'present' },
-  { width: 390, height: 844, theme: 'light', setup: 'empty' },
 ]) {
   await setViewport(width, height);
-  await setTheme(theme);
   await navigate(`${base}convertisseur-joules-fps/?briefing=${width}-${theme}`);
   if (setup === 'present') {
     await evaluate(`(()=>{localStorage.setItem('fat-shot-v3',JSON.stringify({energyJ:1.5,massG:.28}));localStorage.setItem('fat-last-summary-v3',JSON.stringify({energyJ:1.5,massG:.28,usefulRangeM:52,calculatedAt:'2026-07-18T12:00:00.000Z'}))})()`);
@@ -179,7 +169,7 @@ for (const { width, height, theme, setup } of [
   await waitFor(`!document.querySelector('[data-briefing-menu]').hidden`);
   await wait(900);
   const menuState = await evaluate(`(()=>{const overlay=document.querySelector('[data-briefing-menu]');const links=[...overlay.querySelectorAll('.briefing-link')];const targets=[...overlay.querySelectorAll('.briefing-link,.briefing-secondary a,.briefing-secondary button:not([hidden]),.last-setup-card .button')].filter(node=>node.getClientRects().length);return{expanded:document.querySelector('[data-menu-button]').getAttribute('aria-expanded'),role:overlay.getAttribute('role'),modal:overlay.getAttribute('aria-modal'),locked:document.body.classList.contains('has-briefing-menu'),focused:overlay.contains(document.activeElement),links:links.length,small:targets.filter(node=>node.getBoundingClientRect().height<47.5).map(node=>({text:node.textContent.trim(),height:node.getBoundingClientRect().height})),scroll:overlay.scrollWidth,width:overlay.clientWidth,setup:overlay.querySelector('[data-last-setup-card]').textContent.replace(/\\s+/g,' ').trim(),status:overlay.querySelector('[data-pwa-status]').textContent.trim()}})()`);
-  if (menuState.expanded !== 'true' || menuState.role !== 'dialog' || menuState.modal !== 'true' || !menuState.locked || !menuState.focused || menuState.links !== 6 || menuState.small.length || menuState.scroll > menuState.width) throw new Error(`Briefing state ${width}/${theme}: ${JSON.stringify(menuState)}`);
+  if (menuState.expanded !== 'true' || menuState.role !== 'dialog' || menuState.modal !== 'true' || !menuState.locked || !menuState.focused || menuState.links !== 7 || menuState.small.length || menuState.scroll > menuState.width) throw new Error(`Briefing state ${width}/${theme}: ${JSON.stringify(menuState)}`);
   if (setup === 'present' && (!menuState.setup.includes('1,5') || !menuState.setup.includes('0,28') || !menuState.setup.includes('52 m') || !menuState.setup.includes('Calculé'))) throw new Error(`Briefing setup missing: ${JSON.stringify(menuState)}`);
   if (setup === 'empty' && (!menuState.setup.includes('AUCUN SETUP ENREGISTRÉ') || !menuState.setup.includes('n’invente aucune portée'))) throw new Error(`Briefing empty state: ${JSON.stringify(menuState)}`);
   if (!['SERVICE WORKER EN INITIALISATION', 'HORS CONNEXION PRÊT', 'MODE HORS CONNEXION ACTIF'].includes(menuState.status)) throw new Error(`Briefing PWA status: ${JSON.stringify(menuState)}`);
@@ -194,7 +184,6 @@ for (const { width, height, theme, setup } of [
 }
 
 await setViewport(1024, 900);
-await setTheme('dark');
 await navigate(`${base}convertisseur-joules-fps/?visual-fixes`);
 await waitFor(`Boolean(document.querySelector('[data-converter-trust]'))`);
 const converterVisual = await evaluate(`(()=>{const converter=document.querySelector('[data-converter]');const trust=document.querySelector('[data-converter-trust]');const cta=document.querySelector('.guide-rail-cta .button-primary');return{trustAfterGrid:converter.nextElementSibling===trust,firstChild:converter.firstElementChild.className,ctaColor:getComputedStyle(cta).color,ctaBackground:getComputedStyle(cta).backgroundColor}})()`);
@@ -239,22 +228,21 @@ await send('Emulation.setEmulatedMedia', { features: [
   { name: 'prefers-color-scheme', value: 'dark' },
   { name: 'prefers-reduced-motion', value: 'no-preference' },
 ] });
-await evaluate(`localStorage.setItem('fat-theme','system')`);
-await navigate(`${base}?lot2=system-theme`);
+await evaluate(`localStorage.setItem('fat-theme','legacy-choice')`);
+await navigate(`${base}?lot2=fixed-theme`);
 await waitFor(`document.documentElement.dataset.theme === 'dark'`);
 await evaluate(`(()=>{window.__systemPosts=0;const original=Worker.prototype.postMessage;Worker.prototype.postMessage=function(...args){window.__systemPosts++;return original.apply(this,args)}})()`);
 await send('Emulation.setEmulatedMedia', { features: [
   { name: 'prefers-color-scheme', value: 'light' },
   { name: 'prefers-reduced-motion', value: 'no-preference' },
 ] });
-await waitFor(`document.documentElement.dataset.theme === 'light'`);
-const systemTheme = await evaluate(`({mode:document.documentElement.dataset.themeMode,theme:document.documentElement.dataset.theme,stored:localStorage.getItem('fat-theme'),posts:window.__systemPosts,checked:document.querySelector('input[name="fat-theme"][value="system"]').checked})`);
-if (systemTheme.mode !== 'system' || systemTheme.theme !== 'light' || systemTheme.stored !== 'system' || systemTheme.posts !== 0 || !systemTheme.checked) throw new Error(`System theme: ${JSON.stringify(systemTheme)}`);
+await wait(80);
+const fixedTheme = await evaluate(`({mode:document.documentElement.dataset.themeMode||null,theme:document.documentElement.dataset.theme,stored:localStorage.getItem('fat-theme'),posts:window.__systemPosts,controls:document.querySelectorAll('input[name="fat-theme"]').length})`);
+if (fixedTheme.mode !== null || fixedTheme.theme !== 'dark' || fixedTheme.stored !== null || fixedTheme.posts !== 0 || fixedTheme.controls !== 0) throw new Error(`Fixed theme: ${JSON.stringify(fixedTheme)}`);
 
 await setViewport(390, 844);
-await setTheme('dark');
 await navigate(`${base}?lot2=keyboard`);
-await waitFor(`document.querySelectorAll('input[name="fat-theme"]').length===3`);
+await waitFor(`Boolean(document.querySelector('[data-menu-button]'))`);
 await evaluate(`document.querySelector('[data-menu-button]').focus()`);
 await send('Input.dispatchKeyEvent', { type: 'keyDown', key: ' ', code: 'Space', windowsVirtualKeyCode: 32 });
 await send('Input.dispatchKeyEvent', { type: 'keyUp', key: ' ', code: 'Space', windowsVirtualKeyCode: 32 });
@@ -286,7 +274,7 @@ const result = {
   briefingStates,
   visualFixes: { converterVisual, publishedBadge },
   zoom200,
-  systemTheme,
+  fixedTheme,
   reduced,
   consoleErrors,
   screenshots: (await readdir(captureDir)).filter((file) => file.startsWith('lot2-') || file.startsWith('lot4-')).sort(),

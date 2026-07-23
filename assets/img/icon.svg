@@ -3,7 +3,6 @@
   <desc id="desc">Une bille suit une courbe balistique au-dessus d’un sol pointillé.</desc>
   <style>
     .curve{fill:none;stroke:#a8ff3f;stroke-width:6;stroke-linecap:round}.ball{fill:#e9ecdd;stroke:#12160d;stroke-width:2.5}.spin{fill:none;stroke:#6b7a4f;stroke-width:4;stroke-linecap:round}.ground{stroke:#3a4529;stroke-width:3;stroke-dasharray:2 8;stroke-linecap:round}
-    @media (prefers-color-scheme:light){.curve{stroke:#3d5220}.ball{fill:#12160d;stroke:#eef0e2}.ground{stroke:#a3a88e}}
   </style>
   <path class="curve" d="M6 62C30 30 62 22 78 26C96 31 106 44 112 62"/>
   <circle class="ball" cx="78" cy="26" r="13"/>

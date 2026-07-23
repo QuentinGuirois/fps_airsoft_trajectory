@@ -9,7 +9,7 @@ use Fat\Api\Services\TurnstileVerifier;
 $root = dirname(__DIR__);
 require $root . '/api/src/autoload.php';
 
-function configureTurnstile(bool $enabled = true, string $environment = 'local'): Config
+function configureTurnstile(bool $enabled = true, string $environment = 'local', bool $acceptTestKeys = false): Config
 {
     global $root;
     $values = [
@@ -26,6 +26,7 @@ function configureTurnstile(bool $enabled = true, string $environment = 'local')
         'TURNSTILE_SECRET_KEY' => '1x0000000000000000000000000000000AA',
         'TURNSTILE_EXPECTED_HOSTNAME' => '127.0.0.1',
         'TURNSTILE_TIMEOUT_SECONDS' => '4',
+        'TURNSTILE_ACCEPT_TEST_KEYS' => $acceptTestKeys ? 'true' : 'false',
     ];
     foreach ($values as $key => $value) {
         putenv("{$key}={$value}");
@@ -83,6 +84,15 @@ expectTurnstileError('turnstile_invalid', 422, fn() => (new TurnstileVerifier($c
 expectTurnstileError('turnstile_invalid', 422, fn() => (new TurnstileVerifier($config, fn(): array => validTurnstileResult('login', '127.0.0.1', gmdate(DATE_ATOM, time() - 400))))->verify('token', 'login', $request));
 expectTurnstileError('turnstile_invalid', 422, fn() => (new TurnstileVerifier($config, fn(): array => ['success' => false]))->verify('token', 'login', $request));
 expectTurnstileError('turnstile_unavailable', 503, fn() => (new TurnstileVerifier($config, function (): never { throw new RuntimeException('offline'); }))->verify('token', 'login', $request));
+
+$testKeyConfig = configureTurnstile(true, 'local', true);
+$testKeyResult = [
+    'success' => true,
+    'challenge_ts' => gmdate(DATE_ATOM),
+    'hostname' => 'example.com',
+    'metadata' => ['result_with_testing_key' => true],
+];
+(new TurnstileVerifier($testKeyConfig, fn(): array => $testKeyResult))->verify('testing-token', 'radar_publish', $request);
 
 $calls = 0;
 $singleUse = new TurnstileVerifier($config, function () use (&$calls): array {

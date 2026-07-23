@@ -18,7 +18,7 @@ test('le cockpit conserve le canvas accessible, ses onglets, sa table et ses lé
   assert.match(html, /id="holdover-body"/);
 });
 
-test('les couleurs du Canvas sont relues dans les variables CSS à chaque dessin', async () => {
+test('les couleurs du Canvas sont relues dans les variables CSS de la palette sombre', async () => {
   const [app, css] = await Promise.all([read('app.js'), read('assets', 'site.css')]);
   for (const token of [
     '--chart-active', '--curve-2', '--curve-3', '--curve-4', '--chart-grid',
@@ -28,9 +28,8 @@ test('les couleurs du Canvas sont relues dans les variables CSS à chaque dessin
     assert.match(css, new RegExp(`${token.replaceAll('-', '\\-')}:`));
     assert.match(app, new RegExp(`cssColor\\('${token.replaceAll('-', '\\-')}'`));
   }
-  const themeHandler = app.match(/window\.addEventListener\('fat:themechange',[\s\S]*?\n  \}\);/)?.[0] || '';
-  assert.match(themeHandler, /drawChart/);
-  assert.doesNotMatch(themeHandler, /runSimulation|simulateTrajectory|postMessage/);
+  assert.doesNotMatch(app, /fat:themechange|dataset\.theme ===/);
+  assert.match(app, /groundOpacity:\s*0\.38/);
 });
 
 test('la géométrie et les traits du cockpit suivent la charte 2D', async () => {
@@ -57,8 +56,8 @@ test('l’enregistrement conserve une URL complète et les paramètres avancés'
 
 test('le cache PWA contient les modules 2D avec une nouvelle version', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /fat-v3-2026-07-19-45/);
-  assert.match(worker, /'\/chart-data\.js\?v=20260718-28'/);
-  assert.match(worker, /'\/app\.js\?v=20260719-45'/);
-  assert.match(worker, /'\/assets\/site\.css\?v=20260719-45'/);
+  assert.match(worker, /fat-v3-2026-07-23-47/);
+  assert.match(worker, /'\/chart-data\.js\?v=20260723-47'/);
+  assert.match(worker, /'\/app\.js\?v=20260723-47'/);
+  assert.match(worker, /'\/assets\/site\.css\?v=20260723-47'/);
 });

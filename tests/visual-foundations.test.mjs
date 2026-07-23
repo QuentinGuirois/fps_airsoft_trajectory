@@ -4,11 +4,9 @@ import { readdir, readFile } from 'node:fs/promises';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  applyTheme,
-  normalizeThemeMode,
-  resolveTheme,
-  THEME_COLORS,
-  THEME_STORAGE_KEY,
+  applyDarkTheme,
+  initTheme,
+  THEME_COLOR,
 } from '../theme.js';
 import {
   createCalculationLoader,
@@ -36,23 +34,21 @@ function pngDimensions(buffer) {
   return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
 }
 
-test('le thème normalise Système, Nuit et Jour avec un repli système sombre', () => {
-  assert.equal(THEME_STORAGE_KEY, 'fat-theme');
-  assert.equal(normalizeThemeMode('invalid'), 'system');
-  assert.equal(resolveTheme('system', true), 'dark');
-  assert.equal(resolveTheme('system', false), 'light');
-  assert.equal(resolveTheme('dark', false), 'dark');
-  assert.equal(resolveTheme('light', true), 'light');
-
+test('le thème force toujours la palette sombre et efface l’ancien choix mémorisé', () => {
   const meta = { value: '', setAttribute(name, value) { if (name === 'content') this.value = value; } };
   const doc = {
-    documentElement: { dataset: {}, style: {} },
+    documentElement: { dataset: { themeMode: 'legacy' }, style: {} },
     querySelector: () => meta,
   };
-  assert.equal(applyTheme('light', { document: doc, prefersDark: true }), 'light');
-  assert.equal(doc.documentElement.dataset.themeMode, 'light');
-  assert.equal(doc.documentElement.style.colorScheme, 'light');
-  assert.equal(meta.value, THEME_COLORS.light);
+  const removed = [];
+  const storage = { removeItem(key) { removed.push(key); } };
+  assert.equal(applyDarkTheme({ document: doc }), 'dark');
+  assert.equal(doc.documentElement.dataset.theme, 'dark');
+  assert.equal('themeMode' in doc.documentElement.dataset, false);
+  assert.equal(doc.documentElement.style.colorScheme, 'dark');
+  assert.equal(meta.value, THEME_COLOR);
+  assert.deepEqual(initTheme({ document: doc, storage }), { theme: 'dark' });
+  assert.deepEqual(removed, ['fat-theme']);
 });
 
 test('chaque page initialise le thème dans le head avant la feuille de style', async () => {
@@ -60,8 +56,8 @@ test('chaque page initialise le thème dans le head avant la feuille de style', 
   const files = (await walk(root)).filter((path) => path.endsWith('.html') && !path.includes(emailTemplateSegment));
   for (const path of files) {
     const html = await readFile(path, 'utf8');
-    const initPosition = html.indexOf('<script src="/theme-bootstrap.js?v=20260719-45" data-cfasync="false"></script>');
-    const cssPosition = html.search(/<link rel="stylesheet" href="\/assets\/site\.css\?v=20260719-45">/);
+    const initPosition = html.indexOf('<script src="/theme-bootstrap.js?v=20260723-47" data-cfasync="false"></script>');
+    const cssPosition = html.search(/<link rel="stylesheet" href="\/assets\/site\.css\?v=20260723-47">/);
     assert.ok(initPosition > 0, path);
     assert.ok(cssPosition > initPosition, path);
     assert.match(html, /meta name="theme-color" content="#10140c"/);
@@ -69,10 +65,8 @@ test('chaque page initialise le thème dans le head avant la feuille de style', 
 
   const theme = await readFile(join(root, 'theme.js'), 'utf8');
   const site = await readFile(join(root, 'site.js'), 'utf8');
-  assert.match(theme, /Système/);
-  assert.match(theme, /Nuit/);
-  assert.match(theme, /Jour/);
-  assert.match(theme, /fat:themechange/);
+  assert.match(theme, /applyDarkTheme/);
+  assert.doesNotMatch(theme, /data-theme-control|theme-switcher|fat:themechange/);
   assert.match(site, /document\.readyState === 'complete'/);
   assert.match(site, /registerServiceWorker/);
 });
@@ -88,7 +82,7 @@ test('les tokens et composants du lot 1 sont centralisés dans site.css', async 
   for (const component of ['.chip', '.trust-tag', '.field-card', '.metric-hero', '.stencil-patch', '.camo-strip', '.hatched-block', '.attribution-block']) {
     assert.ok(css.includes(component), component);
   }
-  assert.match(css, /:root\[data-theme="light"\]/);
+  assert.doesNotMatch(css, /data-theme="light"|prefers-color-scheme:\s*light|color-scheme:\s*light/);
   assert.match(css, /prefers-reduced-motion: reduce/);
   assert.match(css, /@supports \(offset-path: path/);
   assert.match(css, /\.calculation-loader-ball \{[\s\S]*?top: 26px;[\s\S]*?left: 78px;/);
@@ -203,11 +197,11 @@ test('les polices officielles, licences et modules visuels sont disponibles hors
   }
 
   const sw = await readFile(join(root, 'service-worker.js'), 'utf8');
-  for (const resource of [...fontFiles.map((file) => `/assets/fonts/${file}`), '/theme.js?v=20260718-28', '/calculation-loader.js?v=20260718-28', '/assets/img/icon-maskable-512.png']) {
+  for (const resource of [...fontFiles.map((file) => `/assets/fonts/${file}`), '/theme.js?v=20260723-47', '/calculation-loader.js?v=20260723-47', '/assets/img/icon-maskable-512.png']) {
     assert.ok(sw.includes(`'${resource}'`), resource);
   }
   assert.doesNotMatch(sw, /quentin-guirois-(?:320|640)|quentin-guirois-social|partage-fat\.png/);
-  assert.match(sw, /const CACHE = 'fat-v3-2026-07-19-45'/);
+  assert.match(sw, /const CACHE = 'fat-v3-2026-07-23-47'/);
 
   const production = (await walk(root)).filter((path) => /\.(?:html|css|js|webmanifest|svg)$/.test(path));
   for (const path of production) {

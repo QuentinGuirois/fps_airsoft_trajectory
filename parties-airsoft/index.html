@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#10140c">
+  <title>Parties d’airsoft en France : carte et inscriptions | F.A.T.</title>
+  <meta name="description" content="Trouvez une partie d’airsoft publiée par un organisateur : carte de France, dates, capacité, services, règles et lien d’inscription.">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <link rel="canonical" href="https://fps-airsoft-trajectory.com/parties-airsoft/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Radar des parties d’airsoft en France | F.A.T.">
+  <meta property="og:description" content="Carte, capacités, services et règles communiqués par les organisateurs.">
+  <meta property="og:url" content="https://fps-airsoft-trajectory.com/parties-airsoft/">
+  <meta property="og:image" content="https://fps-airsoft-trajectory.com/assets/img/partage-fat.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://fps-airsoft-trajectory.com/assets/img/partage-fat.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <script src="/theme-bootstrap.js?v=20260723-47" data-cfasync="false"></script>
+  <link rel="stylesheet" href="/assets/site.css?v=20260723-47">
+  <link rel="stylesheet" href="/assets/radar.css?v=20260723-47">
+  <link rel="stylesheet" href="/assets/vendor/leaflet-1.9.4/leaflet.css?v=1.9.4">
+  <link rel="stylesheet" href="/assets/vendor/leaflet.markercluster-1.5.3/MarkerCluster.css?v=1.5.3">
+  <link rel="stylesheet" href="/assets/vendor/leaflet.markercluster-1.5.3/MarkerCluster.Default.css?v=1.5.3">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","name":"Parties d’airsoft en France","url":"https://fps-airsoft-trajectory.com/parties-airsoft/","description":"Carte des parties d’airsoft publiées par leurs organisateurs en France.","isPartOf":{"@type":"WebSite","name":"F.A.T.","url":"https://fps-airsoft-trajectory.com/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Comment trouver une partie d’airsoft près de chez moi ?","acceptedAnswer":{"@type":"Answer","text":"Utilisez la carte, le filtre de lieu ou un rayon. Seules les parties publiées et encore à venir sont affichées."}},{"@type":"Question","name":"Qui renseigne les règles, la capacité et les services ?","acceptedAnswer":{"@type":"Answer","text":"L’organisateur publie et met à jour sa fiche. F.A.T. distingue les règles autorisées, spécifiques, interdites ou non communiquées."}},{"@type":"Question","name":"Pourquoi certaines positions sont-elles approximatives ?","acceptedAnswer":{"@type":"Answer","text":"Un organisateur peut choisir de ne rendre publique que la commune. F.A.T. n’affiche alors ni l’adresse privée ni un point artificiellement précis."}}]}</script>
+</head>
+<body class="radar-page">
+  <a class="skip-link" href="#radar-contenu">Aller au radar des parties</a>
+  <header class="site-header" data-site-shell="header"><div class="shell nav-row"><a class="brand" href="/" aria-label="F.A.T., accueil"><svg class="brand-mark" viewBox="0 0 120 76" aria-hidden="true" focusable="false"><path class="brand-curve" d="M6 62C30 30 62 22 78 26C96 31 106 44 112 62"/><circle class="brand-ball" cx="78" cy="26" r="13"/><path class="brand-spin" d="M60 30A20 20 0 0 1 71 15"/><line class="brand-ground" x1="2" y1="68" x2="118" y2="68"/></svg><span><strong>F.A.T<span class="brand-dot">.</span></strong><small>FPS Airsoft Trajectory</small></span></a><nav class="primary-nav" aria-label="Navigation principale"><a href="/#calculateur">Calculateur</a><a href="/outils/">Outils</a><a href="/guides/">Guides</a></nav><button class="button button-primary button-small nav-install" type="button" data-install-app hidden>Installer l’app</button><button class="menu-toggle menu-button" type="button" data-menu-button aria-expanded="false" aria-controls="briefing-menu" aria-label="Ouvrir le menu"><span class="menu-toggle-label" data-menu-label>MENU</span><span class="menu-toggle-box" aria-hidden="true"><span></span><span></span><span></span></span></button></div></header>
+
+  <main id="radar-contenu">
+    <header class="radar-hero shell">
+      <div>
+        <p class="eyebrow">F.A.T. // RADAR DES PARTIES</p>
+        <h1>Parties d’airsoft en France : trouvez votre prochaine partie</h1>
+        <p>Explorez les parties réellement publiées, vérifiez les règles annoncées et partez vers le lien d’inscription de l’organisateur.</p>
+      </div>
+      <a class="button button-primary radar-publish-cta" href="/compte/mes-parties.html">PUBLIER UNE PARTIE →</a>
+    </header>
+
+    <section class="radar-console shell" aria-labelledby="radar-map-title" data-radar-app>
+      <div class="radar-console-bar">
+        <div><p class="eyebrow">CARTE OPÉRATIONNELLE</p><h2 id="radar-map-title">France métropolitaine</h2></div>
+        <p class="radar-live" data-radar-status role="status" aria-live="polite">Connexion au radar…</p>
+        <strong data-radar-count>0 PARTIE</strong>
+      </div>
+
+      <div class="radar-map-layout">
+        <div class="radar-map-stage">
+          <div id="radar-map" class="radar-map" role="application" aria-label="Carte des parties d’airsoft publiées"></div>
+          <div class="radar-scan" aria-hidden="true"></div>
+
+          <form class="radar-filter-console" data-radar-filters>
+            <div class="radar-filter-heading">
+              <span>FILTRES</span>
+              <button type="reset">RÉINITIALISER</button>
+            </div>
+            <label>LIEU, DÉPARTEMENT OU RÉGION
+              <input name="location" type="search" autocomplete="off" maxlength="120" placeholder="Ex. Tours, 33, Grand Est">
+            </label>
+            <button class="button button-small radar-mobile-geolocate" type="button" data-radar-geolocate>UTILISER MA POSITION</button>
+            <div class="radar-filter-pair">
+              <label>DU <input name="from" type="date"></label>
+              <label>AU <input name="to" type="date"></label>
+            </div>
+            <fieldset>
+              <legend>RACCOURCIS DATE</legend>
+              <div class="radar-date-chips" aria-label="Raccourcis de date">
+                <button type="button" data-radar-date="today">AUJOURD’HUI</button>
+                <button type="button" data-radar-date="saturday">SAMEDI</button>
+                <button type="button" data-radar-date="sunday">DIMANCHE</button>
+                <button type="button" data-radar-date="weekend">CE WEEK-END</button>
+              </div>
+            </fieldset>
+            <div class="radar-checks">
+              <label><input name="beginner" type="checkbox"> Débutants bienvenus</label>
+              <label><input name="rental" type="checkbox"> Location annoncée</label>
+            </div>
+            <fieldset>
+              <legend>RÈGLES AUTORISÉES OU SPÉCIFIQUES</legend>
+              <div class="radar-rule-chips">
+                <label><input type="checkbox" name="rule" value="cqb"><span>CQB</span></label>
+                <label><input type="checkbox" name="rule" value="dmr"><span>DMR</span></label>
+                <label><input type="checkbox" name="rule" value="sniper"><span>SNIPER</span></label>
+                <label><input type="checkbox" name="rule" value="detonating_grenades"><span>DÉTONANTES</span></label>
+                <label><input type="checkbox" name="rule" value="co2_grenades"><span>CO₂</span></label>
+                <label><input type="checkbox" name="rule" value="smoke_grenades"><span>FUMIGÈNES</span></label>
+              </div>
+            </fieldset>
+            <details>
+              <summary>RAYON AUTOUR DE MOI</summary>
+              <div class="radar-radius-controls">
+                <label>RAYON
+                  <select name="radiusKm"><option value="25">25 km</option><option value="50" selected>50 km</option><option value="100">100 km</option><option value="200">200 km</option></select>
+                </label>
+                <button class="button button-small" type="button" data-radar-geolocate>UTILISER MA POSITION</button>
+              </div>
+              <p data-radar-geolocation>Position non utilisée.</p>
+            </details>
+          </form>
+
+          <div class="radar-empty" data-radar-empty hidden>
+            <span class="radar-empty-target" aria-hidden="true"></span>
+            <h3>Aucune partie dans ce secteur</h3>
+            <p>Élargissez le rayon, changez les dates ou consultez une autre région.</p>
+            <div>
+              <button class="button" type="button" data-radar-date-focus>MODIFIER LA DATE</button>
+              <button class="button" type="button" data-radar-widen>VOIR PLUS LOIN</button>
+              <button class="button button-primary" type="button" data-radar-show-all>TOUTE LA FRANCE</button>
+            </div>
+            <a class="radar-empty-publish" href="/compte/mes-parties.html">Vous organisez une partie ? Publiez-la sur le Radar.</a>
+          </div>
+
+          <div class="radar-legend" aria-label="Légende de la carte">
+            <span><i data-tone="exact"></i> Point exact</span>
+            <span><i data-tone="approximate"></i> Commune approximative</span>
+          </div>
+        </div>
+
+        <aside class="radar-briefing" data-radar-briefing hidden aria-labelledby="radar-briefing-title">
+          <button class="radar-briefing-close" type="button" data-radar-close aria-label="Fermer le briefing">×</button>
+          <div data-radar-briefing-content></div>
+        </aside>
+      </div>
+
+      <section class="radar-list-panel" aria-labelledby="radar-list-title">
+        <div><p class="eyebrow">LISTE TACTIQUE</p><h2 id="radar-list-title">Parties à venir</h2></div>
+        <div class="radar-list" data-radar-list></div>
+      </section>
+    </section>
+
+    <section class="radar-editorial shell">
+      <article>
+        <p class="eyebrow">LIRE LE BRIEFING</p>
+        <h2>Une carte utile, avec les informations terrain</h2>
+        <p>Le Radar F.A.T. affiche uniquement les fiches publiées par un compte organisateur et dont la date de fin n’est pas passée. Capacité maximale, toilettes, tarifs et règles restent sous la responsabilité de l’organisateur : vérifiez toujours le lien d’inscription avant de vous déplacer.</p>
+      </article>
+      <article>
+        <p class="eyebrow">LOCALISATION MAÎTRISÉE</p>
+        <h2>Adresse exacte ou commune approximative</h2>
+        <p>Chaque organisateur confirme le point WGS84 utilisé. S’il choisit une visibilité approximative, l’adresse et les coordonnées privées ne sont jamais envoyées au navigateur : seule la commune annoncée apparaît dans la liste.</p>
+      </article>
+      <article class="radar-faq">
+        <p class="eyebrow">FAQ RADAR</p>
+        <h2>Questions fréquentes</h2>
+        <details><summary>Comment trouver une partie près de chez moi ?</summary><p>Filtrez par lieu ou autorisez ponctuellement votre position pour appliquer un rayon. Votre position n’est ni enregistrée ni envoyée dans une fiche.</p></details>
+        <details><summary>Qui renseigne les règles, la capacité et les services ?</summary><p>L’organisateur. La fiche précise notamment la capacité maximale et la présence ou non de toilettes. Quatre états rendent les règles lisibles : autorisé, spécifique, interdit et non communiqué.</p></details>
+        <details><summary>Comment signaler une erreur ?</summary><p>Ouvrez le briefing d’une partie puis utilisez « Signaler ». Le signalement est limité et protégé par un contrôle anti-robot.</p></details>
+      </article>
+    </section>
+  </main>
+
+  <dialog class="radar-report-dialog" data-radar-report aria-labelledby="radar-report-title">
+    <form data-radar-report-form>
+      <button class="radar-briefing-close" type="button" data-radar-report-close aria-label="Fermer">×</button>
+      <p class="eyebrow">SIGNAL TERRAIN</p>
+      <h2 id="radar-report-title">Signaler cette fiche</h2>
+      <label>MOTIF
+        <select name="reason" required>
+          <option value="outdated">Informations dépassées</option>
+          <option value="wrong_location">Localisation incorrecte</option>
+          <option value="wrong_rules">Règles incorrectes</option>
+          <option value="duplicate">Doublon</option>
+          <option value="unsafe">Contenu préoccupant</option>
+          <option value="other">Autre</option>
+        </select>
+      </label>
+      <label>DÉTAIL (OPTIONNEL)<textarea name="message" maxlength="1000" rows="5"></textarea></label>
+      <label class="radar-honeypot" aria-hidden="true">Site web<input name="website" tabindex="-1" autocomplete="off"></label>
+      <div data-turnstile-action="radar_report"></div>
+      <p data-turnstile-message="radar_report" role="status" aria-live="polite"></p>
+      <p data-radar-report-status role="status" aria-live="polite"></p>
+      <button class="button button-primary" type="submit">ENVOYER LE SIGNALEMENT</button>
+    </form>
+  </dialog>
+
+  <footer class="site-footer"><div class="shell"><p>F.A.T. — la physique airsoft rendue lisible.</p></div></footer>
+  <script src="/assets/vendor/leaflet-1.9.4/leaflet.js?v=1.9.4" data-cfasync="false"></script>
+  <script src="/assets/vendor/leaflet.markercluster-1.5.3/leaflet.markercluster.js?v=1.5.3" data-cfasync="false"></script>
+  <script type="module" data-cfasync="false" src="/assets/js/radar/radar-entry.js?v=20260723-47"></script>
+  <script type="module" data-cfasync="false" src="/site.js?v=20260723-47"></script>
+</body>
+</html>

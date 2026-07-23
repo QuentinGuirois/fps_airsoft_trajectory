@@ -14,6 +14,19 @@ $db->exec('DELETE FROM sessions WHERE expires_at<UTC_TIMESTAMP()');
 $db->exec('DELETE FROM rate_limits WHERE expires_at<UTC_TIMESTAMP()');
 $db->exec('DELETE FROM email_verification_tokens WHERE expires_at<UTC_TIMESTAMP()-INTERVAL 7 DAY');
 $db->exec('DELETE FROM password_reset_tokens WHERE expires_at<UTC_TIMESTAMP()-INTERVAL 7 DAY');
+$db->exec("UPDATE radar_events SET state='expired',expires_at=ends_at_utc,version=version+1 WHERE state='published' AND ends_at_utc<=UTC_TIMESTAMP()");
+$db->exec('DELETE FROM radar_geocoding_cache WHERE expires_at<UTC_TIMESTAMP()');
+$radarReportRetentionDays = min(730, max(30, $config->int('RADAR_REPORT_RETENTION_DAYS', 365)));
+$purgeRadarReports = $db->prepare(
+    'DELETE FROM radar_event_reports WHERE created_at<UTC_TIMESTAMP()-INTERVAL ' . $radarReportRetentionDays . ' DAY LIMIT 1000'
+);
+$purgeRadarReports->execute();
+$radarDeletedRetentionDays = min(90, max(7, $config->int('RADAR_DELETED_RETENTION_DAYS', 30)));
+$purgeDeletedRadar = $db->prepare(
+    "DELETE FROM radar_events WHERE state='deleted' AND deleted_at<UTC_TIMESTAMP()-INTERVAL "
+    . $radarDeletedRetentionDays . ' DAY LIMIT 500'
+);
+$purgeDeletedRadar->execute();
 $auditRetentionDays = $config->int('AUDIT_RETENTION_DAYS', 180);
 $technicalLogRetentionDays = $config->int('TECHNICAL_LOG_RETENTION_DAYS', 180);
 if ($auditRetentionDays > 0) {

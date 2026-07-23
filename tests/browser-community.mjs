@@ -95,11 +95,6 @@ async function setViewport(width, height, mobile = false) {
   await send('Emulation.setDeviceMetricsOverride', { width, height, screenWidth: width, screenHeight: height, deviceScaleFactor: 1, mobile });
 }
 
-async function setTheme(value) {
-  await evaluate(`document.querySelector('input[name="fat-theme"][value="${value}"]').click()`);
-  await wait(80);
-}
-
 async function capture(name, clip) {
   const params = { format: 'png', fromSurface: true, captureBeyondViewport: false };
   if (clip) params.clip = { ...clip, scale: 1 };
@@ -247,15 +242,12 @@ await send('Emulation.setEmulatedMedia', { features: [
 
 await setViewport(1440, 900);
 await navigate(`${base}compte/`);
-await waitFor(`document.querySelectorAll('[data-account-tab]').length === 2 && document.querySelectorAll('input[name="fat-theme"]').length === 3`);
-await evaluate(`localStorage.setItem('fat-theme','dark')`);
+await waitFor(`document.querySelectorAll('[data-account-tab]').length === 2`);
 await navigate(`${base}compte/?recipe=desktop`);
 await waitFor(`document.documentElement.dataset.theme === 'dark'`);
 const login = await evaluate(`({robots:document.querySelector('meta[name="robots"]').content,oauthHidden:document.querySelector('[data-oauth-unavailable]').hidden,accountKeys:Object.keys(localStorage).filter(key=>/account/i.test(key)),overflow:document.documentElement.scrollWidth>innerWidth})`);
 if (!login.robots.includes('noindex') || !login.oauthHidden || login.accountKeys.length || login.overflow) throw new Error(`Login shell mismatch ${JSON.stringify(login)}`);
 await capture('lot56-login-desktop-night.png');
-await setTheme('light');
-await capture('lot56-login-desktop-day.png');
 
 await evaluate(`document.querySelector('[data-account-tab="login"]').focus()`);
 await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 });
@@ -272,12 +264,9 @@ await navigate(`${base}compte/?recipe=desktop`);
 await waitFor(`document.querySelectorAll('[data-account-tab]').length === 2`);
 
 await setViewport(390, 844, true);
-await setTheme('dark');
-const loginMobile = await evaluate(`({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,targets:[...document.querySelectorAll('button,input:not(.theme-switcher input),a')].filter(node=>node.getClientRects().length).map(node=>node.getBoundingClientRect().height)})`);
+const loginMobile = await evaluate(`({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,targets:[...document.querySelectorAll('button,input,a')].filter(node=>node.getClientRects().length).map(node=>node.getBoundingClientRect().height)})`);
 if (loginMobile.scrollWidth > loginMobile.width || loginMobile.targets.some((height) => height < 43.5)) throw new Error(`Login mobile mismatch ${JSON.stringify(loginMobile)}`);
 await capture('lot56-login-mobile-night.png');
-await setTheme('light');
-await capture('lot56-login-mobile-day.png');
 
 await send('Emulation.setEmulatedMedia', { features: [
   { name: 'prefers-color-scheme', value: 'light' },
@@ -293,16 +282,13 @@ await send('Emulation.setEmulatedMedia', { features: [
 await navigate(`${base}tu-joues-avec-quoi/`);
 await waitFor(`document.querySelectorAll('replica-card').length === 1`);
 await setViewport(1440, 900);
-await setTheme('dark');
 const publicGallery = await evaluate(`(()=>{const header=document.querySelector('.replica-card-header');const pseudo=header?.firstElementChild;const pseudoStyle=pseudo?getComputedStyle(pseudo):null;return {cards:document.querySelectorAll('replica-card').length,state:document.querySelector('.replica-card-shell')?.dataset.state,cta:document.querySelector('[data-add-replica-link]').getAttribute('href'),robots:document.querySelector('meta[name="robots"]').content,overflow:document.documentElement.scrollWidth>innerWidth,pseudo:pseudo?.textContent,pseudoWeight:pseudoStyle?.fontWeight,pseudoAccent:pseudoStyle?.borderLeftWidth,youtube:header?.querySelector('.replica-youtube')?.textContent,youtubeHref:header?.querySelector('.replica-youtube')?.href}})()`);
 if (publicGallery.cards !== 1 || publicGallery.state !== 'published' || !publicGallery.cta.startsWith('/compte/?return=') || !publicGallery.robots.includes('index') || publicGallery.overflow || publicGallery.pseudo !== 'OPÉRATEUR FIXTURE' || Number(publicGallery.pseudoWeight) < 700 || publicGallery.pseudoAccent !== '3px' || publicGallery.youtube !== '▶ CHAÎNE YOUTUBE' || !publicGallery.youtubeHref.includes('youtube.com/@fixture')) throw new Error(`Public gallery mismatch ${JSON.stringify(publicGallery)}`);
 await capture('community-gallery-desktop-night.png');
-await setTheme('light');
-await capture('community-gallery-desktop-day.png');
 await setViewport(390, 844, true);
 const publicGalleryMobile = await evaluate(`({width:innerWidth,scroll:document.documentElement.scrollWidth,cta:document.querySelector('[data-add-replica-link]').getBoundingClientRect().height})`);
 if (publicGalleryMobile.scroll > publicGalleryMobile.width || publicGalleryMobile.cta < 43.5) throw new Error(`Public gallery mobile mismatch ${JSON.stringify(publicGalleryMobile)}`);
-await capture('community-gallery-mobile-day.png');
+await capture('community-gallery-mobile-night.png');
 await navigate(`${base}compte/?recipe=login-after-gallery`);
 await waitFor(`document.querySelectorAll('[data-account-tab]').length === 2`);
 
@@ -320,7 +306,6 @@ const csrfLogin = apiCalls.find((call) => call.path.endsWith('/auth/login') && c
 if (!csrfLogin || csrfLogin.headers['x-csrf-token'] !== 'browser-csrf' || !csrfLogin.turnstile) throw new Error(`Login CSRF/Turnstile missing ${JSON.stringify(csrfLogin)}`);
 
 await setViewport(1440, 1000);
-await setTheme('dark');
 await wait(120);
 const armory = await evaluate(`({states:[...document.querySelectorAll('.replica-card-shell')].map(card=>card.dataset.state),imageStates:[...document.querySelectorAll('.replica-card-shell')].map(card=>card.dataset.imageStatus),summary:document.querySelector('[data-armory-summary]').textContent,overflow:document.documentElement.scrollWidth>innerWidth})`);
 for (const state of ['draft','pending','published','rejected','archived']) if (!armory.states.includes(state)) throw new Error(`Missing state ${state}`);
@@ -331,13 +316,11 @@ await evaluate(`(()=>{const card=document.querySelector('replica-card');const da
 await wait(80);
 const publicCardRect = await evaluate(`(()=>{const r=document.querySelector('replica-card').getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:Math.min(r.height,innerHeight-r.y)}})()`);
 await capture('lot56-replica-card-night.png', publicCardRect);
-await setTheme('light');
-await capture('lot56-replica-card-day.png', publicCardRect);
 await evaluate(`(()=>{const card=document.querySelector('replica-card');const data=card.data;card.setAttribute('mode','management');card.data=data})()`);
 await evaluate(`document.querySelector('replica-card [data-card-slide="curve"]').click()`);
 await wait(550);
 if (!await evaluate(`document.querySelector('replica-card .replica-card-track').classList.contains('show-curve')`)) throw new Error('Curve slide did not open');
-await capture('lot56-armory-desktop-day.png');
+await capture('lot56-armory-desktop-night.png');
 
 await evaluate(`document.querySelector('.armory-title-row [data-add-replica]').click()`);
 await waitFor(`document.querySelector('[data-replica-dialog]').open && document.querySelectorAll('#replica-trajectory option').length === 3`);
@@ -394,13 +377,10 @@ const reduced = await evaluate(`({loginTracer:${JSON.stringify('none')},track:ge
 if (reduced.track !== '0s') throw new Error(`Reduced motion mismatch ${JSON.stringify(reduced)}`);
 
 await setViewport(390, 844, true);
-await setTheme('dark');
 await wait(100);
 const mobile = await evaluate(`({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,grid:getComputedStyle(document.querySelector('[data-armory-grid]')).gridTemplateColumns,small:[...document.querySelectorAll('button,a,summary')].filter(node=>node.getClientRects().length&&node.getBoundingClientRect().height<43.5).map(node=>node.textContent.trim())})`);
 if (mobile.scrollWidth > mobile.width || mobile.small.length) throw new Error(`Armory mobile mismatch ${JSON.stringify(mobile)}`);
 await capture('lot56-armory-mobile-night.png');
-await setTheme('light');
-await capture('lot56-armory-mobile-day.png');
 
 await evaluate(`sessionStorage.setItem('__fatCommunityTrajectoryMode','empty')`);
 await navigate(`${base}compte/armurerie.html?action=add`);
@@ -427,7 +407,7 @@ await navigate(base);
 await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await navigate(`${base}compte/armurerie.html?recipe=sw`);
 await waitFor(`Boolean(navigator.serviceWorker.controller)`);
-const cache = await evaluate(`Promise.all([caches.open('fat-v3-2026-07-19-45').then(cache=>cache.match('/assets/js/replica-card.js?v=20260719-45')).then(Boolean),caches.match('/api/v1/me').then(Boolean)]).then(([component,api])=>({component,api}))`, true);
+const cache = await evaluate(`Promise.all([caches.open('fat-v3-2026-07-23-47').then(cache=>cache.match('/assets/js/replica-card.js?v=20260723-47')).then(Boolean),caches.match('/api/v1/me').then(Boolean)]).then(([component,api])=>({component,api}))`, true);
 if (!cache.component || cache.api) throw new Error(`Private cache mismatch ${JSON.stringify(cache)}`);
 
 await evaluate(`sessionStorage.setItem('__fatDisableCommunityApi','1')`);

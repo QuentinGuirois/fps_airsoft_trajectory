@@ -8,8 +8,8 @@
   <meta name="description" content="Connexion sécurisée à l’espace joueur F.A.T. pour retrouver ses répliques et ses trajectoires enregistrées.">
   <meta name="theme-color" content="#10140c">
   <title>Connexion au compte joueur | F.A.T.</title>
-  <script src="/theme-bootstrap.js?v=20260719-45" data-cfasync="false"></script>
-  <link rel="stylesheet" href="/assets/site.css?v=20260719-45">
+  <script src="/theme-bootstrap.js?v=20260723-47" data-cfasync="false"></script>
+  <link rel="stylesheet" href="/assets/site.css?v=20260723-47">
 </head>
 <body class="account-page">
   <a class="skip-link" href="#connexion">Aller au formulaire de connexion</a>
@@ -37,7 +37,7 @@
         <label for="account-identity">PSEUDO OU EMAIL</label>
         <input id="account-identity" name="identity" autocomplete="username" required maxlength="254">
         <div class="account-label-row"><label for="account-password">MOT DE PASSE</label><button type="button" data-forgot-password>OUBLIÉ ?</button></div>
-        <input id="account-password" name="password" type="password" autocomplete="current-password" required minlength="10">
+        <input id="account-password" name="password" type="password" autocomplete="current-password" required>
         <div data-turnstile-action="login" aria-label="Vérification anti-robot de connexion"></div>
         <p class="account-status" data-turnstile-message="login" aria-live="polite"></p>
         <button class="button button-primary account-submit" type="submit">ENTRER SUR LE TERRAIN →</button>
@@ -77,9 +77,8 @@
       </div>
       <p class="account-status" data-account-status aria-live="polite"></p>
       <p class="account-loyalty">Le calculateur reste 100 % utilisable sans compte. Le compte sert uniquement à garder tes setups.</p>
-      <div class="account-theme" data-theme-slot></div>
     </section>
   </main>
-  <script type="module" data-cfasync="false" src="/assets/js/account-login-entry.js?v=20260719-45"></script>
+  <script type="module" data-cfasync="false" src="/assets/js/account-login-entry.js?v=20260723-47"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 # Prompt maître à donner à Codex
 
-Tu travailles dans le dépôt courant de F.A.T. V3, une PWA statique de balistique airsoft. Intègre entièrement l’identité visuelle jointe, ses thèmes nuit/jour, son logo, son loader et ses maquettes de pages, sans régression fonctionnelle, physique, PWA, SEO ou données.
+Tu travailles dans le dépôt courant de F.A.T. V3, une PWA statique de balistique airsoft. Intègre entièrement l’identité visuelle jointe avec une palette sombre unique, son logo, son loader et ses maquettes de pages, sans régression fonctionnelle, physique, PWA, SEO ou données.
 
 Le pack de design joint s’appelle `Identité visuelle airsoft balistique.zip`. Commence par le décompresser dans un dossier temporaire hors du code publié, puis lis intégralement :
 
@@ -38,21 +38,15 @@ Crée les composants CSS réutilisables de la charte : chip mono, tags de confia
 
 Respecte le principe « l’olive habille, l’acide mesure » : pas de grande surface acide, pas de texte acide pur sur fond clair, pas de bitmap camo, pas d’emoji et pas de stencil en paragraphe.
 
-## 2. Thème Système / Nuit / Jour
+## 2. Thème sombre unique
 
-Implémente un sélecteur accessible à trois états : `Système`, `Nuit`, `Jour`.
+Le site utilise exclusivement le thème sombre :
 
-- valeur par défaut : `system` ; repli sans support : nuit ;
-- persistance locale sous une clé dédiée qui n’interfère pas avec `fat-shot-v3` ni les paramètres gaz ;
-- application avant le premier paint avec un petit script inline sûr dans le `<head>` afin d’éviter un flash de mauvais thème ;
-- attribut explicite sur `<html>` pour les choix manuels ;
-- écoute de `prefers-color-scheme` uniquement lorsque le mode est `system` ;
-- état, libellé et focus clavier perceptibles ;
-- mise à jour de `color-scheme` et de `meta[name="theme-color"]` ;
-- redessin immédiat du Canvas 2D et de la scène 3D ouverte ;
-- aucun guide ne force le thème clair contre le choix du visiteur : la maquette `2d` est une référence du rendu clair.
-
-Dans le thème clair, utilise `--acid-text: #5c8a00` ou `--accent-deep: #3d5220` pour le texte. `#a8ff3f` reste réservé aux aplats, courbes et surfaces assurant un contraste suffisant.
+- application avant le premier paint avec le script du `<head>` ;
+- `color-scheme: dark` et `meta[name="theme-color"]` cohérents ;
+- aucun sélecteur, libellé ou préférence locale de thème ;
+- Canvas 2D, scène 3D, graphiques et widgets tiers rendus avec la palette sombre ;
+- suppression des règles et variantes de palette alternatives.
 
 ## 3. Logo et actifs
 
@@ -184,8 +178,7 @@ Implémente réellement les changements, puis rends un compte rendu concis conte
 3. tests automatisés et manuels exécutés avec résultats ;
 4. preuve que le moteur ATP et les données gaz n’ont pas changé ;
 5. poids initial avant/après et poids du chunk 3D différé ;
-6. captures nuit/jour desktop/mobile ;
+6. captures sombres desktop/mobile ;
 7. limites restantes ou contenus réels encore nécessaires, sans masquer les échecs.
 
 Ne déclare pas le travail terminé si une étape de recette échoue.
-

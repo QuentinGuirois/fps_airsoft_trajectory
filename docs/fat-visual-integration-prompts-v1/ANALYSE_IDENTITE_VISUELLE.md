@@ -20,11 +20,11 @@ Le meilleur élément est la convergence entre marque et fonction : la bille, la
 
 ### Thème
 
-La charte décrit surtout un thème clair automatique via `prefers-color-scheme`. Elle ne fournit pas la mécanique d’un sélecteur manuel. La V3 actuelle est uniquement sombre et fixe `color-scheme: dark`.
+La V3 est uniquement sombre et fixe `color-scheme: dark`. Elle ne propose aucun sélecteur ni préférence locale de thème.
 
-Le thème ne peut pas être traité uniquement en CSS : le Canvas de trajectoire utilise encore des couleurs codées en dur dans `app.js`, plusieurs SVG inline utilisent d’anciennes couleurs, les `meta theme-color` sont fixes et le manifeste conserve l’ancienne palette bleu-noir.
+Le rendu sombre doit rester cohérent dans le Canvas de trajectoire, les SVG, les `meta theme-color`, le manifeste et les scènes 3D.
 
-Arbitrage : ajouter `Système / Nuit / Jour`, persister le choix dans `localStorage`, appliquer le thème avant le premier rendu et redessiner les Canvas lors d’un changement de thème.
+Arbitrage : conserver le thème sombre unique sans aucune logique de sélection.
 
 ### Loader
 
@@ -112,4 +112,3 @@ Tests, captures multi-formats, navigation clavier, PWA hors ligne, audit SEO et 
 - Les anciennes URL `m`, `j`, `h`, `rpm`, `z`, `w`, `wd`, `t`, `p`, `a`, `c` restent lisibles.
 - Le jeu de données gaz, les tests ATP, le contenu SEO et les données structurées ne régressent pas.
 - Aucun appel de police, script, texture ou module externe n’est nécessaire en production.
-

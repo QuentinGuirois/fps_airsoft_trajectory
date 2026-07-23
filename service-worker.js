@@ -1,21 +1,21 @@
-const CACHE = 'fat-v3-2026-07-19-45';
+const CACHE = 'fat-v3-2026-07-23-47';
 const CRITICAL = [
   '/',
   '/index.html',
   '/offline.html',
   '/manifest.webmanifest',
-  '/theme-bootstrap.js?v=20260719-45',
-  '/assets/site.css?v=20260719-45',
-  '/app.js?v=20260719-45',
-  '/calculation-loader.js?v=20260718-28',
-  '/chart-data.js?v=20260718-28',
-  '/render-capabilities.js?v=20260719-45',
-  '/assets/js/curve-thumbnail.js?v=20260718-28',
-  '/assets/js/community-repositories.js?v=20260719-45',
-  '/site.js?v=20260719-45',
-  '/theme.js?v=20260718-28',
-  '/physics-core.js?v=20260718-28',
-  '/trajectory.worker.js?v=20260718-28'
+  '/theme-bootstrap.js?v=20260723-47',
+  '/assets/site.css?v=20260723-47',
+  '/app.js?v=20260723-47',
+  '/calculation-loader.js?v=20260723-47',
+  '/chart-data.js?v=20260723-47',
+  '/render-capabilities.js?v=20260723-47',
+  '/assets/js/curve-thumbnail.js?v=20260723-47',
+  '/assets/js/community-repositories.js?v=20260723-47',
+  '/site.js?v=20260723-47',
+  '/theme.js?v=20260723-47',
+  '/physics-core.js?v=20260723-47',
+  '/trajectory.worker.js?v=20260723-47'
 ];
 
 const OPTIONAL = [
@@ -32,44 +32,47 @@ const OPTIONAL = [
   '/assets/img/icon-512.png',
   '/assets/img/icon-maskable.svg',
   '/assets/img/icon-maskable-512.png',
-  '/advanced-3d-app.js?v=20260719-45',
-  '/advanced-device.js?v=20260718-28',
-  '/advanced-transition.js?v=20260718-28',
-  '/calculator-tutorial.js?v=20260719-45',
-  '/replica-utils.js?v=20260718-28',
+  '/advanced-3d-app.js?v=20260723-47',
+  '/advanced-device.js?v=20260723-47',
+  '/advanced-transition.js?v=20260723-47',
+  '/calculator-tutorial.js?v=20260723-47',
+  '/replica-utils.js?v=20260723-47',
   '/assets/js/share-link.js?v=20260718-29',
-  '/assets/js/replica-card.js?v=20260719-45',
-  '/assets/js/account-login.js?v=20260719-45',
-  '/assets/js/account-login-entry.js?v=20260719-45',
-  '/assets/js/turnstile-client.js?v=20260718-30',
-  '/assets/js/armory.js?v=20260719-45',
-  '/assets/js/armory-entry.js?v=20260719-45',
-  '/assets/js/community-gallery.js?v=20260719-45',
+  '/assets/js/replica-card.js?v=20260723-47',
+  '/assets/js/turnstile-client.js?v=20260723-47',
+  '/assets/js/community-gallery.js?v=20260723-47',
+  '/assets/radar.css?v=20260723-47',
+  '/assets/js/radar-repositories.js?v=20260723-47',
+  '/assets/js/radar/radar-map.js?v=20260723-47',
+  '/assets/js/radar/radar-entry.js?v=20260723-47',
+  '/assets/vendor/leaflet-1.9.4/leaflet.css?v=1.9.4',
+  '/assets/vendor/leaflet-1.9.4/leaflet.js?v=1.9.4',
+  '/assets/vendor/leaflet.markercluster-1.5.3/MarkerCluster.css?v=1.5.3',
+  '/assets/vendor/leaflet.markercluster-1.5.3/MarkerCluster.Default.css?v=1.5.3',
+  '/assets/vendor/leaflet.markercluster-1.5.3/leaflet.markercluster.js?v=1.5.3',
+  '/data/radar-france-departments.geojson',
   '/convertisseur-joules-fps/',
   '/outils/',
   '/guides/',
   '/simulateur-3d-airsoft/',
   '/outils/choisir-gaz-airsoft-pression-temperature/',
-  '/data/green-gas-pressure-curves.json?v=20260718-28',
-  '/gas-pressure-tool.js?v=20260718-28',
+  '/data/green-gas-pressure-curves.json?v=20260723-47',
+  '/gas-pressure-tool.js?v=20260723-47',
   '/gas-pressure-app.js?v=20260718-29',
   '/modele-physique-atp/',
   '/mentions-legales/',
   '/politique-confidentialite/',
-  '/compte/',
-  '/compte/verifier-email.html',
-  '/compte/compte-active.html',
-  '/compte/armurerie.html',
+  '/parties-airsoft/',
   '/tu-joues-avec-quoi/'
 ];
 
 // Ces ressources restent hors du pré-cache pour préserver le lazy-load réseau.
 // Elles rejoignent le même cache lors de la première activation de la vue 3D.
 const LAZY_3D = [
-  '/drone-3d.js?v=20260718-28',
-  '/assets/vendor/three-r185/build/three.module.min.js?v=20260718-28',
+  '/drone-3d.js?v=20260723-47',
+  '/assets/vendor/three-r185/build/three.module.min.js?v=20260723-47',
   '/assets/vendor/three-r185/build/three.core.min.js',
-  '/assets/vendor/three-r185/examples/jsm/controls/OrbitControls.js?v=20260718-28'
+  '/assets/vendor/three-r185/examples/jsm/controls/OrbitControls.js?v=20260723-47'
 ];
 
 self.addEventListener('install', (event) => {
@@ -105,6 +108,12 @@ self.addEventListener('fetch', (event) => {
 
   // Les réponses authentifiées et mutations privées ne rejoignent jamais le cache PWA.
   if (url.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Les espaces de compte et brouillons restent strictement réseau et hors cache.
+  if (url.pathname.startsWith('/compte/')) {
     event.respondWith(fetch(event.request));
     return;
   }

@@ -98,9 +98,9 @@ async function capture(name) {
   await writeFile(resolve(captureDir, name), Buffer.from(screenshot.data, 'base64'));
 }
 
-async function openCockpit({ width, theme, query = '' }) {
+async function openCockpit({ width, query = '' }) {
   await setViewport(width);
-  await evaluate(`localStorage.setItem('fat-theme','${theme}');localStorage.removeItem('fat-shot-v3')`);
+  await evaluate(`localStorage.removeItem('fat-shot-v3')`);
   await navigate(`${base}${query}`);
   await waitFor(`Boolean(document.querySelector('[data-trajectory-app]')?.dataset.lastRequestId)`);
   await evaluate(`(()=>{document.documentElement.style.scrollBehavior='auto';const scene=document.querySelector('.cockpit-scene');window.scrollTo(0,scene.getBoundingClientRect().top+scrollY-76)})()`);
@@ -137,8 +137,8 @@ await navigate(base);
 const captures = [];
 const layouts = [];
 for (const width of [1440, 1024, 768, 390, 360]) {
-  for (const theme of ['dark', 'light']) {
-    await openCockpit({ width, theme, query: `?cockpit=${width}-${theme}` });
+  for (const theme of ['dark']) {
+    await openCockpit({ width, query: `?cockpit=${width}-${theme}` });
     const state = await evaluate(`(()=>{const v=document.querySelector('.chart-viewport').getBoundingClientRect();const c=document.querySelector('#trajectory-chart');return{theme:document.documentElement.dataset.theme,ratio:v.width/v.height,scroll:document.documentElement.scrollWidth,width:innerWidth,scale:document.querySelector('#vertical-scale-chip').textContent,canvas:[c.width,c.height],metrics:[...document.querySelectorAll('[data-mobile-metric]')].map(e=>e.textContent)}})()`);
     const expected = width <= 620 ? 3 : 4.5;
     if (Math.abs(state.ratio - expected) > 0.08 || state.scroll > state.width || !state.scale.startsWith('HAUTEUR ×')) throw new Error(`Layout ${width}/${theme}: ${JSON.stringify(state)}`);
@@ -193,11 +193,6 @@ if (errorState.busy !== 'false' || errorState.calculating || !errorState.loaderH
 await evaluate(`Worker.prototype.postMessage=window.__originalWorkerPost;(()=>{const input=document.querySelector('#zero');input.value='44';input.dispatchEvent(new Event('input',{bubbles:true}))})()`);
 await waitFor(`Number(document.querySelector('[data-trajectory-app]').dataset.lastRequestId) > window.__errorStart && document.querySelector('#result-status').textContent.includes('kg/m') && !document.querySelector('[data-trajectory-app]').classList.contains('is-calculating')`);
 
-await evaluate(`(()=>{window.__fatPostCount=0;const original=Worker.prototype.postMessage;Worker.prototype.postMessage=function(...args){window.__fatPostCount++;return original.apply(this,args)};window.__fatMetrics=[...document.querySelectorAll('[data-metric]')].map(e=>e.textContent);window.__fatCanvas=document.querySelector('#trajectory-chart').toDataURL();document.querySelector('input[name="fat-theme"][value="light"]').click()})()`);
-await wait(150);
-const themed = await evaluate(`({posts:window.__fatPostCount,metrics:[...document.querySelectorAll('[data-metric]')].map(e=>e.textContent),before:window.__fatMetrics,redrawn:window.__fatCanvas!==document.querySelector('#trajectory-chart').toDataURL(),theme:document.documentElement.dataset.theme})`);
-if (themed.posts !== 0 || JSON.stringify(themed.metrics) !== JSON.stringify(themed.before) || !themed.redrawn || themed.theme !== 'light') throw new Error(`Theme redraw: ${JSON.stringify(themed)}`);
-
 await evaluate(`document.querySelector('[data-chart-mode="trajectory"]').focus()`);
 await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 });
 await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 });
@@ -248,7 +243,7 @@ const result = {
   savedTrajectory: { label: savedTrajectory.label, feedback: savedTrajectory.feedback, params: savedTrajectory.params },
   concurrency: concurrentAfter,
   calculationError: errorState,
-  themeRedrawWithoutPhysics: themed.posts === 0,
+  fixedTheme: await evaluate(`document.documentElement.dataset.theme`),
   keyboardTab,
   comparisons,
   slowLoader,

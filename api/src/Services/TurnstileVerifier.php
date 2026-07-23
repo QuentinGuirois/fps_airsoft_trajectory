@@ -11,6 +11,8 @@ use Fat\Api\Support;
 final class TurnstileVerifier
 {
     private const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+    private const PASSING_TEST_SITE_KEY = '1x00000000000000000000AA';
+    private const PASSING_TEST_SECRET_KEY = '1x0000000000000000000000000000000AA';
 
     /** @var \Closure(array<string,string>,int):array<string,mixed> */
     private readonly \Closure $transport;
@@ -64,11 +66,26 @@ final class TurnstileVerifier
         $challengeTime = strtotime((string) ($result['challenge_ts'] ?? ''));
         $now = time();
         $fresh = $challengeTime !== false && $challengeTime >= $now - 330 && $challengeTime <= $now + 30;
+        if ($success && $fresh && $this->acceptsTestingResult($result)) {
+            return;
+        }
         $expectedHostname = strtolower($this->config->get('TURNSTILE_EXPECTED_HOSTNAME'));
 
         if (!$success || !$fresh || !hash_equals($expectedHostname, $hostname) || !hash_equals($expectedAction, $action)) {
             throw new HttpException(422, 'turnstile_invalid', 'La vérification anti-robot a expiré ou n’est pas valide. Recommence le contrôle.');
         }
+    }
+
+    /** @param array<string,mixed> $result */
+    private function acceptsTestingResult(array $result): bool
+    {
+        $metadata = $result['metadata'] ?? null;
+        return !$this->config->isProduction()
+            && $this->config->bool('TURNSTILE_ACCEPT_TEST_KEYS', false)
+            && hash_equals(self::PASSING_TEST_SITE_KEY, $this->config->get('TURNSTILE_SITE_KEY'))
+            && hash_equals(self::PASSING_TEST_SECRET_KEY, $this->config->get('TURNSTILE_SECRET_KEY'))
+            && is_array($metadata)
+            && ($metadata['result_with_testing_key'] ?? false) === true;
     }
 
     /** @param array<string,string> $payload @return array<string,mixed> */

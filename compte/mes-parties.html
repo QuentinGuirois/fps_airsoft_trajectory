@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="description" content="Espace privé F.A.T. pour créer, publier et gérer ses parties d’airsoft.">
+  <meta name="theme-color" content="#10140c">
+  <title>Mes parties — Radar F.A.T.</title>
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <script src="/theme-bootstrap.js?v=20260723-47" data-cfasync="false"></script>
+  <link rel="stylesheet" href="/assets/site.css?v=20260723-47">
+  <link rel="stylesheet" href="/assets/radar.css?v=20260723-47">
+  <link rel="stylesheet" href="/assets/vendor/leaflet-1.9.4/leaflet.css?v=1.9.4">
+</head>
+<body class="armory-page radar-owner-page">
+  <a class="skip-link" href="#mes-parties">Aller à mes parties</a>
+  <div class="armory-app" data-my-radar>
+    <header class="account-header">
+      <a class="account-brand" href="/" aria-label="F.A.T., retour au calculateur">
+        <svg class="brand-mark" viewBox="0 0 120 76" aria-hidden="true"><path class="brand-curve" d="M6 62C30 30 62 22 78 26C96 31 106 44 112 62"/><circle class="brand-ball" cx="78" cy="26" r="13"/></svg><span>F.A.T<span>.</span></span>
+      </a>
+      <p>/ MON COMPTE / RADAR / MES PARTIES</p>
+      <details class="account-user-menu">
+        <summary><span class="replica-avatar" aria-hidden="true">●</span><span data-account-pseudo>COMPTE</span><span aria-hidden="true">▾</span></summary>
+        <div><a href="/compte/armurerie.html">L’Armurerie</a><button type="button" data-account-logout>Déconnexion</button></div>
+      </details>
+    </header>
+
+    <div class="armory-layout">
+      <aside class="armory-rail" aria-label="Navigation du compte">
+        <p>// MON COMPTE</p>
+        <nav>
+          <a href="/compte/armurerie.html"><span>⌂</span> L’Armurerie</a>
+          <a class="is-active" href="/compte/mes-parties.html" aria-current="page"><span>⌖</span> Mes parties <strong data-owner-count>0</strong></a>
+          <a href="/parties-airsoft/"><span>◎</span> Radar public</a>
+          <button type="button" disabled><span>⚙</span> Réglages</button>
+        </nav>
+        <a class="armory-tutorial" href="/parties-airsoft/"><span>VUE TERRAIN</span><strong>◎ OUVRIR LE RADAR</strong></a>
+      </aside>
+
+      <main class="armory-main radar-owner-main" id="mes-parties">
+        <section data-owner-list-view>
+          <div class="armory-title-row">
+            <div><p class="eyebrow">F.A.T. // RADAR ORGANISATEUR</p><h1>Mes parties</h1><p data-owner-summary>0 PUBLIÉE · 0 BROUILLON</p></div>
+            <button class="button button-primary" type="button" data-owner-create>+ CRÉER UNE PARTIE</button>
+          </div>
+          <div class="armory-state" data-owner-status role="status" aria-live="polite">Chargement de tes parties…</div>
+          <a class="button button-primary armory-login-link" href="/compte/?return=%2Fcompte%2Fmes-parties.html" data-owner-login hidden>SE CONNECTER →</a>
+          <section class="radar-owner-grid" data-owner-grid aria-label="Mes parties"></section>
+          <aside class="radar-owner-notice">
+            <strong>PUBLICATION AUTOMATIQUE APRÈS VALIDATION</strong>
+            <p>F.A.T. ne crée aucune fausse partie et ne corrige pas silencieusement vos règles. Confirmez la position, la capacité, les services et le lien d’inscription avant publication.</p>
+          </aside>
+        </section>
+
+        <section class="radar-owner-editor" data-owner-editor hidden aria-labelledby="owner-editor-title">
+          <header class="radar-owner-editor-header">
+            <div><p class="eyebrow">ÉDITEUR DE BRIEFING</p><h1 id="owner-editor-title" data-editor-title>Nouvelle partie</h1><p data-autosave-status role="status" aria-live="polite">Brouillon prêt.</p></div>
+            <button class="button" type="button" data-editor-close>RETOUR À LA LISTE</button>
+          </header>
+
+          <ol class="radar-stepper" data-stepper aria-label="Étapes de publication">
+            <li data-step-indicator="0"><button type="button">01 <span>Infos</span></button></li>
+            <li data-step-indicator="1"><button type="button">02 <span>Places</span></button></li>
+            <li data-step-indicator="2"><button type="button">03 <span>Règles</span></button></li>
+            <li data-step-indicator="3"><button type="button">04 <span>Liens</span></button></li>
+            <li data-step-indicator="4"><button type="button">05 <span>Aperçu</span></button></li>
+          </ol>
+
+          <form class="radar-owner-form" data-owner-form>
+            <fieldset data-editor-step="0">
+              <legend>01 // INFORMATIONS DE PARTIE</legend>
+              <div class="radar-owner-fields">
+                <label class="is-wide">TITRE<input name="title" required minlength="3" maxlength="120" placeholder="Ex. Opération Ligne Verte"></label>
+                <label>NOM DU TERRAIN<input name="venueName" maxlength="120"></label>
+                <label>SCÉNARIO<input name="scenario" maxlength="120"></label>
+                <label>DÉBUT — EUROPE/PARIS<input name="startLocal" type="datetime-local"></label>
+                <label>FIN — EUROPE/PARIS<input name="endLocal" type="datetime-local"></label>
+                <label>NIVEAU<input name="level" maxlength="80" placeholder="Tous niveaux"></label>
+                <label class="radar-owner-checkbox"><input name="beginnersWelcome" type="checkbox"> Débutants bienvenus</label>
+                <label class="is-wide">DESCRIPTION<textarea name="description" maxlength="800" rows="5"></textarea></label>
+              </div>
+              <div class="radar-location-workbench">
+                <div class="radar-geocode-panel">
+                  <label>RECHERCHER AVEC L’IGN<input name="locationSearch" type="search" minlength="4" maxlength="120" autocomplete="off" placeholder="Adresse, commune ou lieu-dit"></label>
+                  <p data-geocode-status role="status" aria-live="polite">La recherche démarre à partir de quatre caractères.</p>
+                  <div class="radar-geocode-results" data-geocode-results></div>
+                  <label>ADRESSE EXACTE — PRIVÉE<input name="exactAddress" maxlength="255"></label>
+                  <label>LIBELLÉ PUBLIC<input name="publicLocationLabel" maxlength="160" placeholder="Terrain, commune ou secteur"></label>
+                  <label>COMMUNE<input name="city" maxlength="120"></label>
+                  <div class="radar-owner-fields is-compact">
+                    <label>CODE POSTAL<input name="postalCode" maxlength="10"></label>
+                    <label>DÉPARTEMENT<input name="departmentCode" maxlength="3"></label>
+                    <label>NOM DU DÉPARTEMENT<input name="department" maxlength="120"></label>
+                    <label>RÉGION<input name="region" maxlength="120"></label>
+                  </div>
+                  <label>PRÉCISION PUBLIQUE<select name="locationVisibility"><option value="exact">Point exact</option><option value="approximate">Commune approximative — coordonnées privées</option></select></label>
+                  <label class="radar-location-confirm"><input name="locationConfirmed" type="checkbox"> Je confirme le point WGS84 affiché sur la carte.</label>
+                  <p class="radar-location-reading" data-location-reading>Aucun point sélectionné.</p>
+                </div>
+                <div class="radar-location-preview" id="radar-owner-map" role="application" aria-label="Prévisualisation de la position de la partie"></div>
+              </div>
+            </fieldset>
+
+            <fieldset data-editor-step="1" hidden>
+              <legend>02 // CAPACITÉ ET SERVICES</legend>
+              <div class="radar-owner-fields">
+                <label>NOMBRE MAXIMAL DE JOUEURS<input name="maxCapacity" type="number" min="1" max="5000"></label>
+                <label>PRIX EN EUROS<input name="priceEuros" type="number" min="0" max="10000" step="0.01"></label>
+                <label>ÂGE MINIMUM<input name="minimumAge" type="number" min="10" max="99"></label>
+                <label>TOILETTES
+                  <select name="toiletsAvailable" required>
+                    <option value="">À renseigner</option>
+                    <option value="yes">Oui</option>
+                    <option value="no">Non</option>
+                  </select>
+                </label>
+                <label class="is-wide">LOCATION (OPTIONNEL)<input name="rentalDetails" maxlength="255" placeholder="Matériel, tarif et conditions"></label>
+                <label class="is-wide">RESTAURATION (OPTIONNEL)<input name="cateringDetails" maxlength="255"></label>
+              </div>
+            </fieldset>
+
+            <fieldset data-editor-step="2" hidden>
+              <legend>03 // MATRICE DES RÈGLES</legend>
+              <p class="radar-owner-help">Renseignez chaque ligne. « Non communiqué » reste une information explicite et visible.</p>
+              <div class="radar-rule-editor" data-rule-editor>
+                <div data-rule-type="assault"><strong>ASSAUT</strong></div>
+                <div data-rule-type="dmr"><strong>DMR</strong></div>
+                <div data-rule-type="sniper"><strong>SNIPER</strong></div>
+                <div data-rule-type="cqb"><strong>CQB</strong></div>
+                <div data-rule-type="detonating_grenades"><strong>GRENADES DÉTONANTES</strong></div>
+                <div data-rule-type="co2_grenades"><strong>GRENADES CO₂</strong></div>
+                <div data-rule-type="smoke_grenades"><strong>FUMIGÈNES</strong></div>
+              </div>
+            </fieldset>
+
+            <fieldset data-editor-step="3" hidden>
+              <legend>04 // INSCRIPTION ET COMMUNAUTÉ</legend>
+              <div class="radar-owner-fields">
+                <label class="is-wide">LIEN D’INSCRIPTION HTTPS<input name="registrationUrl" type="url" maxlength="2048" placeholder="https://…"></label>
+                <label>SITE WEB<input name="link_website" type="url" maxlength="2048"></label>
+                <label>FACEBOOK<input name="link_facebook" type="url" maxlength="2048"></label>
+                <label>HELLOASSO<input name="link_helloasso" type="url" maxlength="2048"></label>
+                <label>DISCORD<input name="link_discord" type="url" maxlength="2048"></label>
+                <label>INSTAGRAM<input name="link_instagram" type="url" maxlength="2048"></label>
+                <label class="is-wide">EMAIL DE CONTACT PRIVÉ (OPTIONNEL)<input name="contactEmail" type="email" maxlength="254" autocomplete="email"><small>Chiffré en base, jamais affiché sur la fiche publique. Aucun relais email n’est activé dans ce lot.</small></label>
+              </div>
+            </fieldset>
+
+            <fieldset data-editor-step="4" hidden>
+              <legend>05 // CONTRÔLE AVANT PUBLICATION</legend>
+              <div class="radar-owner-preview" data-owner-preview></div>
+              <div class="radar-publish-control">
+                <div data-turnstile-action="radar_publish"></div>
+                <p data-turnstile-message="radar_publish" role="status" aria-live="polite"></p>
+                <button class="button button-primary" type="button" data-owner-publish>PUBLIER LA PARTIE →</button>
+              </div>
+            </fieldset>
+
+            <footer class="radar-editor-nav">
+              <button class="button" type="button" data-step-previous>← PRÉCÉDENT</button>
+              <span data-step-reading>ÉTAPE 1 / 5</span>
+              <button class="button button-primary" type="button" data-step-next>SUIVANT →</button>
+            </footer>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <dialog class="radar-owner-action-dialog" data-owner-action-dialog aria-labelledby="owner-action-title">
+      <form>
+        <button class="radar-briefing-close" type="button" data-action-close aria-label="Fermer">×</button>
+        <p class="eyebrow">ACTION SENSIBLE</p>
+        <h2 id="owner-action-title" data-action-title>Confirmer l’action</h2>
+        <p data-action-description></p>
+        <div data-turnstile-action="radar_cancel"></div>
+        <p data-turnstile-message="radar_cancel" role="status" aria-live="polite"></p>
+        <div data-turnstile-action="radar_delete"></div>
+        <p data-turnstile-message="radar_delete" role="status" aria-live="polite"></p>
+        <p data-action-status role="status" aria-live="polite"></p>
+        <button class="button archive-confirm" type="submit" data-action-confirm>CONFIRMER</button>
+      </form>
+    </dialog>
+  </div>
+  <script src="/assets/vendor/leaflet-1.9.4/leaflet.js?v=1.9.4" data-cfasync="false"></script>
+  <script type="module" data-cfasync="false" src="/assets/js/radar/mes-parties-entry.js?v=20260723-47"></script>
+</body>
+</html>

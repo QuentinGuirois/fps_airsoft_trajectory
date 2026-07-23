@@ -225,11 +225,11 @@ for (const mass of ['0.25', '0.30', '0.40']) {
 }
 await waitFor(`document.querySelector('[data-advanced-drone-host]').dataset.seriesCount === '4'`);
 const postsBeforeUi = await evaluate(`window.__advancedPosts`);
-await evaluate(`(()=>{document.querySelector('[data-advanced-camera="drone"]').click();document.querySelector('input[name="fat-theme"][value="light"]').click();document.querySelector('[data-select-series="2"]').click();document.querySelector('[data-remove-series="1"]').click()})()`);
+await evaluate(`(()=>{document.querySelector('[data-advanced-camera="drone"]').click();document.querySelector('[data-select-series="2"]').click();document.querySelector('[data-remove-series="1"]').click()})()`);
 await waitFor(`document.querySelector('[data-advanced-drone-host]').dataset.seriesCount === '3'`);
 const compareState = await evaluate(`({posts:window.__advancedPosts,count:document.querySelector('[data-advanced-3d-app]').dataset.seriesCount,hostCount:document.querySelector('[data-advanced-drone-host]').dataset.seriesCount,legend:document.querySelectorAll('[data-advanced-legend] li').length,selected:document.querySelector('[data-advanced-3d-app]').dataset.selectedSeriesRequestId,theme:document.documentElement.dataset.theme})`);
-if (compareState.posts !== postsBeforeUi || compareState.count !== '3' || compareState.hostCount !== '3' || compareState.legend !== 3 || !compareState.selected || compareState.theme !== 'light') throw new Error(`Comparaisons: ${JSON.stringify(compareState)}`);
-await capture('advanced-3d-comparisons-light.png');
+if (compareState.posts !== postsBeforeUi || compareState.count !== '3' || compareState.hostCount !== '3' || compareState.legend !== 3 || !compareState.selected || compareState.theme !== 'dark') throw new Error(`Comparaisons: ${JSON.stringify(compareState)}`);
+await capture('advanced-3d-comparisons-dark.png');
 
 console.log('[advanced] WebGL absent et import cassé');
 requests.length = 0;
@@ -245,18 +245,18 @@ const moduleFallback = await evaluate(`({fallback:!document.querySelector('[data
 if (!moduleFallback.fallback || moduleFallback.canvas || !moduleFallback.message.includes('module 3D')) throw new Error(`Fallback module: ${JSON.stringify(moduleFallback)}`);
 await send('Network.setBlockedURLs', { urls: [] });
 
-console.log('[advanced] responsive nuit/jour');
+console.log('[advanced] responsive sombre');
 const formats = [
   [1440, 900, 'desktop'], [1024, 768, 'laptop'], [768, 1024, 'tablet-portrait'],
   [1024, 768, 'tablet-landscape'], [390, 844, 'phone-portrait'], [844, 390, 'phone-landscape'], [359, 640, 'narrow'],
 ];
 for (const [width, height, label] of formats) {
-  for (const theme of ['dark', 'light']) {
+  for (const theme of ['dark']) {
     const touch = label.includes('tablet') || label.includes('phone') || label === 'narrow';
     await send('Emulation.setTouchEmulationEnabled', { enabled: touch, maxTouchPoints: touch ? 5 : 1 });
     await setViewport(width, height);
     await setMedia(theme);
-    await evaluate(`localStorage.setItem('fat-theme','${theme}');sessionStorage.removeItem('fat-advanced-mobile-dismissed')`);
+    await evaluate(`sessionStorage.removeItem('fat-advanced-mobile-dismissed')`);
     requests.length = 0;
     await navigate(`${advancedUrl}?responsive=${label}-${theme}`);
     if (touch) await waitFor(`document.querySelector('[data-advanced-3d-app]').dataset.webgl === 'mobile-disabled'`);
@@ -313,7 +313,7 @@ await waitForScene();
 await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await waitFor(`navigator.serviceWorker.controller !== null`);
 await wait(800);
-const cached = await evaluate(`Promise.all(${JSON.stringify(lazyPaths)}.map(async path=>Boolean(await (await caches.open('fat-v3-2026-07-19-45')).match(path.endsWith('three.core.min.js')?path:path+'?v=20260718-28'))))`, true);
+const cached = await evaluate(`Promise.all(${JSON.stringify(lazyPaths)}.map(async path=>Boolean(await (await caches.open('fat-v3-2026-07-23-47')).match(path.endsWith('three.core.min.js')?path:path+'?v=20260723-47'))))`, true);
 if (cached.some((value) => !value)) throw new Error(`Cache 3D incomplet: ${JSON.stringify(cached)}`);
 await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0, connectionType: 'none' });
 await navigate(`${advancedUrl}?offline=1`);

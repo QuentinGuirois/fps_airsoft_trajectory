@@ -174,12 +174,13 @@ test('la représentation commune conserve une active et au plus trois copies com
   assert.deepEqual(comparisons, before);
 });
 
-test('comparaison, sélection, retrait, caméra et thème ne déclenchent aucun calcul ATP', async () => {
+test('comparaison, sélection, retrait et caméra ne déclenchent aucun calcul ATP', async () => {
   const app = await read('advanced-3d-app.js');
   assert.match(app, /result: structuredClone\(state\.latestResult\)/);
   assert.match(app, /state\.droneApi\?\.updateResult\(state\.latestResult, state\.comparisons\)/);
   assert.match(app, /function setCamera\(name\) \{[\s\S]*?state\.droneApi\?\.setCamera\(name\)/);
-  assert.match(app, /fat:themechange[\s\S]*?setTheme\(droneThemeColors\(\)\)/);
+  assert.doesNotMatch(app, /fat:themechange|dataset\.theme ===/);
+  assert.match(app, /groundOpacity:\s*0\.38/);
   assert.doesNotMatch(app, /function setCamera[\s\S]{0,300}postMessage/);
   assert.doesNotMatch(app, /legend\.addEventListener[\s\S]{0,900}postMessage/);
 });
@@ -207,18 +208,18 @@ test('la scène occupe le viewport, reste locale et rejoint la PWA sans préchar
   ]);
   assert.match(css, /\.advanced-stage \{[\s\S]*?min-height: calc\(100dvh - 4\.5rem\)/);
   assert.match(css, /env\(safe-area-inset-top\)/);
-  assert.match(app, /import\('\.\/drone-3d\.js\?v=20260718-28'\)/);
+  assert.match(app, /import\('\.\/drone-3d\.js\?v=20260723-47'\)/);
   assert.doesNotMatch(app, /^import .*drone-3d/m);
   assert.doesNotMatch(html, /three\.module|OrbitControls|<script[^>]+(?:https?:)?\/\//i);
   const core = worker.match(/const OPTIONAL = \[[\s\S]*?\n\];/)?.[0] || '';
   const lazy = worker.match(/const LAZY_3D = \[[\s\S]*?\n\];/)?.[0] || '';
-  for (const resource of ['/simulateur-3d-airsoft/', '/advanced-3d-app.js?v=20260719-45', '/advanced-device.js?v=20260718-28', '/advanced-transition.js?v=20260718-28']) {
+  for (const resource of ['/simulateur-3d-airsoft/', '/advanced-3d-app.js?v=20260723-47', '/advanced-device.js?v=20260723-47', '/advanced-transition.js?v=20260723-47']) {
     assert.ok(core.includes(`'${resource}'`), resource);
   }
   assert.doesNotMatch(core, /three-r185|drone-3d\.js/);
   assert.match(lazy, /three-r185/);
   assert.match(lazy, /drone-3d\.js/);
-  assert.match(worker, /fat-v3-2026-07-19-45/);
+  assert.match(worker, /fat-v3-2026-07-23-47/);
 });
 
 test('WebGL, Worker et import cassé débouchent sur un panneau utile sans moteur bis', async () => {

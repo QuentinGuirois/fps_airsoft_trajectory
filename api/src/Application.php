@@ -6,14 +6,19 @@ namespace Fat\Api;
 use Fat\Api\Controllers\AdminController;
 use Fat\Api\Controllers\AuthController;
 use Fat\Api\Controllers\PublicReplicaController;
+use Fat\Api\Controllers\PublicRadarController;
+use Fat\Api\Controllers\RadarAdminController;
+use Fat\Api\Controllers\RadarController;
 use Fat\Api\Controllers\ReplicaController;
 use Fat\Api\Controllers\TrajectoryController;
 use Fat\Api\Controllers\UserController;
 use Fat\Api\Middleware\Security;
 use Fat\Api\Services\AuditLogger;
+use Fat\Api\Services\GeocodingService;
 use Fat\Api\Services\MailerFactory;
 use Fat\Api\Services\ModerationNotifier;
 use Fat\Api\Services\RateLimiter;
+use Fat\Api\Services\SensitiveData;
 use Fat\Api\Services\SessionService;
 use Fat\Api\Services\UploadService;
 use Fat\Api\Services\TurnstileVerifier;
@@ -64,6 +69,17 @@ final class Application
         $trajectories = new TrajectoryController($this->db, $this->config, $sessions, $limits, $audit);
         $publicReplicas = new PublicReplicaController($this->db, $this->config);
         $admin = new AdminController($this->db, $this->config, $sessions, $limits, $audit);
+        $radar = new RadarController(
+            $this->db,
+            $sessions,
+            $limits,
+            $audit,
+            $turnstile,
+            new SensitiveData($this->config),
+            new GeocodingService($this->db, $this->config),
+        );
+        $publicRadar = new PublicRadarController($this->db, $this->config, $limits, $turnstile);
+        $radarAdmin = new RadarAdminController($this->db, $sessions, $limits, $audit);
         $router = new Router();
         $router->add('GET', '/health', static fn(): never => Response::json(['status' => 'ok']));
         $router->add('HEAD', '/health', static fn(): never => Response::noContent(200));
@@ -81,6 +97,18 @@ final class Application
         $router->add('GET', '/trajectories', [$trajectories, 'list']);
         $router->add('POST', '/trajectories', [$trajectories, 'create']);
         $router->add('DELETE', '/trajectories/{id}', [$trajectories, 'delete']);
+        $router->add('GET', '/radar/events', [$publicRadar, 'list']);
+        $router->add('GET', '/radar/events/{slug}', [$publicRadar, 'get']);
+        $router->add('POST', '/radar/events/{slug}/report', [$publicRadar, 'report']);
+        $router->add('GET', '/me/radar-events', [$radar, 'list']);
+        $router->add('POST', '/me/radar-events', [$radar, 'create']);
+        $router->add('GET', '/me/radar-events/{id}', [$radar, 'get']);
+        $router->add('PATCH', '/me/radar-events/{id}', [$radar, 'update']);
+        $router->add('DELETE', '/me/radar-events/{id}', [$radar, 'delete']);
+        $router->add('POST', '/me/radar-events/{id}/publish', [$radar, 'publish']);
+        $router->add('POST', '/me/radar-events/{id}/cancel', [$radar, 'cancel']);
+        $router->add('POST', '/me/radar-events/{id}/duplicate', [$radar, 'duplicate']);
+        $router->add('GET', '/me/radar-geocode', [$radar, 'geocode']);
         $router->add('GET', '/public/replicas', [$publicReplicas, 'list']);
         $router->add('GET', '/public/replicas/{slug}/image.webp', [$publicReplicas, 'image']);
         $router->add('GET', '/replicas', [$replicas, 'list']);
@@ -100,6 +128,9 @@ final class Application
         $router->add('POST', '/admin/replicas/{id}/restore', [$admin, 'restore']);
         $router->add('POST', '/admin/replicas/{id}/publish', [$admin, 'publish']);
         $router->add('POST', '/admin/replicas/{id}/reject', [$admin, 'reject']);
+        $router->add('GET', '/admin/radar-reports', [$radarAdmin, 'reports']);
+        $router->add('POST', '/admin/radar-events/{id}/hide', [$radarAdmin, 'hide']);
+        $router->add('POST', '/admin/radar-events/{id}/restore', [$radarAdmin, 'restore']);
         return $router;
     }
 }

@@ -182,10 +182,8 @@ for (const camera of ['drone', 'shooter', 'profile']) {
   cameraCaptures.push(name);
 }
 
-await evaluate(`(()=>{window.__threePosts=0;const original=Worker.prototype.postMessage;Worker.prototype.postMessage=function(...args){window.__threePosts++;return original.apply(this,args)};window.__threeBefore=document.querySelector('[data-drone-host]').dataset.themeSignature;window.__threeRenderCount=Number(document.querySelector('[data-drone-host]').dataset.renderCount);document.querySelector('input[name="fat-theme"][value="light"]').click()})()`);
-await wait(180);
-const themeState = await evaluate(`({posts:window.__threePosts,theme:document.documentElement.dataset.theme,changed:window.__threeBefore!==document.querySelector('[data-drone-host]').dataset.themeSignature,redrawn:Number(document.querySelector('[data-drone-host]').dataset.renderCount)>window.__threeRenderCount})`);
-if (themeState.posts !== 0 || themeState.theme !== 'light' || !themeState.changed || !themeState.redrawn) throw new Error(`Thème 3D: ${JSON.stringify(themeState)}`);
+const fixedTheme = await evaluate(`({theme:document.documentElement.dataset.theme,controls:document.querySelectorAll('input[name="fat-theme"]').length})`);
+if (fixedTheme.theme !== 'dark' || fixedTheme.controls !== 0) throw new Error(`Thème 3D fixe: ${JSON.stringify(fixedTheme)}`);
 
 await evaluate(`document.querySelector('[data-drone-replay]').click()`);
 await wait(80);
@@ -194,7 +192,7 @@ if (replayStart !== 'playing') throw new Error(`Replay non lancé: ${replayStart
 
 await waitFor(`navigator.serviceWorker.controller !== null`);
 await wait(500);
-const cached = await evaluate(`Promise.all(${JSON.stringify(lazyPaths)}.map(async path=>Boolean(await (await caches.open('fat-v3-2026-07-19-45')).match(path.endsWith('three.core.min.js')?path:path+'?v=20260718-28'))))`, true);
+const cached = await evaluate(`Promise.all(${JSON.stringify(lazyPaths)}.map(async path=>Boolean(await (await caches.open('fat-v3-2026-07-23-47')).match(path.endsWith('three.core.min.js')?path:path+'?v=20260723-47'))))`, true);
 if (cached.some((value) => !value)) throw new Error(`Cache 3D incomplet: ${JSON.stringify(cached)}`);
 
 await evaluate(`document.querySelector('[data-view-mode="2d"]').click()`);
@@ -222,9 +220,8 @@ if (noWebgl.webgl !== 'unavailable' || !noWebgl.toggleHidden || !noWebgl.profile
 const responsive3d = [];
 console.log('[drone] formats de recette');
 for (const width of [360, 390, 768, 1024, 1440]) {
-  for (const theme of ['dark', 'light']) {
+  for (const theme of ['dark']) {
     await setViewport(width, width <= 390 ? 844 : 900);
-    await evaluate(`localStorage.setItem('fat-theme','${theme}')`);
     requests.length = 0;
     await navigate(`${base}?three-responsive=${width}-${theme}`);
     await waitForResult();
@@ -293,7 +290,7 @@ const result = {
   loadedRequests,
   sharedState,
   visibilityLifecycle,
-  themeWithoutPhysics: themeState,
+  fixedTheme,
   replayStart,
   cached,
   destroyed,

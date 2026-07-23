@@ -13,13 +13,27 @@
     "test:browser:advanced": "node tests/run-browser-advanced-3d.mjs",
     "test:browser:tutorial": "node tests/run-browser-tutorial.mjs",
     "test:browser:community": "node tests/run-browser-community.mjs",
+    "test:browser:radar": "node tests/run-browser-radar.mjs",
     "test:api": "node tests/api.integration.mjs",
+    "test:radar-api": "node tests/radar-api.integration.mjs",
     "test:background-removal": "python tests/test_background_removal.py",
     "lighthouse:mobile": "lhci autorun --config=./lighthouserc-mobile.cjs",
     "lighthouse:desktop": "lhci autorun --config=./lighthouserc-desktop.cjs",
-    "serve": "python -m http.server 8080"
+    "serve": "php -S 127.0.0.1:8080 bin/local-router.php",
+    "db:migrate": "php bin/migrate.php",
+    "db:reset:local": "php bin/reset-local-database.php --yes",
+    "db:admin:local": "php bin/create-local-test-admin.php",
+    "maintenance": "php bin/maintenance.php",
+    "sitemap": "node bin/build-sitemap.mjs"
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "leaflet": "1.9.4",
+    "leaflet.markercluster": "1.5.3"
+  },
+  "devDependencies": {
+    "playwright": "1.61.1"
   }
 }

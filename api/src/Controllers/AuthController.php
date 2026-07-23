@@ -20,7 +20,7 @@ use PDOException;
 
 final class AuthController
 {
-    private const TERMS_VERSION = '2026-07-18';
+    private const TERMS_VERSION = '2026-07-23';
 
     public function __construct(
         private readonly PDO $db,

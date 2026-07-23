@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /compte/
 
 Sitemap: https://fps-airsoft-trajectory.com/sitemap.xml
-

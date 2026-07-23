@@ -39,7 +39,7 @@ test('l’inscription exige et versionne une acceptation juridique côté serveu
   assert.match(html, /version du 18 juillet 2026/);
   assert.match(client, /legalAccepted: form\.elements\.legalAccepted\?\.checked === true/);
   assert.match(controller, /Validator::boolTrue\(\$body\['legalAccepted'\]/);
-  assert.match(controller, /private const TERMS_VERSION = '2026-07-18'/);
+  assert.match(controller, /private const TERMS_VERSION = '2026-07-23'/);
   assert.match(controller, /terms_version,terms_accepted_at/);
   assert.match(migration, /ADD COLUMN terms_version/);
   assert.match(migration, /ADD COLUMN terms_accepted_at/);

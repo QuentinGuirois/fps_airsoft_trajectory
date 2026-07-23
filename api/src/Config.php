@@ -49,6 +49,13 @@ final class Config
         if ($turnstileEnabled === null) {
             throw new \RuntimeException('TURNSTILE_ENABLED doit être un booléen explicite.');
         }
+        $acceptTurnstileTestKeys = filter_var($values['TURNSTILE_ACCEPT_TEST_KEYS'] ?? 'false', FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
+        if ($acceptTurnstileTestKeys === null) {
+            throw new \RuntimeException('TURNSTILE_ACCEPT_TEST_KEYS doit être un booléen explicite.');
+        }
+        if (($values['APP_ENV'] ?? '') === 'production' && $acceptTurnstileTestKeys) {
+            throw new \RuntimeException('Le mode de recette Turnstile est interdit en production.');
+        }
         if ($turnstileEnabled) {
             foreach (['TURNSTILE_SITE_KEY','TURNSTILE_SECRET_KEY','TURNSTILE_EXPECTED_HOSTNAME'] as $required) {
                 if (!isset($values[$required]) || trim($values[$required]) === '') {

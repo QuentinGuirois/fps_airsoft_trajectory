@@ -19,7 +19,7 @@ function contrast(first, second) {
   return (values[0] + 0.05) / (values[1] + 0.05);
 }
 
-test('le shell rend un header, un sélecteur de thème et un footer cohérents partout', async () => {
+test('le shell rend un header sombre et un footer cohérents partout', async () => {
   const [site, theme, css, offline] = await Promise.all([
     read('site.js'), read('theme.js'), read('assets', 'site.css'), read('offline.html'),
   ]);
@@ -33,12 +33,10 @@ test('le shell rend un header, un sélecteur de thème et un footer cohérents p
   ]) assert.ok(site.includes(href), href);
   assert.match(site, /ensureSiteHeader\(\)/);
   assert.match(site, /normalizeFooter\(\)/);
-  assert.match(theme, /data-theme-control/);
-  assert.match(theme, /Système/);
-  assert.match(theme, /Nuit/);
-  assert.match(theme, /Jour/);
+  assert.match(theme, /applyDarkTheme/);
+  assert.doesNotMatch(`${site}\n${theme}\n${css}`, /data-theme-control|data-theme-slot|theme-switcher|theme-option/);
   assert.match(css, /\.site-footer > \.camo-strip/);
-  assert.match(offline, /src="\/site\.js\?v=20260719-45"/);
+  assert.match(offline, /src="\/site\.js\?v=20260723-47"/);
 });
 
 test('le cockpit, le mobile tactile et les rails de guide suivent le lot 2', async () => {
@@ -52,19 +50,15 @@ test('le cockpit, le mobile tactile et les rails de guide suivent le lot 2', asy
   assert.match(site, /enhanceGuideRails/);
   assert.match(css, /\.guide-rail-cta/);
   assert.match(css, /max-width: var\(--reading\)/);
-  assert.match(css, /\.brand, \.menu-toggle, \.theme-option span \{ min-height: 44px; \}/);
-  assert.match(css, /\.theme-option span \{ min-height: 44px; padding-inline: \.42rem/);
+  assert.match(css, /\.brand, \.menu-toggle \{ min-height: 44px; \}/);
   assert.match(css, /\.drone-controls button \{ min-height: 44px/);
 });
 
-test('les petits textes acide et secondaires conservent un contraste AA dans les deux thèmes', async () => {
+test('les petits textes acide et secondaires conservent un contraste AA en mode sombre', async () => {
   const css = await read('assets', 'site.css');
   assert.match(css, /--muted-dim: #7d8664/);
-  assert.match(css, /--muted-dim: #5a6247/);
-  assert.match(css, /--acid-text: #456900/);
   assert.ok(contrast('#7d8664', '#171c11') >= 4.5);
-  assert.ok(contrast('#456900', '#e0e3cf') >= 4.5);
-  assert.ok(contrast('#456900', '#eef0e2') >= 4.5);
+  assert.ok(contrast('#a8ff3f', '#10140c') >= 4.5);
 });
 
 test('l’outil gaz conserve son parcours et affiche résultat, provenance, comparaison et courbe', async () => {
@@ -134,7 +128,7 @@ test('le cache et les ressources restent autonomes sans CDN', async () => {
   const [worker, css, site, gas] = await Promise.all([
     read('service-worker.js'), read('assets', 'site.css'), read('site.js'), read('gas-pressure-app.js'),
   ]);
-  assert.match(worker, /fat-v3-2026-07-19-45/);
+  assert.match(worker, /fat-v3-2026-07-23-47/);
   for (const source of [worker, css, site, gas]) {
     assert.doesNotMatch(source, /https?:\/\/(?:fonts\.|cdn\.|unpkg|jsdelivr)/i);
   }

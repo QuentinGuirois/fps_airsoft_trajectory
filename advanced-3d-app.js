@@ -1,9 +1,9 @@
-import { DEFAULT_SHOT, normalizeShot } from './physics-core.js?v=20260718-28';
-import { detectWebGL, mobile3DDisabled } from './render-capabilities.js?v=20260719-45';
-import { advancedDeviceAdvice } from './advanced-device.js?v=20260718-28';
-import { consumeAdvancedTransition, createAdvancedTransition } from './advanced-transition.js?v=20260718-28';
-import { serializeCurveThumbnail } from './assets/js/curve-thumbnail.js?v=20260718-28';
-import { createProductionRepositories, RepositoryError } from './assets/js/community-repositories.js?v=20260719-45';
+import { DEFAULT_SHOT, normalizeShot } from './physics-core.js?v=20260723-47';
+import { detectWebGL, mobile3DDisabled } from './render-capabilities.js?v=20260723-47';
+import { advancedDeviceAdvice } from './advanced-device.js?v=20260723-47';
+import { consumeAdvancedTransition, createAdvancedTransition } from './advanced-transition.js?v=20260723-47';
+import { serializeCurveThumbnail } from './assets/js/curve-thumbnail.js?v=20260723-47';
+import { createProductionRepositories, RepositoryError } from './assets/js/community-repositories.js?v=20260723-47';
 
 const root = document.querySelector('[data-advanced-3d-app]');
 
@@ -77,7 +77,7 @@ if (root) {
       fireline: color('--scene-fireline', '#6b7a4f'),
       ball: color('--scene-ball', '#e9ecdd'),
       impact: color('--chart-marker-impact', '#e07856'),
-      groundOpacity: document.documentElement.dataset.theme === 'light' ? 0.58 : 0.38,
+      groundOpacity: 0.38,
     };
   }
 
@@ -216,7 +216,7 @@ if (root) {
   async function prepareDrone() {
     if (state.droneApi || !state.latestResult) return;
     try {
-      state.droneModulePromise ||= import('./drone-3d.js?v=20260718-28');
+      state.droneModulePromise ||= import('./drone-3d.js?v=20260723-47');
       const { createDroneView } = await state.droneModulePromise;
       state.droneApi = createDroneView({
         host,
@@ -416,7 +416,6 @@ if (root) {
     if (document.fullscreenElement) await document.exitFullscreen?.();
   });
   window.addEventListener('resize', updateMobileNotice);
-  window.addEventListener('fat:themechange', () => state.droneApi?.setTheme(droneThemeColors()));
   document.addEventListener('fullscreenchange', () => root.toggleAttribute('data-fullscreen', document.fullscreenElement === stage));
   window.addEventListener('pagehide', () => {
     clearTimeout(state.simulationTimer);
@@ -446,7 +445,7 @@ if (root) {
     showFallback('Le Web Worker ATP n’est pas disponible. Aucun moteur de remplacement n’est chargé.');
     transition.fail('Web Worker indisponible.');
   } else {
-    state.worker = new Worker('/trajectory.worker.js?v=20260718-28', { type: 'module' });
+    state.worker = new Worker('/trajectory.worker.js?v=20260723-47', { type: 'module' });
     state.worker.addEventListener('message', (event) => receiveResult(event.data));
     state.worker.addEventListener('error', () => {
       state.worker?.terminate();

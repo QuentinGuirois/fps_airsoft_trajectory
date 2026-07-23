@@ -3,21 +3,29 @@ ServerSignature Off
 
 <IfModule mod_setenvif.c>
   SetEnvIf Request_URI "^/compte(?:/|$)" fat_private_shell=1
+  SetEnvIf Request_URI "^/parties-airsoft/[a-z0-9-]+/?$" fat_radar_deep=1
 </IfModule>
 
 <IfModule mod_headers.c>
   Header always set X-Content-Type-Options "nosniff"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set X-Frame-Options "DENY"
-  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), fullscreen=(self), screen-wake-lock=(self)"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(self), payment=(), usb=(), fullscreen=(self), screen-wake-lock=(self)"
   # Ne pas ajouter includeSubDomains avant d'avoir corrigé le TLS de mail/webmail.
   Header always set Strict-Transport-Security "max-age=31536000"
   Header always unset X-Powered-By
   Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; manifest-src 'self'"
+  Header always set Cache-Control "private, no-store, max-age=0" env=fat_private_shell
+  Header always set X-Robots-Tag "noindex, follow" env=fat_radar_deep
   <FilesMatch "\.html$">
-    Header add Link "</assets/site.css?v=20260719-45>; rel=preload; as=style"
+    Header add Link "</assets/site.css?v=20260723-47>; rel=preload; as=style"
     Header merge Cache-Control "public, no-transform" env=!fat_private_shell
   </FilesMatch>
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^parties-airsoft/[a-z0-9-]+/?$ /parties-airsoft/index.html [L]
 </IfModule>
 
 <IfModule mod_brotli.c>

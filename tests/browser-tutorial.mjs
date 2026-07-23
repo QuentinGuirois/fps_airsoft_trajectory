@@ -100,11 +100,6 @@ async function setViewport(width, height, mobile = false) {
   });
 }
 
-async function setTheme(value) {
-  await evaluate(`document.querySelector('input[name="fat-theme"][value="${value}"]').click()`);
-  await wait(80);
-}
-
 async function nextStep(expected) {
   await evaluate(`document.querySelector('[data-tutorial-next]').click()`);
   try {
@@ -128,7 +123,7 @@ await send('Emulation.setEmulatedMedia', { features: [
 ] });
 
 await navigate(`${base}?tutorial-recipe=desktop`);
-await evaluate(`localStorage.removeItem('fat-tutorial-v1');localStorage.setItem('fat-theme','dark')`);
+await evaluate(`localStorage.removeItem('fat-tutorial-v1')`);
 await navigate(`${base}?tutorial-recipe=first-visit`);
 await waitFor(`Boolean(window.fatCalculatorTutorial) && Boolean(document.querySelector('[data-trajectory-app]')?.dataset.lastRequestId)`);
 await waitFor(`Boolean(document.querySelector('[data-tutorial-offer]'))`);
@@ -138,6 +133,7 @@ if (!firstVisit.offer || firstVisit.stored !== 'dismissed') throw new Error(`Fir
 const valuesBefore = await evaluate(`Object.fromEntries([...document.querySelectorAll('[data-shot-field]')].map(input=>[input.dataset.shotField,input.value]))`);
 await evaluate(`document.querySelector('[data-tutorial-offer-start]').click()`);
 await waitFor(`window.fatCalculatorTutorial.getState().active && window.fatCalculatorTutorial.getState().index === 0`);
+await waitFor(`document.activeElement===document.querySelector('[data-tutorial-next]')`);
 await wait(520);
 const initial = await evaluate(`(()=>{const dialog=document.querySelector('.tutorial-tip');const hole=document.querySelector('.tutorial-spotlight').getBoundingClientRect();const header=document.querySelector('.site-header').getBoundingClientRect();return{role:dialog.getAttribute('role'),modal:dialog.getAttribute('aria-modal'),dots:document.querySelectorAll('.tutorial-dots span').length,title:document.querySelector('[data-tutorial-title]').textContent,focused:document.activeElement===document.querySelector('[data-tutorial-next]'),safe:hole.top>=header.bottom-1}})()`);
 if (initial.role !== 'dialog' || initial.modal !== 'true' || initial.dots !== 7 || !initial.focused || !initial.safe) throw new Error(`Initial tutorial mismatch ${JSON.stringify(initial)}`);
@@ -148,9 +144,6 @@ await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab',
 await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9, modifiers: 8 });
 if (!await evaluate(`document.activeElement===document.querySelector('[data-tutorial-next]')`)) throw new Error('Shift+Tab did not wrap to last tutorial control');
 await capture('tutorial-desktop-night.png');
-await setTheme('light');
-await capture('tutorial-desktop-day.png');
-await setTheme('dark');
 
 await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 });
 await waitFor(`window.fatCalculatorTutorial.getState().index === 1`);
@@ -198,15 +191,12 @@ await evaluate(`window.fatCalculatorTutorial.close('completed')`);
 await setViewport(390, 844, true);
 await navigate(`${base}?tutorial-recipe=mobile`);
 await waitFor(`Boolean(window.fatCalculatorTutorial) && Boolean(document.querySelector('[data-trajectory-app]')?.dataset.lastRequestId)`);
-await setTheme('dark');
 await evaluate(`document.querySelector('[data-tutorial-launch]').click()`);
 await waitFor(`window.fatCalculatorTutorial.getState().active`);
 for (let expected = 1; expected <= 4; expected += 1) await nextStep(expected);
 const mobile = await evaluate(`(()=>{const tip=document.querySelector('.tutorial-tip').getBoundingClientRect();const hole=document.querySelector('.tutorial-spotlight').getBoundingClientRect();const header=document.querySelector('.site-header').getBoundingClientRect();return{width:innerWidth,scrollWidth:document.documentElement.scrollWidth,tipLeft:tip.left,tipRight:tip.right,holeTop:hole.top,headerBottom:header.bottom,index:window.fatCalculatorTutorial.getState().index}})()`);
 if (mobile.scrollWidth > mobile.width || mobile.tipLeft < 0 || mobile.tipRight > mobile.width || mobile.holeTop < mobile.headerBottom - 1 || mobile.index !== 4) throw new Error(`Mobile layout mismatch ${JSON.stringify(mobile)}`);
 await capture('tutorial-mobile-night.png');
-await setTheme('light');
-await capture('tutorial-mobile-day.png');
 
 await setViewport(360, 800, true);
 await wait(100);
@@ -215,7 +205,7 @@ if (await evaluate(`document.documentElement.scrollWidth > innerWidth`)) throw n
 await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await navigate(`${base}?tutorial-recipe=sw-control`);
 await waitFor(`Boolean(navigator.serviceWorker.controller)`);
-const cache = await evaluate(`caches.open('fat-v3-2026-07-19-45').then(cache=>cache.match('/calculator-tutorial.js?v=20260719-45')).then(Boolean)`, true);
+const cache = await evaluate(`caches.open('fat-v3-2026-07-23-47').then(cache=>cache.match('/calculator-tutorial.js?v=20260723-47')).then(Boolean)`, true);
 if (!cache) throw new Error('Tutorial module missing from PWA cache');
 await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 });
 await navigate(`${base}?tutorial-recipe=offline`);

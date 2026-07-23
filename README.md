@@ -1,10 +1,10 @@
 # F.A.T. v3 — FPS Airsoft Trajectory
 
-Site statique, PWA et calculateur balistique airsoft en français. Le moteur reprend les relations documentées par l’Airsoft Trajectory Project de Mackila, reconstruit les coefficients de spin decay absents à partir de ses figures de référence et exécute le vol en trois dimensions dans un Web Worker.
+Site, PWA, calculateur balistique airsoft et Radar de parties en français. Le moteur reprend les relations documentées par l’Airsoft Trajectory Project de Mackila, reconstruit les coefficients de spin decay absents à partir de ses figures de référence et exécute le vol en trois dimensions dans un Web Worker.
 
 ## Démarrage
 
-Prérequis : Node.js 20+ et Python 3 pour le serveur local.
+Prérequis complet : Node.js 20+, PHP 8.3 et MariaDB pour l’API. Le calculateur statique reste utilisable sans base, mais `npm run serve` lance désormais le routeur PHP local.
 
 ```bash
 npm test
@@ -28,6 +28,11 @@ Ouvrir <http://localhost:8080>. Ne pas ouvrir `index.html` directement : les mod
 - `outils/choisir-gaz-airsoft-pression-temperature/` : page-outil gaz, contenu et FAQ ;
 - `assets/site.css` : charte et composants responsives ;
 - `service-worker.js` / `manifest.webmanifest` : installation et cache hors ligne ;
+- `parties-airsoft/` : carte publique F.A.T. // Radar ;
+- `compte/mes-parties.html` : éditeur organisateur privé en cinq étapes ;
+- `api/src/Controllers/*Radar*` / `database/migrations/005_radar.sql` : API, règles, cycle de vie et modération du Radar ;
+- `docs/radar.md` : architecture, IGN, confidentialité, recette et procédure Plesk ;
+- `docs/radar-delivery-report.md` : inventaire livré, preuves de recette, captures et limites ;
 - `guides/` : contenus SEO de lancement ;
 - `docs/strategie-seo.md` : arborescence et plan de croissance ;
 - `docs/moteur-atp.md` : décisions techniques du moteur ;
@@ -59,7 +64,7 @@ La future charte peut être appliquée dans le bloc `:root` au début de `assets
 
 ## Vie privée
 
-La V3 publique n’envoie actuellement aucun setup, profil ou photo à un serveur et ne charge aucun CDN. Les préférences sont enregistrées localement. Les briques `replica-*` préparent un futur formulaire modéré mais aucune route communautaire ni API n’est ouverte sans profil autorisé, stockage privé et recette de sécurité. Aucun outil d’analytics n’est inclus tant que le choix de mesure et sa configuration légale ne sont pas définis.
+Le calcul ATP et ses préférences restent locaux. Le compte facultatif, les cards et le Radar utilisent l’API documentée : cookie HttpOnly, CSRF, Origin strict, quotas, ownership SQL et export/suppression. Une position Radar approximative ne transmet jamais ses coordonnées privées au navigateur public ; l’email de contact optionnel est chiffré et jamais affiché. Aucun CDN ni outil d’analytics n’est chargé.
 
 ## Attribution
 

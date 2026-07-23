@@ -66,7 +66,7 @@ test('les vrais champs du calculateur portent les ancres et le lancement reste v
     assert.ok(html.includes(`data-tuto="${anchor}"`), anchor);
   }
   assert.match(html, /data-tuto-include="energie"/);
-  assert.match(html, /<script type="module" data-cfasync="false" src="\/calculator-tutorial\.js\?v=20260719-45"><\/script>/);
+  assert.match(html, /<script type="module" data-cfasync="false" src="\/calculator-tutorial\.js\?v=20260723-47"><\/script>/);
 });
 
 test('le guidage est accessible, résilient et n’intervient pas dans les calculs', async () => {
@@ -95,6 +95,6 @@ test('le guidage est accessible, résilient et n’intervient pas dans les calcu
 
 test('le module est précaché et la version PWA est incrémentée', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /const CACHE = 'fat-v3-2026-07-19-45'/);
-  assert.match(worker, /'\/calculator-tutorial\.js\?v=20260719-45'/);
+  assert.match(worker, /const CACHE = 'fat-v3-2026-07-23-47'/);
+  assert.match(worker, /'\/calculator-tutorial\.js\?v=20260723-47'/);
 });

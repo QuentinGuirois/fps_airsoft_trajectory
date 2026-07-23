@@ -9,6 +9,7 @@ const domain = 'https://fps-airsoft-trajectory.com';
 
 const pages = [
   ['/', 'index.html', 'weekly', '1.0'],
+  ['/parties-airsoft/', 'parties-airsoft/index.html', 'daily', '0.9'],
   ['/convertisseur-joules-fps/', 'convertisseur-joules-fps/index.html', 'monthly', '0.9'],
   ['/simulateur-trajectoire-airsoft/', 'simulateur-trajectoire-airsoft/index.html', 'monthly', '0.9'],
   ['/simulateur-3d-airsoft/', 'simulateur-3d-airsoft/index.html', 'monthly', '0.9'],

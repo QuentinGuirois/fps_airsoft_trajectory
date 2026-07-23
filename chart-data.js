@@ -1,4 +1,4 @@
-import { ATP, sightModel } from './physics-core.js?v=20260718-28';
+import { ATP, sightModel } from './physics-core.js?v=20260723-47';
 
 export const ATP_TOLERANCE_M = ATP.usefulEnvelopeM;
 export const TARGET_VERTICAL_EXAGGERATION = 10;

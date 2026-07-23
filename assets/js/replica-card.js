@@ -1,4 +1,4 @@
-import { validateSimulationUrl, validateYoutubeUrl } from '../../replica-utils.js?v=20260718-28';
+import { validateSimulationUrl, validateYoutubeUrl } from '../../replica-utils.js?v=20260723-47';
 
 export const REPLICA_STATES = Object.freeze(['draft', 'pending', 'published', 'rejected', 'archived']);
 export const IMAGE_STATES = Object.freeze(['queued', 'processing', 'ready', 'rejected', 'failed']);

@@ -121,11 +121,13 @@ test('le contrat serveur valide Turnstile sans élargir CSP ni cache PWA', async
   assert.match(verifier, /timeout-or-duplicate|SITEVERIFY_URL|siteverify/i);
   assert.match(config, /TURNSTILE_ENABLED/);
   assert.match(config, /clés de test Turnstile/);
+  assert.match(config, /TURNSTILE_ACCEPT_TEST_KEYS/);
+  assert.match(verifier, /result_with_testing_key/);
   assert.match(apache, /script-src 'self' https:\/\/challenges\.cloudflare\.com/);
   assert.doesNotMatch(apache, /script-src[^;\n"]*'unsafe-inline'/);
   assert.match(apache, /frame-src https:\/\/challenges\.cloudflare\.com/);
   assert.doesNotMatch(apache, /challenges\.cloudflare\.com\/\*|unsafe-eval/);
-  assert.ok(worker.includes("'/assets/js/turnstile-client.js?v=20260718-30'"));
+  assert.ok(worker.includes("'/assets/js/turnstile-client.js?v=20260723-47'"));
   assert.ok(!worker.includes(TURNSTILE_SCRIPT_URL));
   for (const key of ['TURNSTILE_SITE_KEY=', 'TURNSTILE_SECRET_KEY=']) assert.ok(example.includes(key));
   assert.doesNotMatch(example, /TURNSTILE_(?:SITE_KEY|SECRET_KEY)=\S+/);
