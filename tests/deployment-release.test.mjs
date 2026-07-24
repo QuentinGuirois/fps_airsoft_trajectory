@@ -28,6 +28,7 @@ test('l’archive exclut données privées et lie le cache PWA au SHA', async ()
   }
   assert.match(workflow, /git archive HEAD/);
   assert.match(workflow, /database\/seeds\/fat-radar-events-enriched-2026-07-24\.json\.php/);
+  assert.match(workflow, /build-radar-production-seed\.mjs/);
   assert.match(workflow, /fat-v3-\$\{process\.env\.GITHUB_SHA\}/);
   assert.match(workflow, /verify-release-archive\.sh/);
   for (const excluded of ['\\.git', '\\.github', 'docs', 'tests', 'node_modules', 'config', 'storage']) {

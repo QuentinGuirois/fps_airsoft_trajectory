@@ -139,24 +139,10 @@ jobs:
           mkdir -p "$release_root"
           git archive HEAD | tar -x -C "$release_root"
           install -d "$release_root/database/seeds"
-          RELEASE_ROOT="$release_root" node --input-type=module <<'NODE'
-          import { readFile, writeFile } from 'node:fs/promises';
-          import { join } from 'node:path';
-          const source = await readFile(
-            'docs/fat-radar/fat-radar-events-enriched-2026-07-24.json',
-            'utf8',
-          );
-          const marker = 'FAT_RADAR_PRODUCTION_SEED_20260724';
-          if (source.includes(marker)) throw new Error('Marqueur présent dans le JSON Radar.');
-          const wrapped = `<?php\nreturn <<<'${marker}'\n${source.replace(/\s*$/, '\n')}${marker};\n`;
-          await writeFile(
-            join(
-              process.env.RELEASE_ROOT,
-              'database/seeds/fat-radar-events-enriched-2026-07-24.json.php',
-            ),
-            wrapped,
-          );
-          NODE
+          node bin/build-radar-production-seed.mjs \
+            docs/fat-radar/fat-radar-events-enriched-2026-07-24.json \
+            "$release_root/database/seeds/fat-radar-events-enriched-2026-07-24.json.php" \
+            a1d2d8773e032fca8c3b55506229bcdc9f53484136be44d1bb4951d1e76c52d7
           RELEASE_ROOT="$release_root" node bin/build-sitemap.mjs
           RELEASE_ROOT="$release_root" node --input-type=module <<'NODE'
           import { readFile, writeFile } from 'node:fs/promises';
