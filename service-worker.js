@@ -1,4 +1,4 @@
-const CACHE = 'fat-v3-2026-07-24-50';
+const CACHE = 'fat-v3-2026-07-24-51';
 const CRITICAL = [
   '/',
   '/index.html',
@@ -41,10 +41,10 @@ const OPTIONAL = [
   '/assets/js/replica-card.js?v=20260723-47',
   '/assets/js/turnstile-client.js?v=20260723-47',
   '/assets/js/community-gallery.js?v=20260723-47',
-  '/assets/radar.css?v=20260724-50',
+  '/assets/radar.css?v=20260724-51',
   '/assets/js/radar-repositories.js?v=20260724-50',
-  '/assets/js/radar/radar-map.js?v=20260724-50',
-  '/assets/js/radar/radar-entry.js?v=20260724-50',
+  '/assets/js/radar/radar-map.js?v=20260724-51',
+  '/assets/js/radar/radar-entry.js?v=20260724-51',
   '/assets/vendor/leaflet-1.9.4/leaflet.css?v=1.9.4',
   '/assets/vendor/leaflet-1.9.4/leaflet.js?v=1.9.4',
   '/assets/vendor/leaflet.markercluster-1.5.3/MarkerCluster.css?v=1.5.3',

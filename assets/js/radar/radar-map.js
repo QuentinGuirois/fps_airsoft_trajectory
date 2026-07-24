@@ -49,6 +49,12 @@ export const RADAR_CITIES = Object.freeze([
 
 export const RADAR_LAUNCH_NOTICE_KEY = 'fat.radar.launch-notice.v1';
 
+export function radarInteractionMode({ coarsePointer, compactViewport, fullscreen }) {
+  if (fullscreen) return 'fullscreen';
+  if (!coarsePointer) return 'mouse';
+  return compactViewport ? 'preview' : 'cooperative';
+}
+
 export function isWgs84(latitude, longitude) {
   return Number.isFinite(Number(latitude))
     && Number.isFinite(Number(longitude))
@@ -384,7 +390,15 @@ export function initRadarMap({
 } = {}) {
   if (!root || !publicRepository || !leaflet) return null;
   const mapElement = root.querySelector('#radar-map');
+  const mapStage = root.querySelector('.radar-map-stage');
   const filterForm = root.querySelector('[data-radar-filters]');
+  const filterOpenButton = root.querySelector('[data-radar-filter-open]');
+  const filterCloseButton = root.querySelector('[data-radar-filter-close]');
+  const filterBackdrop = root.querySelector('[data-radar-filter-backdrop]');
+  const fullscreenOpenButton = root.querySelector('[data-radar-fullscreen-open]');
+  const fullscreenCloseButton = root.querySelector('[data-radar-fullscreen-close]');
+  const fullscreenHandle = root.querySelector('[data-radar-fullscreen-handle]');
+  const gestureHint = root.querySelector('[data-radar-gesture-hint]');
   const status = root.querySelector('[data-radar-status]');
   const count = root.querySelector('[data-radar-count]');
   const list = root.querySelector('[data-radar-list]');
@@ -394,6 +408,9 @@ export function initRadarMap({
   const reportDialog = documentRef.querySelector('[data-radar-report]');
   const reportForm = reportDialog?.querySelector('[data-radar-report-form]');
   const reportStatus = reportDialog?.querySelector('[data-radar-report-status]');
+  const coarsePointer = windowRef.matchMedia('(pointer: coarse)');
+  const compactViewport = windowRef.matchMedia('(max-width: 820px)');
+  const filterSheetViewport = windowRef.matchMedia('(max-width: 820px)');
   const state = {
     events: [],
     filtered: [],
@@ -402,6 +419,8 @@ export function initRadarMap({
     lastFocus: null,
     markers: new Map(),
     reportEvent: null,
+    fullscreen: false,
+    filterSheetOpen: false,
   };
 
   const map = leaflet.map(mapElement, {
@@ -416,6 +435,262 @@ export function initRadarMap({
   });
   map.attributionControl.setPrefix(false);
   map.attributionControl.addAttribution('Limites © IGN ADMIN EXPRESS COG CARTO PE 2026');
+
+  let interactionMode = '';
+  let gestureHintTimer = 0;
+  let lockedScrollY = 0;
+  let fullscreenFocus = null;
+  let filterFocus = null;
+  let cooperativeGesture = null;
+
+  function toggleMapHandler(handler, enabled) {
+    if (!handler) return;
+    const action = enabled ? 'enable' : 'disable';
+    handler[action]?.();
+  }
+
+  function hideGestureHint() {
+    windowRef.clearTimeout(gestureHintTimer);
+    if (gestureHint) gestureHint.hidden = true;
+  }
+
+  function showGestureHint(message) {
+    if (!gestureHint) return;
+    gestureHint.textContent = message;
+    gestureHint.hidden = false;
+    windowRef.clearTimeout(gestureHintTimer);
+    gestureHintTimer = windowRef.setTimeout(() => {
+      gestureHint.hidden = true;
+    }, 1_200);
+  }
+
+  function syncMapInteractions() {
+    interactionMode = radarInteractionMode({
+      coarsePointer: coarsePointer.matches,
+      compactViewport: compactViewport.matches,
+      fullscreen: state.fullscreen,
+    });
+    mapElement.dataset.radarInteraction = interactionMode;
+    root.dataset.radarInteraction = interactionMode;
+    const directInteraction = interactionMode === 'mouse' || interactionMode === 'fullscreen';
+    toggleMapHandler(map.dragging, directInteraction);
+    toggleMapHandler(map.touchZoom, interactionMode === 'fullscreen');
+    toggleMapHandler(map.doubleClickZoom, directInteraction);
+    toggleMapHandler(map.scrollWheelZoom, interactionMode === 'mouse');
+    toggleMapHandler(map.boxZoom, interactionMode === 'mouse');
+    toggleMapHandler(map.keyboard, true);
+    mapElement.setAttribute('role', interactionMode === 'preview' ? 'region' : 'application');
+    mapElement.setAttribute(
+      'aria-label',
+      interactionMode === 'preview'
+        ? 'Aperçu de la carte des parties. Faites défiler la page ou ouvrez la carte en plein écran.'
+        : 'Carte interactive des parties d’airsoft publiées',
+    );
+    if (!['cooperative', 'preview'].includes(interactionMode)) hideGestureHint();
+  }
+
+  function syncFilterSheet() {
+    if (!filterSheetViewport.matches) state.filterSheetOpen = false;
+    const opened = filterSheetViewport.matches && state.filterSheetOpen;
+    root.classList.toggle('is-filter-sheet-open', opened);
+    documentRef.body.classList.toggle('has-radar-filters', opened);
+    filterOpenButton?.setAttribute('aria-expanded', String(opened));
+    filterForm.inert = filterSheetViewport.matches && !opened;
+    if (filterSheetViewport.matches) {
+      filterForm.setAttribute('role', 'dialog');
+      filterForm.setAttribute('aria-modal', 'true');
+      filterForm.setAttribute('aria-hidden', String(!opened));
+    } else {
+      filterForm.removeAttribute('role');
+      filterForm.removeAttribute('aria-modal');
+      filterForm.removeAttribute('aria-hidden');
+    }
+  }
+
+  function openFilterSheet() {
+    if (!filterSheetViewport.matches || state.filterSheetOpen) return;
+    filterFocus = documentRef.activeElement;
+    state.filterSheetOpen = true;
+    syncFilterSheet();
+    filterCloseButton?.focus();
+  }
+
+  function closeFilterSheet({ restoreFocus = true } = {}) {
+    if (!state.filterSheetOpen) {
+      syncFilterSheet();
+      return;
+    }
+    state.filterSheetOpen = false;
+    syncFilterSheet();
+    if (restoreFocus && filterFocus?.isConnected) filterFocus.focus();
+  }
+
+  function openFullscreenMap() {
+    if (state.fullscreen) return;
+    closeFilterSheet({ restoreFocus: false });
+    fullscreenFocus = documentRef.activeElement;
+    lockedScrollY = windowRef.scrollY;
+    state.fullscreen = true;
+    mapStage.classList.add('is-fullscreen');
+    documentRef.body.classList.add('has-radar-fullscreen');
+    documentRef.body.style.top = `-${lockedScrollY}px`;
+    fullscreenOpenButton?.setAttribute('aria-expanded', 'true');
+    syncMapInteractions();
+    windowRef.requestAnimationFrame(() => {
+      map.invalidateSize({ pan: true, animate: false });
+      fullscreenCloseButton?.focus();
+    });
+  }
+
+  function closeFullscreenMap({ restoreFocus = true } = {}) {
+    if (!state.fullscreen) return;
+    state.fullscreen = false;
+    mapStage.classList.remove('is-fullscreen');
+    documentRef.body.classList.remove('has-radar-fullscreen');
+    documentRef.body.style.removeProperty('top');
+    windowRef.scrollTo(0, lockedScrollY);
+    fullscreenOpenButton?.setAttribute('aria-expanded', 'false');
+    syncMapInteractions();
+    windowRef.requestAnimationFrame(() => map.invalidateSize({ pan: true, animate: false }));
+    if (restoreFocus && fullscreenFocus?.isConnected) fullscreenFocus.focus();
+  }
+
+  function touchMidpoint(touches) {
+    const first = touches[0];
+    const second = touches[1];
+    return {
+      x: (first.clientX + second.clientX) / 2,
+      y: (first.clientY + second.clientY) / 2,
+      distance: Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY),
+    };
+  }
+
+  mapElement.addEventListener('touchstart', (event) => {
+    if (interactionMode === 'preview' && event.touches.length === 1) {
+      hideGestureHint();
+      return;
+    }
+    if (interactionMode !== 'cooperative') return;
+    if (event.touches.length < 2) {
+      cooperativeGesture = null;
+      showGestureHint('Utilisez deux doigts pour déplacer la carte');
+      return;
+    }
+    event.preventDefault();
+    cooperativeGesture = touchMidpoint(event.touches);
+  }, { passive: false });
+
+  mapElement.addEventListener('touchmove', (event) => {
+    if (interactionMode !== 'cooperative' || event.touches.length < 2 || !cooperativeGesture) return;
+    event.preventDefault();
+    const next = touchMidpoint(event.touches);
+    map.panBy([
+      cooperativeGesture.x - next.x,
+      cooperativeGesture.y - next.y,
+    ], { animate: false });
+    const scale = next.distance / cooperativeGesture.distance;
+    if (scale > 1.18 || scale < .84) {
+      const rect = mapElement.getBoundingClientRect();
+      const delta = scale > 1 ? 1 : -1;
+      map.setZoomAround(
+        [next.x - rect.left, next.y - rect.top],
+        Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), map.getZoom() + delta)),
+      );
+      next.distance = touchMidpoint(event.touches).distance;
+    }
+    cooperativeGesture = next;
+  }, { passive: false });
+
+  mapElement.addEventListener('touchend', (event) => {
+    if (event.touches.length < 2) cooperativeGesture = null;
+  }, { passive: true });
+
+  mapElement.addEventListener('wheel', (event) => {
+    if (interactionMode !== 'cooperative') return;
+    if (!event.ctrlKey) {
+      showGestureHint('Maintenez Ctrl et utilisez la molette pour zoomer');
+      return;
+    }
+    event.preventDefault();
+    const rect = mapElement.getBoundingClientRect();
+    const delta = event.deltaY < 0 ? 1 : -1;
+    map.setZoomAround(
+      [event.clientX - rect.left, event.clientY - rect.top],
+      Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), map.getZoom() + delta)),
+    );
+  }, { passive: false });
+
+  filterOpenButton?.addEventListener('click', openFilterSheet);
+  filterCloseButton?.addEventListener('click', () => closeFilterSheet());
+  filterBackdrop?.addEventListener('click', () => closeFilterSheet());
+  fullscreenOpenButton?.addEventListener('click', openFullscreenMap);
+  fullscreenCloseButton?.addEventListener('click', () => closeFullscreenMap());
+  root.querySelector('[data-radar-zoom-in]')?.addEventListener('click', () => map.zoomIn());
+  root.querySelector('[data-radar-zoom-out]')?.addEventListener('click', () => map.zoomOut());
+  root.querySelector('[data-radar-recenter]')?.addEventListener('click', () => {
+    map.setView([46.6, 2.4], 6, {
+      animate: !windowRef.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    });
+  });
+
+  let swipeStart = null;
+  fullscreenHandle?.addEventListener('pointerdown', (event) => {
+    if (!state.fullscreen || event.pointerType !== 'touch') return;
+    swipeStart = { x: event.clientX, y: event.clientY };
+  });
+  fullscreenHandle?.addEventListener('pointerup', (event) => {
+    if (!swipeStart || event.pointerType !== 'touch') return;
+    const deltaX = event.clientX - swipeStart.x;
+    const deltaY = event.clientY - swipeStart.y;
+    swipeStart = null;
+    if (deltaY > 80 && Math.abs(deltaY) > Math.abs(deltaX)) closeFullscreenMap();
+  });
+  fullscreenHandle?.addEventListener('pointercancel', () => {
+    swipeStart = null;
+  });
+
+  filterForm.addEventListener('keydown', (event) => {
+    if (!state.filterSheetOpen) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      closeFilterSheet();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const nodes = focusable(filterForm);
+    if (!nodes.length) return;
+    const first = nodes[0];
+    const last = nodes.at(-1);
+    if (event.shiftKey && documentRef.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && documentRef.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+
+  documentRef.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || !state.fullscreen || !briefing.hidden) return;
+    event.preventDefault();
+    closeFullscreenMap();
+  });
+
+  const syncResponsiveMode = () => {
+    if (!filterSheetViewport.matches) closeFilterSheet({ restoreFocus: false });
+    if (state.fullscreen && !filterSheetViewport.matches) {
+      closeFullscreenMap({ restoreFocus: false });
+    }
+    syncFilterSheet();
+    syncMapInteractions();
+    windowRef.requestAnimationFrame(() => map.invalidateSize({ pan: state.fullscreen, animate: false }));
+  };
+  coarsePointer.addEventListener?.('change', syncResponsiveMode);
+  compactViewport.addEventListener?.('change', syncResponsiveMode);
+  filterSheetViewport.addEventListener?.('change', syncResponsiveMode);
+  syncFilterSheet();
+  syncMapInteractions();
 
   map.createPane('radarCities');
   const cityPane = map.getPane('radarCities');
@@ -734,7 +1009,19 @@ export function initRadarMap({
       first.focus();
     }
   });
-  windowRef.addEventListener('resize', () => map.invalidateSize({ pan: false }));
+  let resizeFrame = 0;
+  const invalidateMapSize = () => {
+    windowRef.cancelAnimationFrame(resizeFrame);
+    resizeFrame = windowRef.requestAnimationFrame(() => {
+      map.invalidateSize({ pan: state.fullscreen, animate: false });
+    });
+  };
+  const mapResizeObserver = typeof windowRef.ResizeObserver === 'function'
+    ? new windowRef.ResizeObserver(invalidateMapSize)
+    : null;
+  mapResizeObserver?.observe(mapStage);
+  windowRef.addEventListener('resize', invalidateMapSize);
+  windowRef.addEventListener('orientationchange', invalidateMapSize);
   map.on('zoomend', () => {
     syncCityVisibility();
     map.invalidateSize({ pan: false });
@@ -819,6 +1106,16 @@ export function initRadarMap({
   });
 
   return {
-    map, state, cities, render, openBriefing, closeBriefing, load,
+    map,
+    state,
+    cities,
+    render,
+    openBriefing,
+    closeBriefing,
+    openFullscreenMap,
+    closeFullscreenMap,
+    openFilterSheet,
+    closeFilterSheet,
+    load,
   };
 }

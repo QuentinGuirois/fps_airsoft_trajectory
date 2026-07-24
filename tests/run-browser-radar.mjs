@@ -275,11 +275,11 @@ try {
   });
   await offline.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
   await offline.waitForFunction(async () => {
-    const cache = await caches.open('fat-v3-2026-07-24-50');
+    const cache = await caches.open('fat-v3-2026-07-24-51');
     return Boolean(
       await cache.match('/parties-airsoft/')
-      && await cache.match('/assets/radar.css?v=20260724-50')
-      && await cache.match('/assets/js/radar/radar-map.js?v=20260724-50'),
+      && await cache.match('/assets/radar.css?v=20260724-51')
+      && await cache.match('/assets/js/radar/radar-map.js?v=20260724-51'),
     );
   });
   await offlineContext.setOffline(true);
@@ -315,11 +315,64 @@ try {
   await mobileLaunch.locator('[data-radar-launch-close]').click();
   await mobileLaunch.waitFor({ state: 'hidden' });
   assert.equal(await mobile.locator('.radar-event-card').count(), expectedEventCount);
-  const mobileGeolocation = await mobile.locator('.radar-mobile-geolocate').boundingBox();
+  const previewMetrics = await mobile.locator('.radar-map-stage').evaluate((stage) => {
+    const map = stage.querySelector('#radar-map');
+    const list = document.querySelector('.radar-list-panel');
+    return {
+      mode: map.dataset.radarInteraction,
+      touchAction: getComputedStyle(map).touchAction,
+      height: stage.getBoundingClientRect().height,
+      viewportHeight: innerHeight,
+      pageWidth: document.documentElement.scrollWidth,
+      listOverflow: getComputedStyle(list).overflowY,
+    };
+  });
+  assert.equal(previewMetrics.mode, 'preview');
+  assert.equal(previewMetrics.touchAction, 'pan-y');
+  assert.ok(previewMetrics.height >= 240 && previewMetrics.height <= previewMetrics.viewportHeight * .46 + 1, JSON.stringify(previewMetrics));
+  assert.ok(previewMetrics.pageWidth <= 390, JSON.stringify(previewMetrics));
+  assert.equal(previewMetrics.listOverflow, 'visible');
+  const mobileGeolocation = await mobile.locator('.radar-mobile-geolocate:visible').boundingBox();
   assert.ok(mobileGeolocation?.height >= 44, JSON.stringify(mobileGeolocation));
-  const mobileRadius = await mobile.locator('[data-radar-mobile-radius]').boundingBox();
+  await mobile.getByRole('button', { name: 'FILTRES' }).click();
+  await mobile.locator('[data-radar-app].is-filter-sheet-open').waitFor();
+  assert.equal(await mobile.locator('[data-radar-filters]').getAttribute('role'), 'dialog');
+  assert.equal(await mobile.locator('[data-radar-filters]').getAttribute('aria-hidden'), 'false');
+  const mobileRadius = await mobile.locator('[data-radar-mobile-radius]:visible').boundingBox();
   assert.ok(mobileRadius?.height >= 44, JSON.stringify(mobileRadius));
+  await mobile.screenshot({ path: join(output, 'radar-mobile-filters.png'), fullPage: false });
+  await mobile.keyboard.press('Escape');
+  await mobile.locator('[data-radar-app]:not(.is-filter-sheet-open)').waitFor();
+  assert.equal(await mobile.getByRole('button', { name: 'FILTRES' }).getAttribute('aria-expanded'), 'false');
   await mobile.screenshot({ path: join(output, 'radar-mobile.png'), fullPage: false });
+  await mobile.locator('[data-radar-fullscreen-open]').click();
+  const fullscreenMap = mobile.locator('.radar-map-stage.is-fullscreen');
+  await fullscreenMap.waitFor();
+  const fullscreenMetrics = await fullscreenMap.evaluate((stage) => {
+    const box = stage.getBoundingClientRect();
+    const map = stage.querySelector('#radar-map');
+    const close = stage.querySelector('[data-radar-fullscreen-close]').getBoundingClientRect();
+    return {
+      width: box.width,
+      height: box.height,
+      mode: map.dataset.radarInteraction,
+      touchAction: getComputedStyle(map).touchAction,
+      bodyLocked: document.body.classList.contains('has-radar-fullscreen'),
+      closeHeight: close.height,
+    };
+  });
+  assert.deepEqual(fullscreenMetrics, {
+    width: 390,
+    height: 844,
+    mode: 'fullscreen',
+    touchAction: 'none',
+    bodyLocked: true,
+    closeHeight: 44,
+  });
+  await mobile.screenshot({ path: join(output, 'radar-mobile-fullscreen.png'), fullPage: false });
+  await mobile.locator('[data-radar-fullscreen-close]').click();
+  await fullscreenMap.waitFor({ state: 'hidden' });
+  assert.equal(await mobile.evaluate(() => document.body.classList.contains('has-radar-fullscreen')), false);
   await mobile.locator('.radar-event-open').first().click();
   const mobileBriefing = mobile.locator('[data-radar-briefing]:visible');
   await mobileBriefing.waitFor();
@@ -399,8 +452,8 @@ try {
   await ownerContext.close();
   await desktopContext.close();
 
-  console.log(`Radar navigateur: villes zoom 6/7/8, popup, rayon ${expectedAt(10)} → ${expectedAt(100)}, refus de position, desktop, mobile, briefing, confidentialité et espace organisateur validés.`);
-  console.log(`Captures: ${join(output, 'radar-launch-desktop.png')}, ${join(output, 'radar-desktop.png')}, ${join(output, 'radar-launch-mobile-390.png')}, ${join(output, 'radar-mobile.png')}, ${join(output, 'radar-mobile-430.png')}, ${join(output, 'radar-mobile-briefing.png')}, ${join(output, 'radar-owner-list.png')}, ${join(output, 'radar-owner-editor.png')}`);
+  console.log(`Radar navigateur: villes zoom 6/7/8, popup, rayon ${expectedAt(10)} → ${expectedAt(100)}, refus de position, desktop, aperçu tactile, filtres, plein écran, briefing, confidentialité et espace organisateur validés.`);
+  console.log(`Captures: ${join(output, 'radar-launch-desktop.png')}, ${join(output, 'radar-desktop.png')}, ${join(output, 'radar-launch-mobile-390.png')}, ${join(output, 'radar-mobile.png')}, ${join(output, 'radar-mobile-filters.png')}, ${join(output, 'radar-mobile-fullscreen.png')}, ${join(output, 'radar-mobile-430.png')}, ${join(output, 'radar-mobile-briefing.png')}, ${join(output, 'radar-owner-list.png')}, ${join(output, 'radar-owner-editor.png')}`);
 } finally {
   await browser.close();
 }

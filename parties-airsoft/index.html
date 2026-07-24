@@ -19,7 +19,7 @@
   <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
   <script src="/theme-bootstrap.js?v=20260723-47" data-cfasync="false"></script>
   <link rel="stylesheet" href="/assets/site.css?v=20260723-47">
-  <link rel="stylesheet" href="/assets/radar.css?v=20260724-50">
+  <link rel="stylesheet" href="/assets/radar.css?v=20260724-51">
   <link rel="stylesheet" href="/assets/vendor/leaflet-1.9.4/leaflet.css?v=1.9.4">
   <link rel="stylesheet" href="/assets/vendor/leaflet.markercluster-1.5.3/MarkerCluster.css?v=1.5.3">
   <link rel="stylesheet" href="/assets/vendor/leaflet.markercluster-1.5.3/MarkerCluster.Default.css?v=1.5.3">
@@ -52,10 +52,37 @@
           <div id="radar-map" class="radar-map" role="application" aria-label="Carte des parties d’airsoft publiées"></div>
           <div class="radar-scan" aria-hidden="true"></div>
 
-          <form class="radar-filter-console" data-radar-filters>
+          <div class="radar-mobile-map-tools" aria-label="Raccourcis de la carte">
+            <button type="button" data-radar-date="today">AUJOURD’HUI</button>
+            <button type="button" data-radar-date="weekend">CE WEEK-END</button>
+            <button class="radar-mobile-geolocate" type="button" data-radar-geolocate>MA POSITION</button>
+            <button class="is-primary" type="button" data-radar-filter-open aria-controls="radar-filter-sheet" aria-expanded="false">FILTRES</button>
+          </div>
+
+          <p class="radar-inline-gesture">GLISSEZ POUR FAIRE DÉFILER · TOUCHEZ UN POINT POUR LE BRIEFING</p>
+          <button class="radar-fullscreen-open" type="button" data-radar-fullscreen-open aria-controls="radar-map" aria-expanded="false">
+            ⛶ CARTE PLEIN ÉCRAN
+          </button>
+
+          <div class="radar-fullscreen-header" data-radar-fullscreen-handle>
+            <span><strong>CARTE · PLEIN ÉCRAN</strong><small>Glissez pour explorer · pincez pour zoomer</small></span>
+            <button type="button" data-radar-fullscreen-close>× FERMER</button>
+          </div>
+          <div class="radar-fullscreen-controls" aria-label="Contrôles de la carte">
+            <button type="button" data-radar-zoom-in aria-label="Zoom avant">+</button>
+            <button type="button" data-radar-zoom-out aria-label="Zoom arrière">−</button>
+            <button type="button" data-radar-recenter aria-label="Recentrer la carte">⌖</button>
+          </div>
+          <p class="radar-fullscreen-footer">TOUCHEZ UN POINT POUR OUVRIR LE BRIEFING</p>
+          <p class="radar-gesture-hint" data-radar-gesture-hint hidden role="status" aria-live="polite"></p>
+
+          <form id="radar-filter-sheet" class="radar-filter-console" data-radar-filters aria-label="Filtres du Radar">
             <div class="radar-filter-heading">
               <span>FILTRES</span>
-              <button type="reset">RÉINITIALISER</button>
+              <div>
+                <button type="reset">RÉINITIALISER</button>
+                <button class="radar-filter-close" type="button" data-radar-filter-close aria-label="Fermer les filtres">× FERMER</button>
+              </div>
             </div>
             <label>LIEU, DÉPARTEMENT OU RÉGION
               <input name="location" type="search" autocomplete="off" maxlength="120" placeholder="Ex. Tours, 33, Grand Est">
@@ -103,6 +130,7 @@
               <p id="radar-geolocation-reading" data-radar-geolocation>Position non utilisée. Elle n’est jamais enregistrée.</p>
             </details>
           </form>
+          <button class="radar-filter-backdrop" type="button" data-radar-filter-backdrop tabindex="-1" aria-label="Fermer les filtres"></button>
 
           <div class="radar-empty" data-radar-empty hidden>
             <span class="radar-empty-target" aria-hidden="true"></span>
@@ -197,7 +225,7 @@
   <footer class="site-footer"><div class="shell"><p>F.A.T. — la physique airsoft rendue lisible.</p></div></footer>
   <script src="/assets/vendor/leaflet-1.9.4/leaflet.js?v=1.9.4" data-cfasync="false"></script>
   <script src="/assets/vendor/leaflet.markercluster-1.5.3/leaflet.markercluster.js?v=1.5.3" data-cfasync="false"></script>
-  <script type="module" data-cfasync="false" src="/assets/js/radar/radar-entry.js?v=20260724-50"></script>
+  <script type="module" data-cfasync="false" src="/assets/js/radar/radar-entry.js?v=20260724-51"></script>
   <script type="module" data-cfasync="false" src="/site.js?v=20260723-47"></script>
 </body>
 </html>

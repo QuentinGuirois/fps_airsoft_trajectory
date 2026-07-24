@@ -11,6 +11,7 @@ import {
   isWgs84,
   RADAR_CITIES,
   RADAR_LAUNCH_NOTICE_KEY,
+  radarInteractionMode,
   toLeafletLatLng,
 } from '../assets/js/radar/radar-map.js';
 
@@ -93,6 +94,49 @@ test('les onze grandes villes restent un calque décoratif séparé jusqu’au z
   assert.match(map, /aria-hidden/);
   assert.match(css, /\.radar-cities-pane\s*\{[^}]*pointer-events:\s*none/s);
   assert.match(css, /\.radar-city-marker\s*\{[^}]*pointer-events:\s*none/s);
+});
+
+test('la carte tactile inline reste inerte et réserve les gestes directs au plein écran', async () => {
+  const [html, css, map] = await Promise.all([
+    read('parties-airsoft', 'index.html'),
+    read('assets', 'radar.css'),
+    read('assets', 'js', 'radar', 'radar-map.js'),
+  ]);
+  assert.equal(radarInteractionMode({
+    coarsePointer: true,
+    compactViewport: true,
+    fullscreen: false,
+  }), 'preview');
+  assert.equal(radarInteractionMode({
+    coarsePointer: true,
+    compactViewport: false,
+    fullscreen: false,
+  }), 'cooperative');
+  assert.equal(radarInteractionMode({
+    coarsePointer: false,
+    compactViewport: false,
+    fullscreen: false,
+  }), 'mouse');
+  assert.equal(radarInteractionMode({
+    coarsePointer: true,
+    compactViewport: true,
+    fullscreen: true,
+  }), 'fullscreen');
+  for (const hook of [
+    'data-radar-fullscreen-open',
+    'data-radar-fullscreen-close',
+    'data-radar-filter-open',
+    'data-radar-filter-close',
+    'data-radar-gesture-hint',
+  ]) assert.ok(html.includes(hook), hook);
+  assert.match(css, /\.radar-page \.radar-map\.leaflet-container\s*\{[^}]*touch-action:\s*pan-y/s);
+  assert.match(css, /\.radar-map-stage\.is-fullscreen \.radar-map\.leaflet-container\s*\{[^}]*touch-action:\s*none/s);
+  assert.match(css, /\.radar-map-stage\.is-fullscreen\s*\{[^}]*position:\s*fixed/s);
+  assert.match(map, /map\.dragging/);
+  assert.match(map, /Utilisez deux doigts pour déplacer la carte/);
+  assert.match(map, /Maintenez Ctrl et utilisez la molette pour zoomer/);
+  assert.match(map, /new windowRef\.ResizeObserver/);
+  assert.match(map, /deltaY > 80/);
 });
 
 test('la popup de lancement est versionnée, accessible et réservée à la racine du Radar', async () => {
@@ -189,11 +233,11 @@ test('le schéma et les routes couvrent cycle de vie, règles, signalement et mo
 
 test('le cache PWA inclut seulement le Radar public et contourne compte et API', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /fat-v3-2026-07-24-50/);
+  assert.match(worker, /fat-v3-2026-07-24-51/);
   for (const asset of [
     '/parties-airsoft/',
-    '/assets/radar.css?v=20260724-50',
-    '/assets/js/radar/radar-map.js?v=20260724-50',
+    '/assets/radar.css?v=20260724-51',
+    '/assets/js/radar/radar-map.js?v=20260724-51',
     '/data/radar-france-departments.geojson',
   ]) assert.ok(worker.includes(`'${asset}'`), asset);
   const optional = worker.match(/const OPTIONAL = \[([\s\S]*?)\n\];/)?.[1] || '';
