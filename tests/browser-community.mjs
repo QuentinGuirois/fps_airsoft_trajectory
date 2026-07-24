@@ -85,7 +85,13 @@ const wait = (duration) => new Promise((resolveWait) => setTimeout(resolveWait, 
 async function waitFor(expression, timeout = 8000) {
   const started = Date.now();
   while (Date.now() - started < timeout) {
-    if (await evaluate(expression)) return;
+    try {
+      if (await evaluate(expression)) return;
+    } catch (error) {
+      if (!/Inspected target navigated or closed|Execution context was destroyed/i.test(error.message)) {
+        throw error;
+      }
+    }
     await wait(50);
   }
   throw new Error(`Timeout: ${expression}`);
