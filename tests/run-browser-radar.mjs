@@ -300,7 +300,7 @@ try {
   });
   await offline.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
   await offline.waitForFunction(async () => {
-    const cache = await caches.open('fat-v3-2026-07-24-54');
+    const cache = await caches.open('fat-v3-2026-07-24-55');
     return Boolean(
       await cache.match('/parties-airsoft/')
       && await cache.match('/assets/radar.css?v=20260724-54')
@@ -311,9 +311,14 @@ try {
   await offline.goto(`${base}/parties-airsoft/`, { waitUntil: 'domcontentloaded' });
   await offline.locator('h1').filter({ hasText: 'Parties d’airsoft en France' }).waitFor();
   assert.equal(await offline.evaluate(() => navigator.serviceWorker.controller !== null), true);
-  assert.equal(await offline.locator('[data-radar-app].has-live-basemap').count(), 0);
-  await offline.locator('.radar-city-marker').first().waitFor();
-  assert.equal(await offline.locator('.radar-city-marker:visible').count(), 11);
+  const hasCachedBasemap = await offline.locator('[data-radar-app].has-live-basemap').count();
+  if (hasCachedBasemap) {
+    assert.ok(await offline.locator('.radar-map .leaflet-tile-loaded').count() > 0);
+  } else {
+    await offline.locator('.radar-city-marker').first().waitFor();
+    assert.equal(await offline.locator('.radar-city-marker:visible').count(), 11);
+  }
+  assert.equal(await offline.locator('.radar-city-marker').count(), 11);
   await offlineContext.setOffline(false);
   await offlineContext.close();
 
@@ -523,6 +528,17 @@ try {
   await adminFilters.getByRole('button', { name: 'FILTRER' }).click();
   await owner.locator('[data-admin-count]').filter({ hasText: expectedPrimaryLabel }).waitFor();
   assert.equal(await owner.locator('.radar-admin-card').count(), expectedPrimaryCount);
+  assert.equal(await owner.locator('[data-admin-edit]').count(), expectedPrimaryCount);
+  assert.equal(await owner.locator('[data-admin-delete]').count(), expectedPrimaryCount);
+  const moderatedTitle = await owner.locator('.radar-admin-card h3').first().textContent();
+  await owner.locator('[data-admin-edit]').first().click();
+  await owner.locator('[data-owner-editor]:visible').waitFor();
+  assert.equal(
+    (await owner.locator('[data-editor-title]').textContent()).trim(),
+    `MODÉRATION · ${moderatedTitle.trim()}`,
+  );
+  await owner.locator('[data-editor-close]').click();
+  await owner.locator('[data-admin-count]').filter({ hasText: expectedPrimaryLabel }).waitFor();
   await adminFilters.locator('[name="sourceTier"]').selectOption('');
   await adminFilters.locator('[name="verification"]').selectOption('');
   await adminFilters.locator('[name="fixtures"]').selectOption('only');

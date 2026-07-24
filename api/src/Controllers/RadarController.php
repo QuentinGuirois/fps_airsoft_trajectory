@@ -95,6 +95,13 @@ final class RadarController
         Response::json(['event' => $this->present($this->owned($params['id'], (string) $session['id']))]);
     }
 
+    public function adminGet(Request $request, array $params): never
+    {
+        $session = $this->sessions->require($request, 'admin');
+        $this->limits->hit('admin_radar_get', (string) $session['id'], 240, 3600);
+        Response::json(['event' => $this->present($this->event($params['id']))]);
+    }
+
     public function update(Request $request, array $params): never
     {
         $session = $this->sessions->require($request);
@@ -160,6 +167,77 @@ final class RadarController
         }
         $this->audit->write($request->requestId, $session['id'], 'radar.update', 'radar_event', $params['id']);
         Response::json(['event' => $this->present($this->owned($params['id'], (string) $session['id']))]);
+    }
+
+    public function adminUpdate(Request $request, array $params): never
+    {
+        $session = $this->sessions->require($request, 'admin');
+        $this->sessions->requireCsrf($request, $session);
+        $this->limits->hit('admin_radar_update', (string) $session['id'], 240, 3600);
+        $this->limits->hit('admin_radar_update_ip', $request->ip(), 480, 3600);
+        $body = $request->json();
+        Validator::keys($body, self::EDITABLE_FIELDS, ['version']);
+        $current = $this->event($params['id']);
+        $version = Validator::version($body['version']);
+        $values = $this->mergedValues($current, $body);
+        $rules = array_key_exists('rules', $body) ? RadarValidator::rules($body['rules']) : $this->rules($params['id']);
+        $links = array_key_exists('links', $body) ? RadarValidator::links($body['links']) : $this->links($params['id']);
+        $this->linkSafety->assertEventLinks($values['registrationUrl'], $links);
+        if ($current['state'] === 'published') {
+            $this->assertAdminPublishedRecord($values, $links);
+        }
+        $slug = $current['state'] === 'draft' && array_key_exists('title', $body)
+            ? $this->slug($values['title'], (string) $current['id'])
+            : $current['slug'];
+
+        $this->db->beginTransaction();
+        try {
+            $statement = $this->db->prepare(
+                'UPDATE radar_events SET slug=?,title=?,venue_name=?,short_description=?,starts_at_utc=?,ends_at_utc=?,'
+                . 'scenario=?,level_label=?,beginners_welcome=?,max_capacity=?,price_cents=?,minimum_age=?,'
+                . 'rental_details=?,catering_details=?,toilets_available=?,latitude=?,longitude=?,location_method=?,'
+                . 'location_confirmed_at=?,location_visibility=?,location_precision=?,geocode_status=?,geocode_checked_at=?,'
+                . 'exact_address=?,public_location_label=?,city=?,postal_code=?,'
+                . 'department_code=?,department=?,region=?,registration_url=?,contact_email_ciphertext=?,version=version+1 '
+                . "WHERE id=? AND version=? AND state<>'deleted'"
+            );
+            $statement->execute([
+                $slug, $values['title'], $values['venueName'], $values['description'], $values['startsAtUtc'], $values['endsAtUtc'],
+                $values['scenario'], $values['level'], $values['beginnersWelcome'] ? 1 : 0, $values['maxCapacity'],
+                $values['priceCents'], $values['minimumAge'], $values['rentalDetails'], $values['cateringDetails'],
+                $values['toiletsAvailable'] === null ? null : ($values['toiletsAvailable'] ? 1 : 0),
+                $values['latitude'], $values['longitude'],
+                $values['locationMethod'], $values['locationConfirmedAt'], $values['locationVisibility'],
+                $values['locationPrecision'], $values['geocodeStatus'], $values['geocodeCheckedAt'],
+                $values['exactAddress'], $values['publicLocationLabel'], $values['city'], $values['postalCode'],
+                $values['departmentCode'], $values['department'], $values['region'], $values['registrationUrl'],
+                $values['contactEmailCiphertext'], $params['id'], $version,
+            ]);
+            if ($statement->rowCount() !== 1) {
+                throw new HttpException(409, 'version_conflict', 'La partie a été modifiée ailleurs. Recharge-la avant de continuer.');
+            }
+            if (array_key_exists('rules', $body)) {
+                $this->replaceRules($params['id'], $rules);
+            }
+            if (array_key_exists('links', $body)) {
+                $this->replaceLinks($params['id'], $links);
+            }
+            $this->db->commit();
+        } catch (\Throwable $error) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $error;
+        }
+        $this->audit->write(
+            $request->requestId,
+            $session['id'],
+            'admin.radar.update',
+            'radar_event',
+            $params['id'],
+            ['ownerId' => $current['user_id']],
+        );
+        Response::json(['event' => $this->present($this->event($params['id']))]);
     }
 
     public function publish(Request $request, array $params): never
@@ -300,6 +378,35 @@ final class RadarController
         Response::noContent();
     }
 
+    public function adminDelete(Request $request, array $params): never
+    {
+        $session = $this->sessions->require($request, 'admin');
+        $this->sessions->requireCsrf($request, $session);
+        $this->limits->hit('admin_radar_delete', (string) $session['id'], 60, 3600);
+        $this->limits->hit('admin_radar_delete_ip', $request->ip(), 120, 3600);
+        $body = $request->json();
+        Validator::keys($body, ['version','turnstileToken'], ['version','turnstileToken']);
+        $this->turnstile->verify($body['turnstileToken'], 'radar_delete', $request);
+        $current = $this->event($params['id']);
+        $statement = $this->db->prepare(
+            "UPDATE radar_events SET state='deleted',record_visibility='private',deleted_at=UTC_TIMESTAMP(),version=version+1 "
+            . "WHERE id=? AND version=? AND state<>'deleted'"
+        );
+        $statement->execute([$params['id'], Validator::version($body['version'])]);
+        if ($statement->rowCount() !== 1) {
+            throw new HttpException(409, 'radar_delete_conflict', 'Cette partie n’est plus supprimable avec cette version.');
+        }
+        $this->audit->write(
+            $request->requestId,
+            $session['id'],
+            'admin.radar.delete',
+            'radar_event',
+            $params['id'],
+            ['ownerId' => $current['user_id'], 'previousState' => $current['state']],
+        );
+        Response::noContent();
+    }
+
     public function geocode(Request $request): never
     {
         $session = $this->sessions->require($request);
@@ -315,6 +422,18 @@ final class RadarController
     {
         $statement = $this->db->prepare('SELECT * FROM radar_events WHERE id=? AND user_id=? AND state<>\'deleted\' LIMIT 1');
         $statement->execute([$id, $userId]);
+        $row = $statement->fetch();
+        if (!$row) {
+            throw new HttpException(404, 'radar_not_found', 'Partie introuvable.');
+        }
+        return $row;
+    }
+
+    /** @return array<string,mixed> */
+    private function event(string $id): array
+    {
+        $statement = $this->db->prepare("SELECT * FROM radar_events WHERE id=? AND state<>'deleted' LIMIT 1");
+        $statement->execute([$id]);
         $row = $statement->fetch();
         if (!$row) {
             throw new HttpException(404, 'radar_not_found', 'Partie introuvable.');
@@ -486,6 +605,42 @@ final class RadarController
         }
         if ($missing) {
             throw new HttpException(422, 'radar_incomplete', 'Complète la fiche avant de la publier.', ['missing' => $missing]);
+        }
+    }
+
+    /** @param array<string,mixed> $values @param list<array<string,mixed>> $links */
+    private function assertAdminPublishedRecord(array $values, array $links): void
+    {
+        $missing = [];
+        foreach (['title' => 'titre', 'startsAtUtc' => 'début', 'endsAtUtc' => 'fin'] as $key => $label) {
+            if ($values[$key] === null || $values[$key] === '') {
+                $missing[] = $label;
+            }
+        }
+        if (
+            ($values['city'] === null || $values['city'] === '')
+            && ($values['postalCode'] === null || $values['postalCode'] === '')
+            && ($values['publicLocationLabel'] === null || $values['publicLocationLabel'] === '')
+        ) {
+            $missing[] = 'commune, code postal ou lieu public';
+        }
+        if (
+            $values['registrationUrl'] === null
+            && !array_filter($links, static fn(array $link): bool => in_array(
+                $link['type'],
+                ['organizer','registration','website','facebook','helloasso'],
+                true,
+            ))
+        ) {
+            $missing[] = 'lien web';
+        }
+        if ($missing) {
+            throw new HttpException(
+                422,
+                'radar_incomplete',
+                'La fiche publiée doit conserver ses repères essentiels.',
+                ['missing' => $missing],
+            );
         }
     }
 

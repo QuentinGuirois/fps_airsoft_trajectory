@@ -132,6 +132,9 @@ final class Application
         $router->add('POST', '/admin/replicas/{id}/reject', [$admin, 'reject']);
         $router->add('GET', '/admin/radar-reports', [$radarAdmin, 'reports']);
         $router->add('GET', '/admin/radar-events', [$radarAdmin, 'events']);
+        $router->add('GET', '/admin/radar-events/{id}', [$radar, 'adminGet']);
+        $router->add('PATCH', '/admin/radar-events/{id}', [$radar, 'adminUpdate']);
+        $router->add('DELETE', '/admin/radar-events/{id}', [$radar, 'adminDelete']);
         $router->add('POST', '/admin/radar-events/{id}/review', [$radarAdmin, 'review']);
         $router->add('POST', '/admin/radar-events/{id}/publish', [$radarAdmin, 'publish']);
         $router->add('POST', '/admin/radar-events/{id}/hide', [$radarAdmin, 'hide']);

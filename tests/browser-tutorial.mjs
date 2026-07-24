@@ -205,7 +205,7 @@ if (await evaluate(`document.documentElement.scrollWidth > innerWidth`)) throw n
 await evaluate(`navigator.serviceWorker.ready.then(()=>true)`, true);
 await navigate(`${base}?tutorial-recipe=sw-control`);
 await waitFor(`Boolean(navigator.serviceWorker.controller)`);
-const cache = await evaluate(`caches.open('fat-v3-2026-07-24-54').then(cache=>cache.match('/calculator-tutorial.js?v=20260723-47')).then(Boolean)`, true);
+const cache = await evaluate(`caches.open('fat-v3-2026-07-24-55').then(cache=>cache.match('/calculator-tutorial.js?v=20260723-47')).then(Boolean)`, true);
 if (!cache) throw new Error('Tutorial module missing from PWA cache');
 await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 });
 await navigate(`${base}?tutorial-recipe=offline`);

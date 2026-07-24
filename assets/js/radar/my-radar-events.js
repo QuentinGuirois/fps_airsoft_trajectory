@@ -331,6 +331,7 @@ export function initMyRadarEvents({
     saveQueued: false,
     geocodeController: null,
     pendingAction: null,
+    editingAsAdmin: false,
     adminEvents: [],
     adminMap: null,
     adminClusters: null,
@@ -463,16 +464,25 @@ export function initMyRadarEvents({
   function populate(event) {
     state.current = structuredClone(event);
     fill(form, state.current, ruleEditor);
-    root.querySelector('[data-editor-title]').textContent = event.title;
+    root.querySelector('[data-editor-title]').textContent = state.editingAsAdmin
+      ? `MODÉRATION · ${event.title}`
+      : event.title;
     autosaveStatus.textContent = `Version ${event.version} · ${event.state === 'draft' ? 'brouillon' : 'publiée'}.`;
     const publishButton = root.querySelector('[data-owner-publish]');
-    publishButton.hidden = Boolean(event.requiresPrePublicationCheck || event.recordVisibility === 'admin_preview_only' || event.isFixture);
+    publishButton.hidden = Boolean(
+      state.editingAsAdmin
+      || event.state !== 'draft'
+      || event.requiresPrePublicationCheck
+      || event.recordVisibility === 'admin_preview_only'
+      || event.isFixture,
+    );
     initializeMap();
     updateMarker({ center: true });
     setStep(0);
   }
 
-  function showEditor(event) {
+  function showEditor(event, { admin = false } = {}) {
+    state.editingAsAdmin = admin;
     listView.hidden = true;
     editor.hidden = false;
     populate(event);
@@ -480,15 +490,21 @@ export function initMyRadarEvents({
   }
 
   function closeEditor() {
+    const refreshAdmin = state.editingAsAdmin;
     windowRef.clearTimeout(state.saveTimer);
     editor.hidden = true;
     listView.hidden = false;
     state.current = null;
+    state.editingAsAdmin = false;
     loadEvents();
+    if (refreshAdmin) loadAdminEvents();
   }
 
   async function saveNow() {
-    if (!state.current || !['draft', 'published'].includes(state.current.state)) return state.current;
+    if (
+      !state.current
+      || (!state.editingAsAdmin && !['draft', 'published'].includes(state.current.state))
+    ) return state.current;
     if (state.savePromise) {
       state.saveQueued = true;
       await state.savePromise;
@@ -497,11 +513,14 @@ export function initMyRadarEvents({
     state.saveQueued = false;
     const payload = collectOwnerPayload(form, state.current, ruleEditor);
     autosaveStatus.textContent = 'Enregistrement serveur…';
-    state.savePromise = ownerRepository.update(state.current.id, payload)
+    const repository = state.editingAsAdmin ? adminRepository : ownerRepository;
+    state.savePromise = repository.update(state.current.id, payload)
       .then(({ event }) => {
         state.current = event;
         autosaveStatus.textContent = `Enregistré · version ${event.version}.`;
-        root.querySelector('[data-editor-title]').textContent = event.title;
+        root.querySelector('[data-editor-title]').textContent = state.editingAsAdmin
+          ? `MODÉRATION · ${event.title}`
+          : event.title;
         updateLocationReading();
         return event;
       })
@@ -528,9 +547,19 @@ export function initMyRadarEvents({
     announce('Ouverture du briefing…');
     try {
       const { event } = await ownerRepository.get(id);
-      showEditor(event);
+      showEditor(event, { admin: false });
     } catch (error) {
       announce(error.message, 'error');
+    }
+  }
+
+  async function adminEdit(id) {
+    root.querySelector('[data-admin-status]').textContent = 'Ouverture de la fiche complète…';
+    try {
+      const { event } = await adminRepository.get(id);
+      showEditor(event, { admin: true });
+    } catch (error) {
+      root.querySelector('[data-admin-status]').textContent = error.message;
     }
   }
 
@@ -548,10 +577,14 @@ export function initMyRadarEvents({
   function sensitive(type, event) {
     state.pendingAction = { type, event };
     const action = type === 'cancel' ? 'radar_cancel' : 'radar_delete';
-    actionDialog.querySelector('[data-action-title]').textContent = type === 'cancel' ? 'Annuler la partie publiée ?' : 'Supprimer cette partie ?';
+    actionDialog.querySelector('[data-action-title]').textContent = type === 'cancel'
+      ? 'Annuler la partie publiée ?'
+      : 'Supprimer cette partie ?';
     actionDialog.querySelector('[data-action-description]').textContent = type === 'cancel'
       ? 'Elle disparaîtra immédiatement du radar. Son URL indiquera encore son annulation.'
-      : 'La fiche sera supprimée de ton espace et de toutes les réponses publiques.';
+      : (type === 'admin-delete'
+        ? 'Suppression administrative : la fiche disparaîtra du compte organisateur et de toutes les réponses publiques.'
+        : 'La fiche sera supprimée de ton espace et de toutes les réponses publiques.');
     actionDialog.querySelectorAll('[data-turnstile-action]').forEach((container) => {
       container.hidden = container.dataset.turnstileAction !== action;
     });
@@ -635,6 +668,7 @@ export function initMyRadarEvents({
       );
       const title = element(documentRef, 'h3', '', radarEvent.title);
       const facts = element(documentRef, 'p', '', [
+        radarEvent.owner?.pseudo ? `Compte ${radarEvent.owner.pseudo}` : null,
         radarEvent.source?.tier ? `Source ${radarEvent.source.tier}` : 'Sans source importée',
         radarEvent.requiresPrePublicationCheck ? 'À vérifier' : 'Vérifié',
         radarEvent.geocodeStatus || 'Géocodage inconnu',
@@ -645,6 +679,15 @@ export function initMyRadarEvents({
         formatDate(radarEvent.startsAt),
       ].join(' · '));
       const actions = element(documentRef, 'div', 'radar-owner-card-actions');
+      const edit = element(documentRef, 'button', 'button button-primary', 'MODIFIER');
+      edit.type = 'button';
+      edit.dataset.adminEdit = '';
+      edit.addEventListener('click', () => adminEdit(radarEvent.id));
+      const remove = element(documentRef, 'button', 'radar-owner-delete', 'SUPPRIMER');
+      remove.type = 'button';
+      remove.dataset.adminDelete = '';
+      remove.addEventListener('click', () => sensitive('admin-delete', radarEvent));
+      actions.append(edit, remove);
       if (radarEvent.source?.url) {
         const source = element(documentRef, 'a', 'button', 'VÉRIFIER LA SOURCE');
         source.href = radarEvent.source.url;
@@ -870,10 +913,15 @@ export function initMyRadarEvents({
     actionStatus.textContent = 'Validation en cours…';
     try {
       const token = await turnstileController.token(action);
-      if (type === 'cancel') await ownerRepository.cancel(radarEvent.id, radarEvent.version, token);
-      else await ownerRepository.delete(radarEvent.id, radarEvent.version, token);
+      if (type === 'cancel') {
+        await ownerRepository.cancel(radarEvent.id, radarEvent.version, token);
+      } else if (type === 'admin-delete') {
+        await adminRepository.delete(radarEvent.id, radarEvent.version, token);
+      } else {
+        await ownerRepository.delete(radarEvent.id, radarEvent.version, token);
+      }
       actionDialog.close();
-      await loadEvents();
+      await Promise.all([loadEvents(), loadAdminEvents()]);
     } catch (error) {
       actionStatus.textContent = error.message;
     } finally {

@@ -88,6 +88,22 @@ export class RadarAdminRepository {
     return this.client.request(`/admin/radar-events?${query}`, { signal });
   }
 
+  get(id, { signal } = {}) {
+    return this.client.request(`/admin/radar-events/${encodeURIComponent(id)}`, { signal });
+  }
+
+  update(id, data, { signal } = {}) {
+    return this.client.request(`/admin/radar-events/${encodeURIComponent(id)}`, {
+      method: 'PATCH', body: data, signal,
+    });
+  }
+
+  delete(id, version, turnstileToken, { signal } = {}) {
+    return this.client.request(`/admin/radar-events/${encodeURIComponent(id)}`, {
+      method: 'DELETE', body: { version, turnstileToken }, signal,
+    });
+  }
+
   review(id, version, { signal } = {}) {
     return this.client.request(`/admin/radar-events/${encodeURIComponent(id)}/review`, {
       method: 'POST',

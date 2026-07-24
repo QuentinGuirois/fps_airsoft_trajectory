@@ -249,10 +249,11 @@ test('le public ne reçoit jamais adresse exacte, email chiffré, brouillon ou f
 });
 
 test('le schéma et les routes couvrent cycle de vie, règles, signalement et modération', async () => {
-  const [migration, app, maintenance] = await Promise.all([
+  const [migration, app, maintenance, controller] = await Promise.all([
     read('database', 'migrations', '005_radar.sql'),
     read('api', 'src', 'Application.php'),
     read('bin', 'maintenance.php'),
+    read('api', 'src', 'Controllers', 'RadarController.php'),
   ]);
   for (const table of ['radar_events', 'radar_event_rules', 'radar_event_links', 'radar_event_reports', 'radar_geocoding_cache']) {
     assert.match(migration, new RegExp(`CREATE TABLE IF NOT EXISTS ${table}`));
@@ -263,12 +264,17 @@ test('le schéma et les routes couvrent cycle de vie, règles, signalement et mo
     '/me/radar-events/{id}/duplicate', '/me/radar-geocode',
     '/admin/radar-reports', '/admin/radar-events/{id}/hide',
   ]) assert.ok(app.includes(`'${route}'`), route);
+  for (const method of ['GET', 'PATCH', 'DELETE']) {
+    assert.match(app, new RegExp(`\\$router->add\\('${method}', '/admin/radar-events/\\{id\\}'`));
+  }
+  assert.match(controller, /'admin\.radar\.update'/);
+  assert.match(controller, /'admin\.radar\.delete'/);
   assert.match(maintenance, /state='expired'/);
 });
 
 test('le cache PWA inclut seulement le Radar public et contourne compte et API', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /fat-v3-2026-07-24-54/);
+  assert.match(worker, /fat-v3-2026-07-24-55/);
   for (const asset of [
     '/parties-airsoft/',
     '/assets/radar.css?v=20260724-54',
@@ -297,9 +303,10 @@ test('les pointeurs exacts et approximatifs utilisent le vert acide sans pointil
 });
 
 test('l’espace organisateur matérialise les cinq étapes et aucune donnée démo runtime', async () => {
-  const [html, owner, seed] = await Promise.all([
+  const [html, owner, repositories, seed] = await Promise.all([
     read('compte', 'mes-parties.html'),
     read('assets', 'js', 'radar', 'my-radar-events.js'),
+    read('assets', 'js', 'radar-repositories.js'),
     read('bin', 'seed-radar-local.php'),
   ]);
   assert.equal((html.match(/data-step-indicator="/g) || []).length, 5);
@@ -311,6 +318,12 @@ test('l’espace organisateur matérialise les cinq étapes et aucune donnée d�
   assert.match(html, /RECHERCHER AVEC L’IGN/);
   assert.match(owner, /scheduleSave/);
   assert.match(owner, /locationConfirmed/);
+  assert.match(owner, /dataset\.adminEdit/);
+  assert.match(owner, /dataset\.adminDelete/);
+  assert.match(owner, /state\.editingAsAdmin/);
+  assert.match(repositories, /\/admin\/radar-events\/\$\{encodeURIComponent\(id\)\}/);
+  assert.match(repositories, /method:\s*'PATCH'/);
+  assert.match(repositories, /method:\s*'DELETE'/);
   assert.match(seed, /APP_ENV=local|isProduction/);
   assert.doesNotMatch(`${html}\n${owner}`, /Opération recette|Tours API|example\.test/);
 });

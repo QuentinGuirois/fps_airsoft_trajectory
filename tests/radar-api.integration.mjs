@@ -335,6 +335,33 @@ try {
   assert.equal(published.event.state, 'published');
   assert.equal(published.event.recordVisibility, 'public');
 
+  const makeImportedShape = "require 'api/src/autoload.php'; $config=\\Fat\\Api\\Config::load(getcwd()); $db=\\Fat\\Api\\Database::connect($config); $statement=$db->prepare('UPDATE radar_events SET venue_name=NULL,scenario=NULL,level_label=NULL,max_capacity=NULL WHERE id=?'); $statement->execute([$argv[1]]);";
+  command(PHP, ['-r', makeImportedShape, eventId]);
+  await api(`/admin/radar-events/${eventId}`, {
+    identity: identities.owner,
+    expected: 403,
+  });
+  const adminDetail = await api(`/admin/radar-events/${eventId}`, {
+    identity: identities.admin,
+  });
+  assert.equal(adminDetail.event.id, eventId);
+  assert.equal(adminDetail.event.rules.length, 7);
+  await api(`/admin/radar-events/${eventId}`, {
+    method: 'PATCH',
+    identity: { ...identities.admin, csrf: '' },
+    expected: 403,
+    body: { version: adminDetail.event.version, title: 'Modification CSRF refusée' },
+  });
+  const adminPatched = await api(`/admin/radar-events/${eventId}`, {
+    method: 'PATCH',
+    identity: identities.admin,
+    body: { version: adminDetail.event.version, title: 'Opération Tours API modérée' },
+  });
+  assert.equal(adminPatched.event.title, 'Opération Tours API modérée');
+  assert.equal(adminPatched.event.state, 'published');
+  const restoreCommunityShape = "require 'api/src/autoload.php'; $config=\\Fat\\Api\\Config::load(getcwd()); $db=\\Fat\\Api\\Database::connect($config); $statement=$db->prepare('UPDATE radar_events SET venue_name=?,scenario=?,level_label=?,max_capacity=? WHERE id=?'); $statement->execute([$argv[1],$argv[2],$argv[3],$argv[4],$argv[5]]);";
+  command(PHP, ['-r', restoreCommunityShape, 'Terrain des Rives', 'Contrôle de zone', 'Tous niveaux', '80', eventId]);
+
   const publicList = await api('/radar/events?city=Tours&beginner=1&rules=dmr&limit=20', { publicCache: true });
   assert.equal(publicList.events.length, 1);
   assert.equal(publicList.events[0].latitude, 47.394144);
@@ -368,7 +395,7 @@ try {
   const approximate = await api(`/me/radar-events/${eventId}`, {
     method: 'PATCH',
     identity: identities.owner,
-    body: { version: published.event.version, locationVisibility: 'approximate' },
+    body: { version: adminPatched.event.version, locationVisibility: 'approximate' },
   });
   const approximatePublic = await api(`/radar/events/${approximate.event.slug}`, { publicCache: true });
   assert.equal(approximatePublic.event.locationVisibility, 'approximate');
@@ -423,15 +450,21 @@ try {
     method: 'POST', identity: identities.owner, body: {}, expected: 201,
   });
   assert.equal(duplicate.event.state, 'draft');
-  await api(`/me/radar-events/${duplicate.event.id}`, {
+  await api(`/admin/radar-events/${duplicate.event.id}`, {
     method: 'DELETE',
     identity: identities.owner,
+    body: { version: duplicate.event.version, turnstileToken: token('radar_delete') },
+    expected: 403,
+  });
+  await api(`/admin/radar-events/${duplicate.event.id}`, {
+    method: 'DELETE',
+    identity: identities.admin,
     body: { version: duplicate.event.version, turnstileToken: token('radar_delete') },
     expected: 204,
   });
   await api(`/me/radar-events/${duplicate.event.id}`, { identity: identities.owner, expected: 404 });
 
-  console.log('Radar API intégration: CSRF, validation, publication, confidentialité, filtres, IGN/cache/429/503/quota, signalement, modération, annulation, expiration, duplication, suppression et IDOR validés.');
+  console.log('Radar API intégration: CSRF, validation, publication, confidentialité, filtres, IGN/cache/429/503/quota, signalement, modification/suppression admin, modération, annulation, expiration, duplication et IDOR validés.');
 } finally {
   server.kill('SIGTERM');
   helperServer.close();

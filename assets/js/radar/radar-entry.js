@@ -1,5 +1,5 @@
 import { createTurnstileController } from '../turnstile-client.js?v=20260723-47';
-import { createRadarRepositories } from '../radar-repositories.js?v=20260724-50';
+import { createRadarRepositories } from '../radar-repositories.js?v=20260724-55';
 import { initRadarMap } from './radar-map.js?v=20260724-54';
 
 const root = document.querySelector('[data-radar-app]');
