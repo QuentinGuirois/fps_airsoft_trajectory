@@ -18,9 +18,19 @@ const RULE_LABELS = Object.freeze({
 
 const RULE_STATES = Object.freeze({
   allowed: ['AUTORISÉ', '✓'],
-  specific: ['RÈGLE SPÉCIFIQUE', '◆'],
+  specific: ['SPÉCIFIQUE — VOIR DÉTAIL', '◆'],
   forbidden: ['INTERDIT', '×'],
-  not_communicated: ['NON COMMUNIQUÉ', '?'],
+  not_communicated: ['NC', '?'],
+});
+
+const LINK_LABELS = Object.freeze({
+  organizer: 'SITE ORGANISATEUR',
+  registration: 'INSCRIPTION',
+  website: 'SITE WEB',
+  facebook: 'FACEBOOK',
+  helloasso: 'HELLOASSO',
+  discord: 'DISCORD',
+  instagram: 'INSTAGRAM',
 });
 
 export function isWgs84(latitude, longitude) {
@@ -193,6 +203,11 @@ function ruleRow(documentRef, rule) {
       rule.details || '',
     ].filter(Boolean).join(' · ')),
   );
+  if (rule.evidence?.url) {
+    const proof = link(documentRef, rule.evidence.url, 'PREUVE OFFICIELLE ↗', 'radar-rule-evidence');
+    proof.title = [rule.evidence.locator, rule.evidence.excerpt].filter(Boolean).join(' — ');
+    main.append(proof);
+  }
   row.append(icon, main);
   return row;
 }
@@ -252,10 +267,11 @@ function briefingContent(documentRef, event, handlers) {
 
   const community = element(documentRef, 'div', 'radar-community-links');
   for (const item of event.links || []) {
-    community.append(link(documentRef, item.url, item.type.toUpperCase()));
+    if (item.type === 'registration' && item.url === event.registrationUrl) continue;
+    community.append(link(documentRef, item.url, LINK_LABELS[item.type] || item.type.toUpperCase()));
   }
   const organizer = element(documentRef, 'p', 'radar-organizer', `ORGANISATEUR // ${event.organizerName || event.organizer?.pseudo || 'Compte F.A.T.'}`);
-  const privacy = element(documentRef, 'p', 'radar-privacy-note', 'Aucune adresse email de l’organisateur n’est affichée. Vérifiez les informations sur le lien d’inscription.');
+  const privacy = element(documentRef, 'p', 'radar-privacy-note', 'Aucune adresse email de l’organisateur n’est affichée. Vérifiez les informations sur les liens officiels.');
   const report = element(documentRef, 'button', 'radar-report-button', 'SIGNALER UNE INFORMATION INCORRECTE');
   report.type = 'button';
   report.addEventListener('click', () => handlers.report(event));

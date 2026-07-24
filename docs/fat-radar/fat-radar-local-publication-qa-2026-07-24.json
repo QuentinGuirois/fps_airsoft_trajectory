@@ -1,0 +1,79 @@
+{
+    "schema_version": "1.0.0",
+    "generated_at": "2026-07-24T15:17:49+00:00",
+    "local_only": true,
+    "dry_run": false,
+    "input_events": 40,
+    "published": 32,
+    "deleted": 8,
+    "published_external_keys": [
+        "primary-caen-2026-08-09",
+        "primary-verdun-reactions-2026-08-15",
+        "primary-gaz-cqb-shelter-2026-08-08",
+        "primary-op-chimere-2026-09-27",
+        "primary-arca-husky-2026-10-02",
+        "primary-black-sheep-fallout-2026-10-10",
+        "primary-big-game-veckring-2026-10-09",
+        "primary-black-sheep-noche-roja-2026-09-12",
+        "primary-7-nains-2026-08-02",
+        "primary-family-airsoft-doree-2026-09-12",
+        "primary-taos-luzille-2026-08-09",
+        "primary-taos-luzille-2026-08-30",
+        "primary-taos-luzille-2026-09-20",
+        "primary-taos-luzille-2026-10-04",
+        "primary-taos-luzille-2026-10-18",
+        "primary-ama-taniere-2026-08-09",
+        "primary-ama-taniere-2026-08-30",
+        "primary-umbrella-delta-zone-2026-08-02",
+        "primary-umbrella-delta-zone-2026-09-06",
+        "primary-umbrella-delta-zone-2026-10-04",
+        "primary-reapers-2026-08-02",
+        "primary-reapers-2026-09-13",
+        "primary-reapers-2026-10-11",
+        "primary-agb-session-2026-08-09",
+        "primary-alpha-command-conquer-2026-09-13",
+        "primary-cia-hunter-games-2026-08-23",
+        "primary-fox-survie-stage-2026-09-19",
+        "primary-bearsoft-malabry-2026-08-02",
+        "primary-bearsoft-marais-2026-08-23",
+        "primary-bearsoft-marais-2026-09-13",
+        "primary-bearsoft-malabry-2026-09-26",
+        "primary-black-sheep-dominicale-2026-08-02"
+    ],
+    "deleted_external_keys": [
+        "primary-ama-mercurow-2026-08-02",
+        "primary-ama-mercurow-2026-08-16",
+        "primary-ama-mercurow-2026-08-23",
+        "primary-ama-mercurow-2026-09-06",
+        "primary-armorica-libera-2026-08-01",
+        "primary-auvergne6mm-ragnarok-2026-08-15",
+        "primary-black-tiger-2026-08-30",
+        "secondary-russian-heritage-2026-09-26"
+    ],
+    "rejected": {
+        "primary-armorica-libera-2026-08-01": [
+            "code_postal_absent"
+        ],
+        "secondary-russian-heritage-2026-09-26": [
+            "code_postal_absent"
+        ],
+        "primary-ama-mercurow-2026-08-02": [
+            "code_postal_absent"
+        ],
+        "primary-ama-mercurow-2026-08-16": [
+            "code_postal_absent"
+        ],
+        "primary-ama-mercurow-2026-08-23": [
+            "code_postal_absent"
+        ],
+        "primary-ama-mercurow-2026-09-06": [
+            "code_postal_absent"
+        ],
+        "primary-black-tiger-2026-08-30": [
+            "code_postal_absent"
+        ],
+        "primary-auvergne6mm-ragnarok-2026-08-15": [
+            "code_postal_absent"
+        ]
+    }
+}

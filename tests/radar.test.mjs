@@ -49,6 +49,14 @@ test('les filtres date, lieu, débutants, location, règles et rayon se combinen
   }), true);
   assert.equal(eventMatchesFilters(tours, { location: 'Bordeaux' }), false);
   assert.equal(eventMatchesFilters(tours, { rules: new Set(['sniper']) }), false);
+  assert.equal(eventMatchesFilters({
+    ...tours,
+    rules: [{ type: 'cqb', state: 'not_communicated' }],
+  }, { rules: new Set(['cqb']) }), false);
+  assert.equal(eventMatchesFilters({
+    ...tours,
+    rules: [{ type: 'cqb', state: 'forbidden' }],
+  }, { rules: new Set(['cqb']) }), false);
   assert.equal(eventMatchesFilters(tours, {
     position: { latitude: 48.8566, longitude: 2.3522 },
     radiusKm: 10,
@@ -124,17 +132,32 @@ test('le schéma et les routes couvrent cycle de vie, règles, signalement et mo
 
 test('le cache PWA inclut seulement le Radar public et contourne compte et API', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /fat-v3-2026-07-24-48/);
+  assert.match(worker, /fat-v3-2026-07-24-49/);
   for (const asset of [
     '/parties-airsoft/',
-    '/assets/radar.css?v=20260724-48',
-    '/assets/js/radar/radar-map.js?v=20260724-48',
+    '/assets/radar.css?v=20260724-49',
+    '/assets/js/radar/radar-map.js?v=20260724-49',
     '/data/radar-france-departments.geojson',
   ]) assert.ok(worker.includes(`'${asset}'`), asset);
   const optional = worker.match(/const OPTIONAL = \[([\s\S]*?)\n\];/)?.[1] || '';
   assert.doesNotMatch(optional, /\/compte\//);
   assert.match(worker, /url\.pathname\.startsWith\('\/api\/'\)/);
   assert.match(worker, /url\.pathname\.startsWith\('\/compte\/'\)/);
+});
+
+test('les pointeurs exacts et approximatifs utilisent le vert acide sans pointillés', async () => {
+  const [css, map] = await Promise.all([
+    read('assets', 'radar.css'),
+    read('assets', 'js', 'radar', 'radar-map.js'),
+  ]);
+  assert.match(css, /\.radar-marker-shell\.is-approximate \.radar-pin\s*\{[^}]*background:\s*var\(--acid\)/s);
+  assert.doesNotMatch(css, /\.radar-marker-shell\.is-approximate \.radar-pin\s*\{[^}]*border[^}]*dashed/s);
+  assert.match(css, /\.radar-legend i\[data-tone="approximate"\]\s*\{[^}]*background:\s*var\(--acid\)/s);
+  assert.doesNotMatch(css, /\.radar-legend i\[data-tone="approximate"\]\s*\{[^}]*dashed/s);
+  assert.doesNotMatch(css, /\bdashed\b|\bdotted\b/);
+  assert.match(map, /AUTORISÉ/);
+  assert.match(map, /SPÉCIFIQUE — VOIR DÉTAIL/);
+  assert.match(map, /PREUVE OFFICIELLE ↗/);
 });
 
 test('l’espace organisateur matérialise les cinq étapes et aucune donnée démo runtime', async () => {

@@ -84,27 +84,82 @@ final class GeocodingService
      */
     public function matchExpected(array $suggestions, string $city, ?string $postalCode, ?string $departmentCode): array
     {
-        $expectedCity = $this->placeKey($city);
-        $matches = [];
-        foreach ($suggestions as $suggestion) {
-            if (
-                $this->placeKey((string) ($suggestion['city'] ?? '')) !== $expectedCity
-                || ($postalCode !== null && (string) ($suggestion['postalCode'] ?? '') !== $postalCode)
-                || ($departmentCode !== null && strtoupper((string) ($suggestion['departmentCode'] ?? '')) !== strtoupper($departmentCode))
-            ) {
-                continue;
-            }
-            $coordinateKey = sprintf(
-                '%.6F,%.6F',
-                (float) ($suggestion['latitude'] ?? 999),
-                (float) ($suggestion['longitude'] ?? 999),
-            );
-            $matches[$coordinateKey] = $suggestion;
-        }
+        $matches = $this->expectedMatches($suggestions, $city, $postalCode, $departmentCode);
         if (count($matches) !== 1) {
             return ['status' => 'needs_review', 'suggestion' => null];
         }
         return ['status' => 'validated', 'suggestion' => array_values($matches)[0]];
+    }
+
+    /**
+     * @return array{
+     *   status:'exact'|'approximate'|'ambiguous'|'rejected',
+     *   suggestion:?array<string,mixed>,
+     *   query:?string,
+     *   attempts:list<array{query:string,result:string,matches:int}>
+     * }
+     */
+    public function resolveExpectedLocation(
+        ?string $address,
+        string $city,
+        ?string $postalCode,
+        string $departmentCode,
+        bool $writeCache = true,
+    ): array {
+        $queries = [];
+        if ($address !== null && trim($address) !== '') {
+            $queries[] = trim($address . ', ' . ($postalCode !== null ? $postalCode . ' ' : '') . $city);
+        }
+        if ($postalCode !== null) {
+            $queries[] = trim($postalCode . ' ' . $city);
+        }
+        // Dernier repli : recherche de la commune, puis validation stricte du
+        // département dans la réponse IGN. Ajouter le code départemental au
+        // texte libre dégrade certains résultats (par exemple « Benay 02 »).
+        $queries[] = trim($city);
+        $queries = array_values(array_unique($queries));
+        $attempts = [];
+        $ambiguous = false;
+        foreach ($queries as $index => $query) {
+            $suggestions = $this->search($query, $writeCache);
+            $matches = $this->expectedMatches($suggestions, $city, $postalCode, $departmentCode);
+            $addressAttempt = $index === 0 && $address !== null && trim($address) !== '';
+            $expectedTypes = $addressAttempt ? ['housenumber', 'street'] : ['municipality'];
+            $matches = array_filter(
+                $matches,
+                static fn(array $suggestion): bool => in_array(
+                    (string) ($suggestion['type'] ?? ''),
+                    $expectedTypes,
+                    true,
+                ),
+            );
+            $count = count($matches);
+            if ($count === 1) {
+                $suggestion = array_values($matches)[0];
+                $type = (string) ($suggestion['type'] ?? '');
+                $exact = $addressAttempt
+                    && in_array($type, ['housenumber', 'street'], true);
+                $attempts[] = ['query' => $query, 'result' => $exact ? 'exact' : 'approximate', 'matches' => 1];
+                return [
+                    'status' => $exact ? 'exact' : 'approximate',
+                    'suggestion' => $suggestion,
+                    'query' => $query,
+                    'attempts' => $attempts,
+                ];
+            }
+            if ($count > 1) {
+                $ambiguous = true;
+                $attempts[] = ['query' => $query, 'result' => 'ambiguous', 'matches' => $count];
+            } else {
+                $attempts[] = ['query' => $query, 'result' => 'rejected', 'matches' => 0];
+            }
+        }
+        return [
+            'status' => $ambiguous ? 'ambiguous' : 'rejected',
+            'suggestion' => null,
+            'query' => null,
+            'attempts' => $attempts,
+        ];
     }
 
     /** @return list<array<string,mixed>>|null */
@@ -166,6 +221,7 @@ final class GeocodingService
                 'departmentCode' => mb_substr((string) ($properties['depcode'] ?? ''), 0, 3),
                 'department' => mb_substr((string) ($context[1] ?? ''), 0, 120),
                 'region' => mb_substr((string) ($context[2] ?? ''), 0, 120),
+                'type' => mb_substr((string) ($properties['type'] ?? ''), 0, 40),
                 'source' => 'IGN Géoplateforme',
             ];
         }
@@ -195,5 +251,35 @@ final class GeocodingService
         $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
         $value = is_string($ascii) ? $ascii : $value;
         return preg_replace('/[^a-z0-9]+/', '', $value) ?? $value;
+    }
+
+    /**
+     * @param list<array<string,mixed>> $suggestions
+     * @return array<string,array<string,mixed>>
+     */
+    private function expectedMatches(
+        array $suggestions,
+        string $city,
+        ?string $postalCode,
+        ?string $departmentCode,
+    ): array {
+        $expectedCity = $this->placeKey($city);
+        $matches = [];
+        foreach ($suggestions as $suggestion) {
+            if (
+                $this->placeKey((string) ($suggestion['city'] ?? '')) !== $expectedCity
+                || ($postalCode !== null && (string) ($suggestion['postalCode'] ?? '') !== $postalCode)
+                || ($departmentCode !== null && strtoupper((string) ($suggestion['departmentCode'] ?? '')) !== strtoupper($departmentCode))
+            ) {
+                continue;
+            }
+            $coordinateKey = sprintf(
+                '%.6F,%.6F',
+                (float) ($suggestion['latitude'] ?? 999),
+                (float) ($suggestion['longitude'] ?? 999),
+            );
+            $matches[$coordinateKey] = $suggestion;
+        }
+        return $matches;
     }
 }

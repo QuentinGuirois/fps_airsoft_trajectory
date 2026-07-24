@@ -14,7 +14,9 @@ final class RadarValidator
         'assault', 'dmr', 'sniper', 'cqb', 'detonating_grenades', 'co2_grenades', 'smoke_grenades',
     ];
     public const RULE_STATES = ['allowed', 'specific', 'forbidden', 'not_communicated'];
-    public const LINK_TYPES = ['website', 'facebook', 'helloasso', 'discord', 'instagram'];
+    public const LINK_TYPES = [
+        'organizer', 'registration', 'website', 'facebook', 'helloasso', 'discord', 'instagram',
+    ];
 
     public static function optionalText(mixed $value, string $label, int $max, int $min = 0): ?string
     {
@@ -123,7 +125,7 @@ final class RadarValidator
         return [$lat, $lon];
     }
 
-    /** @return list<array{type:string,state:string,joules:?float,details:?string}> */
+    /** @return list<array<string,mixed>> */
     public static function rules(mixed $value): array
     {
         if (!is_array($value) || !array_is_list($value) || count($value) > count(self::RULE_TYPES)) {
@@ -135,7 +137,7 @@ final class RadarValidator
             if (!is_array($row) || array_is_list($row)) {
                 throw new HttpException(422, 'validation', 'Une règle est invalide.');
             }
-            Validator::keys($row, ['type','state','joules','details'], ['type','state']);
+            Validator::keys($row, ['type','state','joules','details','evidence'], ['type','state']);
             $type = self::enum($row['type'], 'Le type de règle', self::RULE_TYPES);
             if (isset($seen[$type])) {
                 throw new HttpException(422, 'validation', 'Chaque règle ne peut être renseignée qu’une fois.');
@@ -150,14 +152,60 @@ final class RadarValidator
                 }
                 $joules = round((float) $parsed, 2);
             }
+            $details = self::optionalText($row['details'] ?? null, 'Le détail de règle', 240);
+            $evidence = null;
+            if ($state === 'not_communicated') {
+                if ($joules !== null || ($details !== null && $details !== 'NC') || ($row['evidence'] ?? null) !== null) {
+                    throw new HttpException(422, 'validation', 'Une règle non communiquée doit rester NC, sans joules ni preuve.');
+                }
+                $details = 'NC';
+            } else {
+                if ($details === null) {
+                    throw new HttpException(422, 'validation', 'Une règle connue exige un détail.');
+                }
+                $evidence = self::ruleEvidence($row['evidence'] ?? null);
+            }
             $rules[] = [
                 'type' => $type,
                 'state' => $state,
                 'joules' => $joules,
-                'details' => self::optionalText($row['details'] ?? null, 'Le détail de règle', 240),
+                'details' => $details,
+                'evidence' => $evidence,
             ];
         }
         return $rules;
+    }
+
+    /** @return array<string,mixed> */
+    private static function ruleEvidence(mixed $value): array
+    {
+        if (!is_array($value) || array_is_list($value)) {
+            throw new HttpException(422, 'validation', 'Une règle connue exige une preuve officielle.');
+        }
+        Validator::keys(
+            $value,
+            ['url','locator','excerpt','scope','checkedAt'],
+            ['url','locator','excerpt','scope','checkedAt'],
+        );
+        $checkedAt = (string) $value['checkedAt'];
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})$/D', $checkedAt)) {
+            throw new HttpException(422, 'validation', 'La date de contrôle de la preuve est invalide.');
+        }
+        try {
+            $checkedAtUtc = (new DateTimeImmutable($checkedAt))
+                ->setTimezone(new DateTimeZone('UTC'))
+                ->format('Y-m-d H:i:s');
+        } catch (\Throwable) {
+            throw new HttpException(422, 'validation', 'La date de contrôle de la preuve est invalide.');
+        }
+        return [
+            'url' => (string) self::httpsUrl($value['url'], 'Le lien de preuve', true),
+            'locator' => self::optionalText($value['locator'], 'Le repère de preuve', 500, 2),
+            'excerpt' => self::optionalText($value['excerpt'], 'Le résumé de preuve', 500, 2),
+            'scope' => self::enum($value['scope'], 'La portée de preuve', ['event','organizer_general']),
+            'checkedAt' => $checkedAt,
+            'checkedAtUtc' => $checkedAtUtc,
+        ];
     }
 
     /** @return list<array{type:string,url:string}> */

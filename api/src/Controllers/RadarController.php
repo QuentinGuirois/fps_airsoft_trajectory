@@ -73,7 +73,7 @@ final class RadarController
             $statement = $this->db->prepare('INSERT INTO radar_events (id,user_id,slug,title) VALUES (?,?,?,?)');
             $statement->execute([$id, $session['id'], $slug, $title]);
             $rule = $this->db->prepare(
-                "INSERT INTO radar_event_rules (event_id,rule_type,rule_state) VALUES (?,?,'not_communicated')"
+                "INSERT INTO radar_event_rules (event_id,rule_type,rule_state,details) VALUES (?,?,'not_communicated','NC')"
             );
             foreach (RadarValidator::RULE_TYPES as $type) {
                 $rule->execute([$id, $type]);
@@ -110,7 +110,7 @@ final class RadarController
         $rules = array_key_exists('rules', $body) ? RadarValidator::rules($body['rules']) : $this->rules($params['id']);
         $links = array_key_exists('links', $body) ? RadarValidator::links($body['links']) : $this->links($params['id']);
         if ($current['state'] === 'published') {
-            $this->assertPublishable($values, $rules);
+            $this->assertPublishable($values, $rules, $links);
         }
         $slug = $current['state'] === 'draft' && array_key_exists('title', $body)
             ? $this->slug($values['title'], (string) $current['id'])
@@ -185,7 +185,7 @@ final class RadarController
         }
         $values = $this->mergedValues($row, []);
         $rules = $this->rules($params['id']);
-        $this->assertPublishable($values, $rules);
+        $this->assertPublishable($values, $rules, $this->links($params['id']));
         $statement = $this->db->prepare(
             "UPDATE radar_events SET state='published',record_visibility='public',"
             . "location_precision=COALESCE(location_precision,IF(location_visibility='exact','street','locality')),"
@@ -252,8 +252,10 @@ final class RadarController
                 throw new HttpException(404, 'radar_not_found', 'Partie introuvable.');
             }
             $rules = $this->db->prepare(
-                'INSERT INTO radar_event_rules (event_id,rule_type,rule_state,joules,details) '
-                . 'SELECT ?,rule_type,rule_state,joules,details FROM radar_event_rules WHERE event_id=?'
+                'INSERT INTO radar_event_rules (event_id,rule_type,rule_state,joules,details,evidence_url,'
+                . 'evidence_locator,evidence_excerpt,evidence_scope,evidence_checked_at) '
+                . 'SELECT ?,rule_type,rule_state,joules,details,evidence_url,evidence_locator,evidence_excerpt,'
+                . 'evidence_scope,evidence_checked_at FROM radar_event_rules WHERE event_id=?'
             );
             $rules->execute([$id, $params['id']]);
             $links = $this->db->prepare(
@@ -447,8 +449,8 @@ final class RadarController
             : ($current === null ? null : (string) $current);
     }
 
-    /** @param array<string,mixed> $values @param list<array<string,mixed>> $rules */
-    private function assertPublishable(array $values, array $rules): void
+    /** @param array<string,mixed> $values @param list<array<string,mixed>> $rules @param list<array<string,mixed>> $links */
+    private function assertPublishable(array $values, array $rules, array $links): void
     {
         $missing = [];
         foreach ([
@@ -456,7 +458,6 @@ final class RadarController
             'endsAtUtc' => 'fin', 'scenario' => 'scénario', 'level' => 'niveau', 'maxCapacity' => 'capacité',
             'toiletsAvailable' => 'toilettes', 'latitude' => 'latitude', 'longitude' => 'longitude',
             'locationConfirmedAt' => 'confirmation du point', 'publicLocationLabel' => 'lieu public',
-            'registrationUrl' => 'lien d’inscription',
         ] as $key => $label) {
             if ($values[$key] === null || $values[$key] === '') {
                 $missing[] = $label;
@@ -464,6 +465,16 @@ final class RadarController
         }
         if (count($rules) !== count(RadarValidator::RULE_TYPES)) {
             $missing[] = 'matrice complète des règles';
+        }
+        if (
+            $values['registrationUrl'] === null
+            && !array_filter($links, static fn(array $link): bool => in_array(
+                $link['type'],
+                ['organizer','registration','website','facebook','helloasso'],
+                true,
+            ))
+        ) {
+            $missing[] = 'lien officiel organisateur ou inscription';
         }
         if ($values['endsAtUtc'] !== null && $values['endsAtUtc'] <= gmdate('Y-m-d H:i:s')) {
             $missing[] = 'date future';
@@ -473,11 +484,12 @@ final class RadarController
         }
     }
 
-    /** @return list<array{type:string,state:string,joules:?float,details:?string}> */
+    /** @return list<array<string,mixed>> */
     private function rules(string $eventId): array
     {
         $statement = $this->db->prepare(
-            'SELECT rule_type,rule_state,joules,details FROM radar_event_rules WHERE event_id=? ORDER BY FIELD(rule_type,'
+            'SELECT rule_type,rule_state,joules,details,evidence_url,evidence_locator,evidence_excerpt,'
+            . 'evidence_scope,evidence_checked_at FROM radar_event_rules WHERE event_id=? ORDER BY FIELD(rule_type,'
             . "'assault','dmr','sniper','cqb','detonating_grenades','co2_grenades','smoke_grenades')"
         );
         $statement->execute([$eventId]);
@@ -486,6 +498,13 @@ final class RadarController
             'state' => $row['rule_state'],
             'joules' => $row['joules'] === null ? null : (float) $row['joules'],
             'details' => $row['details'],
+            'evidence' => $row['evidence_url'] === null ? null : [
+                'url' => $row['evidence_url'],
+                'locator' => $row['evidence_locator'],
+                'excerpt' => $row['evidence_excerpt'],
+                'scope' => $row['evidence_scope'],
+                'checkedAt' => $row['evidence_checked_at'] . 'Z',
+            ],
         ], $statement->fetchAll());
     }
 
@@ -507,10 +526,16 @@ final class RadarController
         $delete = $this->db->prepare('DELETE FROM radar_event_rules WHERE event_id=?');
         $delete->execute([$eventId]);
         $insert = $this->db->prepare(
-            'INSERT INTO radar_event_rules (event_id,rule_type,rule_state,joules,details) VALUES (?,?,?,?,?)'
+            'INSERT INTO radar_event_rules (event_id,rule_type,rule_state,joules,details,evidence_url,'
+            . 'evidence_locator,evidence_excerpt,evidence_scope,evidence_checked_at) VALUES (?,?,?,?,?,?,?,?,?,?)'
         );
         foreach ($rules as $rule) {
-            $insert->execute([$eventId, $rule['type'], $rule['state'], $rule['joules'], $rule['details']]);
+            $evidence = $rule['evidence'];
+            $insert->execute([
+                $eventId, $rule['type'], $rule['state'], $rule['joules'], $rule['details'],
+                $evidence['url'] ?? null, $evidence['locator'] ?? null, $evidence['excerpt'] ?? null,
+                $evidence['scope'] ?? null, $evidence['checkedAtUtc'] ?? null,
+            ]);
         }
     }
 

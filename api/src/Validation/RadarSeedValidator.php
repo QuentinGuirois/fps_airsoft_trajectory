@@ -14,13 +14,19 @@ final class RadarSeedValidator
         'schema_version', 'dataset', 'generated_at', 'timezone', 'purpose',
         'import_defaults', 'privacy', 'source_policy', 'events',
     ];
-    private const EVENT_KEYS = [
+    private const EVENT_KEYS_V1 = [
         'external_key', 'title', 'organizer', 'organizer_type', 'source_tier',
         'source_url', 'registration_url', 'source_locator', 'starts_at', 'ends_at',
         'event_type', 'terrain_type', 'location_label', 'address', 'postal_code',
         'city', 'department_code', 'location_precision', 'geocode_query',
         'price_min_eur', 'price_max_eur', 'capacity', 'rules_summary',
     ];
+    private const RULE_TYPES = [
+        'assault', 'dmr', 'sniper', 'cqb',
+        'detonating_grenades', 'co2_grenades', 'smoke_grenades',
+    ];
+    private const RULE_STATES = ['allowed', 'specific', 'forbidden', 'not_communicated'];
+    private const EVIDENCE_SCOPES = ['event', 'organizer_general'];
     private const ORGANIZER_TYPES = ['association', 'association_unverified', 'organizer_unverified', 'venue'];
     private const EVENT_TYPES = [
         'OP', 'OP_historique', 'OP_nocturne', 'OP_roleplay', 'big_game', 'dominicale',
@@ -38,7 +44,8 @@ final class RadarSeedValidator
     public static function document(array $document): array
     {
         Validator::keys($document, self::TOP_LEVEL_KEYS, self::TOP_LEVEL_KEYS);
-        if ($document['schema_version'] !== '1.0.0' || $document['timezone'] !== 'Europe/Paris') {
+        $schemaVersion = (string) $document['schema_version'];
+        if (!in_array($schemaVersion, ['1.0.0', '1.1.0'], true) || $document['timezone'] !== 'Europe/Paris') {
             throw self::invalid('La version ou le fuseau du lot Radar est invalide.');
         }
         self::text($document['dataset'], 'Le nom du lot', 200, 3);
@@ -80,7 +87,7 @@ final class RadarSeedValidator
             if (!is_array($raw) || array_is_list($raw)) {
                 throw self::invalid('Un événement du lot Radar est invalide.', ['row' => $index + 1]);
             }
-            $event = self::event($raw, $index + 1);
+            $event = self::event($raw, $index + 1, $schemaVersion);
             if (isset($seen[$event['externalKey']])) {
                 throw self::invalid('Une clé externe est présente plusieurs fois.', ['row' => $index + 1]);
             }
@@ -89,7 +96,7 @@ final class RadarSeedValidator
         }
 
         return [
-            'schemaVersion' => '1.0.0',
+            'schemaVersion' => $schemaVersion,
             'generatedAt' => (string) $document['generated_at'],
             'timezone' => 'Europe/Paris',
             'events' => $events,
@@ -97,9 +104,12 @@ final class RadarSeedValidator
     }
 
     /** @param array<string,mixed> $raw @return array<string,mixed> */
-    private static function event(array $raw, int $row): array
+    private static function event(array $raw, int $row, string $schemaVersion): array
     {
-        Validator::keys($raw, self::EVENT_KEYS, self::EVENT_KEYS);
+        $eventKeys = $schemaVersion === '1.1.0'
+            ? [...self::EVENT_KEYS_V1, 'rules']
+            : self::EVENT_KEYS_V1;
+        Validator::keys($raw, $eventKeys, $eventKeys);
         $externalKey = trim((string) $raw['external_key']);
         if (!preg_match('/^[a-z0-9][a-z0-9-]{5,159}$/D', $externalKey)) {
             throw self::invalid('La clé externe est invalide.', ['row' => $row]);
@@ -140,7 +150,10 @@ final class RadarSeedValidator
             throw self::invalid('Le prix maximum est inférieur au prix minimum.', ['row' => $row]);
         }
         $capacity = RadarValidator::optionalInteger($raw['capacity'], 'La capacité', 1, 5000);
-        $summary = RadarValidator::optionalText($raw['rules_summary'], 'Le résumé', 800, 10);
+        $summary = RadarValidator::optionalText($raw['rules_summary'], 'Le résumé', 800, 2);
+        $rules = $schemaVersion === '1.1.0'
+            ? self::rules($raw['rules'], $row)
+            : self::unknownRules();
 
         return [
             'externalKey' => $externalKey,
@@ -167,7 +180,119 @@ final class RadarSeedValidator
             'priceMaxCents' => $priceMax,
             'capacity' => $capacity,
             'summary' => $summary,
+            'rules' => $rules,
         ];
+    }
+
+    /** @return list<array<string,mixed>> */
+    private static function unknownRules(): array
+    {
+        return array_map(static fn(string $type): array => [
+            'type' => $type,
+            'state' => 'not_communicated',
+            'joules' => null,
+            'details' => 'NC',
+            'evidence' => null,
+        ], self::RULE_TYPES);
+    }
+
+    /** @return list<array<string,mixed>> */
+    private static function rules(mixed $value, int $row): array
+    {
+        if (!is_array($value) || !array_is_list($value) || count($value) !== count(self::RULE_TYPES)) {
+            throw self::invalid('La matrice doit contenir exactement sept règles.', ['row' => $row]);
+        }
+        $byType = [];
+        foreach ($value as $rawRule) {
+            if (!is_array($rawRule) || array_is_list($rawRule)) {
+                throw self::invalid('Une règle enrichie est invalide.', ['row' => $row]);
+            }
+            Validator::keys(
+                $rawRule,
+                ['type', 'state', 'joules', 'details', 'evidence'],
+                ['type', 'state', 'joules', 'details', 'evidence'],
+            );
+            $type = self::oneOf($rawRule['type'], self::RULE_TYPES, 'Le type de règle');
+            if (isset($byType[$type])) {
+                throw self::invalid('Chaque type de règle doit apparaître une seule fois.', ['row' => $row]);
+            }
+            $state = self::oneOf($rawRule['state'], self::RULE_STATES, 'L’état de règle');
+            $joules = self::joules($rawRule['joules']);
+            if ($state === 'not_communicated') {
+                if ($joules !== null || $rawRule['details'] !== 'NC' || $rawRule['evidence'] !== null) {
+                    throw self::invalid('Une règle non communiquée doit rester NC, sans joules ni preuve.', ['row' => $row]);
+                }
+                $byType[$type] = [
+                    'type' => $type,
+                    'state' => $state,
+                    'joules' => null,
+                    'details' => 'NC',
+                    'evidence' => null,
+                ];
+                continue;
+            }
+            $details = self::text($rawRule['details'], 'Le détail de règle', 240, 2);
+            $evidence = self::evidence($rawRule['evidence'], $row);
+            $byType[$type] = [
+                'type' => $type,
+                'state' => $state,
+                'joules' => $joules,
+                'details' => $details,
+                'evidence' => $evidence,
+            ];
+        }
+        if (array_diff(self::RULE_TYPES, array_keys($byType)) !== []) {
+            throw self::invalid('La matrice de règles est incomplète.', ['row' => $row]);
+        }
+        return array_map(static fn(string $type): array => $byType[$type], self::RULE_TYPES);
+    }
+
+    /** @return array<string,mixed> */
+    private static function evidence(mixed $value, int $row): array
+    {
+        $evidence = self::map($value, 'La preuve de règle');
+        Validator::keys(
+            $evidence,
+            ['url', 'locator', 'excerpt', 'scope', 'checked_at'],
+            ['url', 'locator', 'excerpt', 'scope', 'checked_at'],
+        );
+        $url = (string) RadarValidator::httpsUrl($evidence['url'], 'L’URL de preuve', true);
+        $locator = self::text($evidence['locator'], 'Le repère de preuve', 500, 2);
+        $excerpt = self::text($evidence['excerpt'], 'Le résumé de preuve', 500, 2);
+        $scope = self::oneOf($evidence['scope'], self::EVIDENCE_SCOPES, 'La portée de preuve');
+        try {
+            $checkedAt = new DateTimeImmutable((string) $evidence['checked_at']);
+        } catch (\Throwable) {
+            throw self::invalid('La date de contrôle de preuve est invalide.', ['row' => $row]);
+        }
+        if (
+            !is_string($evidence['checked_at'])
+            || !preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})$/D', $evidence['checked_at'])
+        ) {
+            throw self::invalid('La date de contrôle de preuve est invalide.', ['row' => $row]);
+        }
+        return [
+            'url' => $url,
+            'locator' => $locator,
+            'excerpt' => $excerpt,
+            'scope' => $scope,
+            'checkedAtUtc' => $checkedAt->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    private static function joules(mixed $value): ?float
+    {
+        if ($value === null) {
+            return null;
+        }
+        if ((!is_int($value) && !is_float($value)) || !is_finite((float) $value)) {
+            throw self::invalid('La puissance en joules est invalide.');
+        }
+        $joules = round((float) $value, 2);
+        if ($joules < 0.01 || $joules > 10) {
+            throw self::invalid('La puissance en joules est invalide.');
+        }
+        return $joules;
     }
 
     /** @return array{DateTimeImmutable,string} */

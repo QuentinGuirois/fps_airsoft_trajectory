@@ -60,6 +60,11 @@ provenance, la clé externe idempotente, les prix min/max, la visibilité
 publication, les fixtures privées et le squelette de revendication. La
 procédure complète est décrite dans `docs/radar-import.md`.
 
+La migration `database/migrations/007_radar_rule_evidence.sql` ajoute la preuve
+officielle par règle et distingue les liens `organizer` et `registration`. Une
+règle connue sans preuve devient `NC` ; l’interface publique affiche les sept
+catégories et propose le lien de preuve lorsque l’information est connue.
+
 Les événements utilisent des UUID. Les mutations propriétaire et modérateur
 combinent ownership SQL, cookie HttpOnly, Origin strict, CSRF, quotas et version
 optimiste. Un brouillon créé normalement par son propriétaire peut être publié
@@ -226,6 +231,10 @@ Le service worker met en cache la page publique, les bibliothèques locales, le
 GeoJSON et les modules de carte. Il contourne explicitement `/api/` et
 `/compte/`. Les brouillons et réponses authentifiées ne rejoignent jamais le
 cache.
+
+Les deux variantes de pointeur utilisent le vert acide de la charte
+`#a8ff3f`, avec des contours pleins. Le point intérieur distingue une position
+communale approximative sans employer de bordure pointillée.
 
 La page principale est indexable et figure seule dans le sitemap. Les URLs
 profondes servent le même shell mais reçoivent `X-Robots-Tag: noindex, follow`

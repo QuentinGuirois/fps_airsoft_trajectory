@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url)).replace(/[\\/]$/, '');
 const php = process.env.FAT_TEST_PHP || (process.platform === 'win32' ? 'C:\\tools\\php\\php.exe' : 'php');
 const ownerEnvironment = 'FAT_RADAR_SEED_OWNER_EMAIL';
-const seed = 'docs/fat-radar/fat-radar-events-seed-2026-07-24.json';
+const seed = 'docs/fat-radar/fat-radar-events-enriched-2026-07-24.json';
+const baseSeed = 'docs/fat-radar/fat-radar-events-seed-2026-07-24.importable-v1.json';
 const databaseEnvironment = process.env.FAT_TEST_CONFIG_FILE
   ? { FAT_CONFIG_FILE: process.env.FAT_TEST_CONFIG_FILE }
   : {
@@ -57,32 +58,52 @@ const baseArguments = [
   '--preview=admin',
 ];
 const dryRun = run([...baseArguments, '--dry-run']);
-assert.match(dryRun.stdout, /"created":46/);
+assert.match(dryRun.stdout, /"created":40/);
 assert.equal(scalar('SELECT COUNT(*) FROM radar_events'), 0);
 assert.equal(scalar('SELECT COUNT(*) FROM radar_geocoding_cache'), 0);
 
 const first = run(baseArguments);
-assert.match(first.stdout, /"created":46/);
-assert.equal(scalar("SELECT COUNT(*) FROM radar_events WHERE state='draft' AND record_visibility='admin_preview_only' AND requires_pre_publication_check=1 AND is_fixture=0"), 46);
-assert.equal(scalar('SELECT COUNT(DISTINCT external_key) FROM radar_events'), 46);
-assert.equal(scalar('SELECT COUNT(*) FROM radar_event_sources'), 46);
+assert.match(first.stdout, /"created":40/);
+assert.equal(scalar("SELECT COUNT(*) FROM radar_events WHERE state='draft' AND record_visibility='admin_preview_only' AND requires_pre_publication_check=1 AND is_fixture=0"), 40);
+assert.equal(scalar('SELECT COUNT(DISTINCT external_key) FROM radar_events'), 40);
+assert.equal(scalar('SELECT COUNT(*) FROM radar_event_sources'), 40);
+assert.equal(scalar('SELECT COUNT(*) FROM radar_event_rules'), 280);
+assert.equal(scalar("SELECT COUNT(*) FROM radar_event_rules WHERE rule_state<>'not_communicated'"), 3);
+assert.equal(scalar("SELECT COUNT(*) FROM radar_event_rules WHERE rule_state<>'not_communicated' AND evidence_url IS NOT NULL AND evidence_locator IS NOT NULL AND evidence_excerpt IS NOT NULL AND evidence_scope IS NOT NULL AND evidence_checked_at IS NOT NULL"), 3);
+assert.equal(scalar("SELECT COUNT(*) FROM radar_event_rules WHERE rule_state='not_communicated' AND joules IS NULL AND details='NC' AND evidence_url IS NULL"), 277);
+assert.equal(scalar("SELECT COUNT(*) FROM radar_event_links WHERE link_type='organizer'"), 40);
+assert.equal(scalar("SELECT COUNT(*) FROM radar_event_links WHERE link_type='registration'"), 35);
+assert.equal(scalar('SELECT COUNT(*) FROM radar_events WHERE registration_url IS NULL'), 5);
 assert.equal(scalar("SELECT COUNT(*) FROM radar_events WHERE state='published'"), 0);
 
 const second = run(baseArguments);
-assert.match(second.stdout, /"updated":46/);
-assert.equal(scalar('SELECT COUNT(*) FROM radar_events'), 46);
-assert.equal(scalar('SELECT COUNT(*) FROM radar_event_sources'), 46);
+assert.match(second.stdout, /"updated":40/);
+assert.equal(scalar('SELECT COUNT(*) FROM radar_events'), 40);
+assert.equal(scalar('SELECT COUNT(*) FROM radar_event_rules'), 280);
+assert.equal(scalar('SELECT COUNT(*) FROM radar_event_sources'), 40);
+assert.equal(scalar('SELECT COUNT(*) FROM radar_event_links'), 75);
+
+const baseSeedArguments = [
+  'bin/import-radar-events.php',
+  baseSeed,
+  `--owner-email-env=${ownerEnvironment}`,
+  '--preview=admin',
+];
+const baseUpdate = run(baseSeedArguments);
+assert.match(baseUpdate.stdout, /"updated":40/);
+assert.equal(scalar("SELECT COUNT(*) FROM radar_event_rules WHERE rule_state<>'not_communicated'"), 3);
+assert.equal(scalar("SELECT COUNT(*) FROM radar_event_rules WHERE rule_state<>'not_communicated' AND evidence_url IS NOT NULL"), 3);
 
 const protectReviewed = [
   'require "api/src/autoload.php";',
   '$config=Fat\\Api\\Config::load(getcwd());',
   '$db=Fat\\Api\\Database::connect($config);',
-  '$db->exec("UPDATE radar_events SET requires_pre_publication_check=0 WHERE external_key=\'primary-ftf-2026-07-25\'");',
+  '$db->exec("UPDATE radar_events SET requires_pre_publication_check=0 WHERE external_key=\'primary-caen-2026-08-09\'");',
 ].join('');
 run(['-r', protectReviewed]);
 const protectedRun = run(baseArguments);
-assert.match(protectedRun.stdout, /primary-ftf-2026-07-25 : ignoré/);
-assert.equal(scalar("SELECT requires_pre_publication_check FROM radar_events WHERE external_key='primary-ftf-2026-07-25'"), 0);
+assert.match(protectedRun.stdout, /primary-caen-2026-08-09 : ignoré/);
+assert.equal(scalar("SELECT requires_pre_publication_check FROM radar_events WHERE external_key='primary-caen-2026-08-09'"), 0);
 
 const missingOwner = run(baseArguments, { expected: 3, extraEnv: { FAT_RADAR_SEED_OWNER_EMAIL: '' } });
 assert.doesNotMatch(missingOwner.stderr, /@/);
@@ -94,4 +115,4 @@ for (const count of [1, 10, 50, 200]) {
 }
 assert.equal(scalar("SELECT COUNT(*) FROM radar_events WHERE state='published' AND record_visibility='public' AND is_fixture=0"), 0);
 
-console.log('Radar import intégration : migration fraîche, dry-run, 46 brouillons, idempotence, protection après revue, propriétaire obligatoire et fixtures 1/10/50/200 validés.');
+console.log('Radar import intégration : migration fraîche, 40 brouillons, 280 règles, preuves, liens organisateur/inscription, idempotence et fixtures validés.');

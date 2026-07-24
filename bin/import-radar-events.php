@@ -19,7 +19,7 @@ function fail(string $message, int $code = 2): never
     exit($code);
 }
 
-/** @return array{path:string,dryRun:bool,geocode:bool,ownerEnv:string,preview:string} */
+/** @return array{path:string,dryRun:bool,geocode:bool,ownerEnv:string,preview:string,qaReport:?string} */
 function options(array $arguments, string $root): array
 {
     array_shift($arguments);
@@ -29,6 +29,7 @@ function options(array $arguments, string $root): array
         'geocode' => false,
         'ownerEnv' => '',
         'preview' => '',
+        'qaReport' => null,
     ];
     foreach ($arguments as $argument) {
         if ($argument === '--dry-run') {
@@ -39,6 +40,8 @@ function options(array $arguments, string $root): array
             $result['ownerEnv'] = substr($argument, strlen('--owner-email-env='));
         } elseif (str_starts_with($argument, '--preview=')) {
             $result['preview'] = substr($argument, strlen('--preview='));
+        } elseif (str_starts_with($argument, '--qa-report=')) {
+            $result['qaReport'] = substr($argument, strlen('--qa-report='));
         } elseif (!str_starts_with($argument, '-') && $result['path'] === '') {
             $result['path'] = $argument;
         } else {
@@ -60,11 +63,24 @@ function options(array $arguments, string $root): array
         $knownDirectory === false
         || $path === false
         || dirname($path) !== $knownDirectory
-        || !preg_match('/^fat-radar-events-seed-\d{4}-\d{2}-\d{2}\.json$/D', basename($path))
+        || !preg_match(
+            '/^fat-radar-events-(?:seed-\d{4}-\d{2}-\d{2}(?:\.importable-v1)?|enriched-\d{4}-\d{2}-\d{2})\.json$/D',
+            basename($path),
+        )
     ) {
         fail('le fichier doit être un JSON de semences connu dans docs/fat-radar.');
     }
     $result['path'] = $path;
+    if ($result['qaReport'] !== null) {
+        $reportDirectory = realpath(dirname($result['qaReport']));
+        if (
+            $reportDirectory !== $knownDirectory
+            || !preg_match('/^fat-radar-geocoding-qa-\d{4}-\d{2}-\d{2}\.json$/D', basename($result['qaReport']))
+        ) {
+            fail('le rapport QA doit être un JSON connu dans docs/fat-radar.');
+        }
+        $result['qaReport'] = $reportDirectory . '/' . basename($result['qaReport']);
+    }
     return $result;
 }
 
@@ -120,9 +136,14 @@ try {
         'skipped' => 0,
         'validationErrors' => 0,
         'geocoded' => 0,
+        'exact' => 0,
+        'approximate' => 0,
+        'ambiguous' => 0,
+        'rejected' => 0,
         'needsReview' => 0,
         'withoutPublicPin' => 0,
     ];
+    $geocodeAudit = [];
 
     if (!$options['dryRun']) {
         $db->beginTransaction();
@@ -169,45 +190,77 @@ try {
             $geocodeStatus = $existing && !$options['geocode']
                 ? (string) $existing['geocode_status']
                 : ($event['locationPrecision'] === 'undisclosed' ? 'needs_review' : 'not_requested');
+            $locationPrecision = $event['locationPrecision'];
+            $visibility = in_array($locationPrecision, ['city', 'undisclosed'], true) ? 'approximate' : 'exact';
 
             if ($event['locationPrecision'] === 'undisclosed') {
                 $latitude = $longitude = $locationMethod = $confirmedAt = null;
                 $geocodeStatus = 'needs_review';
+                $summary['rejected']++;
                 $summary['needsReview']++;
+                $geocodeAudit[] = [
+                    'external_key' => $event['externalKey'],
+                    'status' => 'rejected',
+                    'precision' => 'undisclosed',
+                    'query' => null,
+                    'attempts' => [],
+                ];
             } elseif ($options['geocode']) {
                 if ($geocodeRequestCount > 0) {
                     usleep(150_000);
                 }
                 $geocodeRequestCount++;
                 try {
-                    $suggestions = $geocoder->search((string) $event['geocodeQuery'], !$options['dryRun']);
-                    $matched = $geocoder->matchExpected(
-                        $suggestions,
+                    $resolved = $geocoder->resolveExpectedLocation(
+                        $event['address'],
                         (string) $event['city'],
                         $event['postalCode'],
-                        $event['departmentCode'],
+                        (string) $event['departmentCode'],
+                        !$options['dryRun'],
                     );
                     $geocodeCheckedAt = gmdate('Y-m-d H:i:s');
-                    if ($matched['status'] === 'validated' && $matched['suggestion'] !== null) {
-                        $latitude = round((float) $matched['suggestion']['latitude'], 6);
-                        $longitude = round((float) $matched['suggestion']['longitude'], 6);
+                    if (in_array($resolved['status'], ['exact', 'approximate'], true) && $resolved['suggestion'] !== null) {
+                        $latitude = round((float) $resolved['suggestion']['latitude'], 6);
+                        $longitude = round((float) $resolved['suggestion']['longitude'], 6);
                         $locationMethod = 'geocoded';
                         $confirmedAt = $geocodeCheckedAt;
                         $geocodeStatus = 'validated';
+                        $locationPrecision = $resolved['status'] === 'exact' ? 'street' : 'city';
+                        $visibility = $resolved['status'] === 'exact' ? 'exact' : 'approximate';
                         $summary['geocoded']++;
+                        $summary[$resolved['status']]++;
                     } else {
+                        $latitude = $longitude = $locationMethod = $confirmedAt = null;
                         $geocodeStatus = 'needs_review';
+                        $summary[$resolved['status']]++;
                         $summary['needsReview']++;
                     }
-                } catch (HttpException) {
+                    $geocodeAudit[] = [
+                        'external_key' => $event['externalKey'],
+                        'status' => $resolved['status'],
+                        'precision' => $locationPrecision,
+                        'query' => $resolved['query'],
+                        'attempts' => $resolved['attempts'],
+                    ];
+                } catch (HttpException $error) {
+                    $latitude = $longitude = $locationMethod = $confirmedAt = null;
                     $geocodeStatus = 'needs_review';
                     $geocodeCheckedAt = gmdate('Y-m-d H:i:s');
+                    $summary['rejected']++;
                     $summary['needsReview']++;
+                    $geocodeAudit[] = [
+                        'external_key' => $event['externalKey'],
+                        'status' => 'rejected',
+                        'precision' => $locationPrecision,
+                        'query' => null,
+                        'attempts' => [],
+                        'error' => $error->errorCode,
+                    ];
                 }
             } elseif ($geocodeStatus === 'needs_review') {
                 $summary['needsReview']++;
             }
-            if ($latitude === null || $longitude === null || $event['locationPrecision'] === 'undisclosed') {
+            if ($latitude === null || $longitude === null || $locationPrecision === 'undisclosed') {
                 $summary['withoutPublicPin']++;
             }
 
@@ -215,7 +268,6 @@ try {
                 $priceCents = $event['priceMinCents'] !== null && $event['priceMinCents'] === $event['priceMaxCents']
                     ? $event['priceMinCents']
                     : null;
-                $visibility = in_array($event['locationPrecision'], ['city', 'undisclosed'], true) ? 'approximate' : 'exact';
                 if ($action === 'created') {
                     $statement = $db->prepare(
                         'INSERT INTO radar_events (id,user_id,external_key,slug,state,moderation_state,record_visibility,claim_state,'
@@ -234,7 +286,7 @@ try {
                         $event['title'], $event['organizer'], $event['organizerType'], $event['eventType'], $event['terrainType'],
                         $event['locationLabel'], $event['summary'], $event['startsAtUtc'], $event['endsAtUtc'],
                         $event['schedulePrecision'], $event['capacity'], $priceCents, $event['priceMinCents'], $event['priceMaxCents'],
-                        $latitude, $longitude, $locationMethod, $confirmedAt, $visibility, $event['locationPrecision'],
+                        $latitude, $longitude, $locationMethod, $confirmedAt, $visibility, $locationPrecision,
                         $geocodeStatus, $geocodeCheckedAt, $event['address'], $event['locationLabel'], $event['city'],
                         $event['postalCode'], $event['departmentCode'], $event['registrationUrl'], $batchKey,
                     ]);
@@ -252,17 +304,50 @@ try {
                         $event['title'], $event['organizer'], $event['organizerType'], $event['eventType'], $event['terrainType'],
                         $event['locationLabel'], $event['summary'], $event['startsAtUtc'], $event['endsAtUtc'],
                         $event['schedulePrecision'], $event['capacity'], $priceCents, $event['priceMinCents'], $event['priceMaxCents'],
-                        $latitude, $longitude, $locationMethod, $confirmedAt, $visibility, $event['locationPrecision'],
+                        $latitude, $longitude, $locationMethod, $confirmedAt, $visibility, $locationPrecision,
                         $geocodeStatus, $geocodeCheckedAt, $event['address'], $event['locationLabel'], $event['city'],
                         $event['postalCode'], $event['departmentCode'], $event['registrationUrl'], $batchKey, $eventId,
                     ]);
                 }
 
                 $rule = $db->prepare(
-                    "INSERT IGNORE INTO radar_event_rules (event_id,rule_type,rule_state) VALUES (?,?,'not_communicated')"
+                    'INSERT INTO radar_event_rules (event_id,rule_type,rule_state,joules,details,'
+                    . 'evidence_url,evidence_locator,evidence_excerpt,evidence_scope,evidence_checked_at) '
+                    . 'VALUES (?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE '
+                    . "joules=IF(VALUES(rule_state)='not_communicated' AND rule_state<>'not_communicated',joules,VALUES(joules)),"
+                    . "details=IF(VALUES(rule_state)='not_communicated' AND rule_state<>'not_communicated',details,VALUES(details)),"
+                    . "evidence_url=IF(VALUES(rule_state)='not_communicated' AND rule_state<>'not_communicated',evidence_url,VALUES(evidence_url)),"
+                    . "evidence_locator=IF(VALUES(rule_state)='not_communicated' AND rule_state<>'not_communicated',evidence_locator,VALUES(evidence_locator)),"
+                    . "evidence_excerpt=IF(VALUES(rule_state)='not_communicated' AND rule_state<>'not_communicated',evidence_excerpt,VALUES(evidence_excerpt)),"
+                    . "evidence_scope=IF(VALUES(rule_state)='not_communicated' AND rule_state<>'not_communicated',evidence_scope,VALUES(evidence_scope)),"
+                    . "evidence_checked_at=IF(VALUES(rule_state)='not_communicated' AND rule_state<>'not_communicated',evidence_checked_at,VALUES(evidence_checked_at)),"
+                    . "rule_state=IF(VALUES(rule_state)='not_communicated' AND rule_state<>'not_communicated',rule_state,VALUES(rule_state))"
                 );
-                foreach (['assault','dmr','sniper','cqb','detonating_grenades','co2_grenades','smoke_grenades'] as $type) {
-                    $rule->execute([$eventId, $type]);
+                foreach ($event['rules'] as $eventRule) {
+                    $evidence = $eventRule['evidence'];
+                    $rule->execute([
+                        $eventId,
+                        $eventRule['type'],
+                        $eventRule['state'],
+                        $eventRule['joules'],
+                        $eventRule['details'],
+                        $evidence['url'] ?? null,
+                        $evidence['locator'] ?? null,
+                        $evidence['excerpt'] ?? null,
+                        $evidence['scope'] ?? null,
+                        $evidence['checkedAtUtc'] ?? null,
+                    ]);
+                }
+                $deleteImportedLinks = $db->prepare(
+                    "DELETE FROM radar_event_links WHERE event_id=? AND link_type IN ('organizer','registration')"
+                );
+                $deleteImportedLinks->execute([$eventId]);
+                $eventLink = $db->prepare(
+                    'INSERT INTO radar_event_links (id,event_id,link_type,url,sort_order) VALUES (?,?,?,?,?)'
+                );
+                $eventLink->execute([Support::uuid(), $eventId, 'organizer', $event['sourceUrl'], 0]);
+                if ($event['registrationUrl'] !== null) {
+                    $eventLink->execute([Support::uuid(), $eventId, 'registration', $event['registrationUrl'], 1]);
                 }
                 $fingerprint = hash('sha256', $event['sourceUrl'], true);
                 $source = $db->prepare(
@@ -298,6 +383,25 @@ try {
     }
 
     $mode = $options['dryRun'] ? 'SIMULATION — aucune écriture' : 'IMPORT EN BROUILLON ADMIN';
+    if ($options['qaReport'] !== null) {
+        file_put_contents(
+            $options['qaReport'],
+            json_encode([
+                'schema_version' => '1.0.0',
+                'generated_at' => gmdate('c'),
+                'dataset' => basename($options['path']),
+                'dry_run' => $options['dryRun'],
+                'summary' => [
+                    'exact' => $summary['exact'],
+                    'approximate' => $summary['approximate'],
+                    'ambiguous' => $summary['ambiguous'],
+                    'rejected' => $summary['rejected'],
+                ],
+                'events' => $geocodeAudit,
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n",
+            LOCK_EX,
+        );
+    }
     fwrite(STDOUT, "\n{$mode}\n");
     fwrite(STDOUT, json_encode($summary, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n");
 } catch (HttpException $error) {

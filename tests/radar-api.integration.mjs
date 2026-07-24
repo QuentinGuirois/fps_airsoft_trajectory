@@ -39,7 +39,7 @@ command(PHP, ['bin/reset-local-database.php', '--yes']);
 const identities = JSON.parse(command(PHP, ['tests/radar-api-fixture.php']));
 command(PHP, [
   'bin/import-radar-events.php',
-  'docs/fat-radar/fat-radar-events-seed-2026-07-24.json',
+  'docs/fat-radar/fat-radar-events-enriched-2026-07-24.json',
   '--owner-email-env=FAT_RADAR_SEED_OWNER_EMAIL',
   '--preview=admin',
 ]);
@@ -145,7 +145,7 @@ try {
   const imported = await api('/admin/radar-events?sourceTier=primary&verification=pending&state=draft&limit=100', {
     identity: identities.admin,
   });
-  assert.equal(imported.events.length, 15);
+  assert.equal(imported.events.length, 40);
   assert.equal(imported.events.every((event) => event.recordVisibility === 'admin_preview_only'), true);
   assert.equal(JSON.stringify(imported).includes('@'), false);
   const importedEvent = imported.events[0];
@@ -197,12 +197,22 @@ try {
     hour: '2-digit', minute: '2-digit', hour12: false,
   }).format(date).replace(' ', 'T');
   const rules = ['assault', 'dmr', 'sniper', 'cqb', 'detonating_grenades', 'co2_grenades', 'smoke_grenades']
-    .map((type, index) => ({
-      type,
-      state: ['allowed', 'specific', 'forbidden', 'not_communicated'][index % 4],
-      joules: index < 4 ? 1.2 + index * .3 : null,
-      details: index === 1 ? 'Distance minimale de 20 m.' : null,
-    }));
+    .map((type, index) => {
+      const state = ['allowed', 'specific', 'forbidden', 'not_communicated'][index % 4];
+      return {
+        type,
+        state,
+        joules: state === 'not_communicated' ? null : (index < 4 ? 1.2 + index * .3 : null),
+        details: state === 'not_communicated' ? 'NC' : `Règle officielle de test pour ${type}.`,
+        evidence: state === 'not_communicated' ? null : {
+          url: 'https://example.org/reglement-officiel',
+          locator: `Section ${type}`,
+          excerpt: `Règle officielle de test pour ${type}.`,
+          scope: 'event',
+          checkedAt: '2026-07-24T12:00:00Z',
+        },
+      };
+    });
   await api(`/me/radar-events/${eventId}`, {
     method: 'PATCH',
     identity: identities.owner,

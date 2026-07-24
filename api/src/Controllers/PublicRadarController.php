@@ -227,7 +227,8 @@ final class PublicRadarController
     private function rules(string $eventId): array
     {
         $statement = $this->db->prepare(
-            'SELECT rule_type,rule_state,joules,details FROM radar_event_rules WHERE event_id=? ORDER BY FIELD(rule_type,'
+            'SELECT rule_type,rule_state,joules,details,evidence_url,evidence_locator,evidence_excerpt,'
+            . 'evidence_scope,evidence_checked_at FROM radar_event_rules WHERE event_id=? ORDER BY FIELD(rule_type,'
             . "'assault','dmr','sniper','cqb','detonating_grenades','co2_grenades','smoke_grenades')"
         );
         $statement->execute([$eventId]);
@@ -236,6 +237,13 @@ final class PublicRadarController
             'state' => $row['rule_state'],
             'joules' => $row['joules'] === null ? null : (float) $row['joules'],
             'details' => $row['details'],
+            'evidence' => $row['evidence_url'] === null ? null : [
+                'url' => $row['evidence_url'],
+                'locator' => $row['evidence_locator'],
+                'excerpt' => $row['evidence_excerpt'],
+                'scope' => $row['evidence_scope'],
+                'checkedAt' => $row['evidence_checked_at'] . 'Z',
+            ],
         ], $statement->fetchAll());
     }
 

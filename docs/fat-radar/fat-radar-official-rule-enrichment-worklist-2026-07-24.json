@@ -1,0 +1,2911 @@
+{
+  "schema_version": "1.0.0",
+  "document_type": "fat_radar_official_rule_enrichment_worklist",
+  "generated_at": "2026-07-24T14:28:02.851Z",
+  "source_seed": "fat-radar-events-seed-2026-07-24.importable-v1.json",
+  "policy": {
+    "no_user_validation": true,
+    "only_official_sources": true,
+    "no_inference": true,
+    "unknown_display": "NC",
+    "unknown_filter_behavior": "must_not_match_allowed_or_specific_filter",
+    "evidence_required_for_known_value": true,
+    "allowed_rule_states": [
+      "allowed",
+      "specific",
+      "forbidden",
+      "not_communicated"
+    ]
+  },
+  "required_rule_types": [
+    "assault",
+    "dmr",
+    "sniper",
+    "cqb",
+    "detonating_grenades",
+    "co2_grenades",
+    "smoke_grenades"
+  ],
+  "events": [
+    {
+      "external_key": "primary-caen-2026-08-09",
+      "title": "Partie publique du 9 août",
+      "organizer": "Caen Airsoft Team",
+      "starts_at": "2026-08-09",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/caen-airsoft-team",
+        "official_registration_url": "https://www.helloasso.com/associations/caen-airsoft-team",
+        "source_locator": "Partie publique du 9 Août"
+      },
+      "location": {
+        "location_label": "The Store",
+        "address": "1 Rue Auguste Lemonnier",
+        "postal_code": "14270",
+        "city": "Ouézy",
+        "department_code": "14",
+        "location_precision": "street",
+        "geocode_query": "1 Rue Auguste Lemonnier, 14270 Ouézy"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-verdun-reactions-2026-08-15",
+      "title": "Réactions rapides 2026",
+      "organizer": "Verdun Airsoft",
+      "starts_at": "2026-08-15",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/verdun-airsoft",
+        "official_registration_url": "https://www.helloasso.com/associations/verdun-airsoft",
+        "source_locator": "Réactions rapides 2026 - PAF"
+      },
+      "location": {
+        "location_label": "Village de combat — Bainville-sur-Madon",
+        "address": "Fort de Bainville-sur-Madon",
+        "postal_code": "54550",
+        "city": "Bainville-sur-Madon",
+        "department_code": "54",
+        "location_precision": "street",
+        "geocode_query": "Fort de Bainville-sur-Madon, 54550 Bainville-sur-Madon"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-armorica-libera-2026-08-01",
+      "title": "OP Armorica Libera",
+      "organizer": "Escouade Ghost Forest et Klan des Kroustillants",
+      "starts_at": "2026-08-01",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/escouadeghostforest",
+        "official_registration_url": "https://www.helloasso.com/associations/escouadeghostforest",
+        "source_locator": "Op ARMORICA LIBERA"
+      },
+      "location": {
+        "location_label": "Terrain du Klan, près de Guingamp",
+        "address": null,
+        "postal_code": null,
+        "city": "Guingamp",
+        "department_code": "22",
+        "location_precision": "city",
+        "geocode_query": "Guingamp, 22200"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-gaz-cqb-shelter-2026-08-08",
+      "title": "CQB Shelter La Rochelle — expérience immersive Real Cap",
+      "organizer": "Gaz Airsoft Organisation",
+      "starts_at": "2026-08-08T13:00:00+02:00",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/gaz-airsoft-organisation/evenements/training-dimanche-9-aout-cqb-la-rochelle",
+        "official_registration_url": "https://www.helloasso.com/associations/gaz-airsoft-organisation/evenements/training-dimanche-9-aout-cqb-la-rochelle",
+        "source_locator": "CQB Shelter La Rochelle Expérience Immersive Real Cap Jour et Nuit"
+      },
+      "location": {
+        "location_label": "R’Soft Games / VS Park La Rochelle",
+        "address": "41 ZI des Grands Champs",
+        "postal_code": "17290",
+        "city": "Aigrefeuille-d’Aunis",
+        "department_code": "17",
+        "location_precision": "street",
+        "geocode_query": "41 ZI des Grands Champs, 17290 Aigrefeuille-d’Aunis"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-op-chimere-2026-09-27",
+      "title": "OP Chimère",
+      "organizer": "Les Mordus du 6 mm",
+      "starts_at": "2026-09-27T07:30:00+02:00",
+      "source": {
+        "official_source_url": "https://www.billetweb.fr/op-chimere",
+        "official_registration_url": "https://www.billetweb.fr/op-chimere",
+        "source_locator": "OP Chimère — Les Mordus du 6 mm"
+      },
+      "location": {
+        "location_label": "Troupins",
+        "address": "137 Cassan",
+        "postal_code": "33720",
+        "city": "Landiras",
+        "department_code": "33",
+        "location_precision": "street",
+        "geocode_query": "137 Cassan, 33720 Landiras"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-arca-husky-2026-10-02",
+      "title": "OP Husky 2026",
+      "organizer": "Aquitaine Reconstitutions Commémorations Airsoft (ARCA)",
+      "starts_at": "2026-10-02T18:00:00+02:00",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/aquitaine-reconstitutions-commemorations-airsoft",
+        "official_registration_url": "https://www.helloasso.com/associations/aquitaine-reconstitutions-commemorations-airsoft",
+        "source_locator": "OP Husky"
+      },
+      "location": {
+        "location_label": "Wildmax — La Plotuère",
+        "address": "La Plotuère",
+        "postal_code": "41230",
+        "city": "Gy-en-Sologne",
+        "department_code": "41",
+        "location_precision": "locality",
+        "geocode_query": "La Plotuère, 41230 Gy-en-Sologne"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-black-sheep-fallout-2026-10-10",
+      "title": "FALLOUT — pré-inscription",
+      "organizer": "Black Sheep Airsoft",
+      "starts_at": "2026-10-10T08:00:00+02:00",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/black-sheep-airsoft/evenements/fallout-pre-inscription",
+        "official_registration_url": "https://www.helloasso.com/associations/black-sheep-airsoft/evenements/fallout-pre-inscription",
+        "source_locator": "Billetterie officielle Black Sheep Airsoft — lieu nommé Warhouse ; commune/CP recoupés avec une autre page officielle du même organisateur utilisant le même lieu, à garder comme point ville approximatif."
+      },
+      "location": {
+        "location_label": "Warhouse",
+        "address": null,
+        "postal_code": "16270",
+        "city": "Terres-de-Haute-Charente",
+        "department_code": "16",
+        "location_precision": "city",
+        "geocode_query": "Terres-de-Haute-Charente, 16270"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-big-game-veckring-2026-10-09",
+      "title": "Big Game Airsoft 2026",
+      "organizer": "Paintball Sports et Loisirs Veckring",
+      "starts_at": "2026-10-09",
+      "source": {
+        "official_source_url": "https://www.paintball-veckring.fr/fr/big-game-airsoft/",
+        "official_registration_url": null,
+        "source_locator": "Big Game Airsoft — 9, 10 et 11 octobre 2026"
+      },
+      "location": {
+        "location_label": "Paintball Sports et Loisirs",
+        "address": "Route de Helling",
+        "postal_code": "57920",
+        "city": "Veckring",
+        "department_code": "57",
+        "location_precision": "street",
+        "geocode_query": "Route de Helling, 57920 Veckring"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-black-sheep-noche-roja-2026-09-12",
+      "title": "La Noche Roja",
+      "organizer": "Black Sheep Airsoft",
+      "starts_at": "2026-09-12T08:00:00+02:00",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/black-sheep-airsoft/evenements/la-noche-roja-mini-op",
+        "official_registration_url": "https://www.helloasso.com/associations/black-sheep-airsoft/evenements/la-noche-roja-mini-op",
+        "source_locator": "La Noche Roja (mini OP), 12–13/09/2026 — complément de localisation vérifié via une source à recontrôler"
+      },
+      "location": {
+        "location_label": "Suris",
+        "address": null,
+        "postal_code": "16270",
+        "city": "Terres-de-Haute-Charente",
+        "department_code": "16",
+        "location_precision": "city",
+        "geocode_query": "Suris, 16270 Terres-de-Haute-Charente"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "secondary-russian-heritage-2026-09-26",
+      "title": "Russian Furious Heritage",
+      "organizer": "Commando Casimir",
+      "starts_at": "2026-09-26T08:30:00+02:00",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/commando-casimir-c-c/evenements/russian-furious-mir",
+        "official_registration_url": "https://www.helloasso.com/associations/commando-casimir-c-c/evenements/russian-furious-mir",
+        "source_locator": "Billetterie officielle Commando Casimir / HelloAsso — Russian Furious Heritage, 26–27/09/2026, Signes (83870)."
+      },
+      "location": {
+        "location_label": "Signes",
+        "address": null,
+        "postal_code": null,
+        "city": "Signes",
+        "department_code": "83",
+        "location_precision": "city",
+        "geocode_query": "Signes, 83870"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-7-nains-2026-08-02",
+      "title": "Partie du 2 août 2026",
+      "organizer": "Les 7 Nains font du Airsoft",
+      "starts_at": "2026-08-02T07:15:00+02:00",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/les-7-nains-font-du-airsoft/evenements/partie-du-02-08-2026",
+        "official_registration_url": "https://www.helloasso.com/associations/les-7-nains-font-du-airsoft/evenements/partie-du-02-08-2026",
+        "source_locator": "Partie du 02.08.2026"
+      },
+      "location": {
+        "location_label": "Terrain officiel des 7 Nains — rendez-vous parking de l’église",
+        "address": "35 Rue du 1er Septembre",
+        "postal_code": "68640",
+        "city": "Muespach",
+        "department_code": "68",
+        "location_precision": "street",
+        "geocode_query": "35 Rue du 1er Septembre, 68640 Muespach"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-family-airsoft-doree-2026-09-12",
+      "title": "La Journée Dorée",
+      "organizer": "Family Airsoft Team",
+      "starts_at": "2026-09-12T09:00:00+02:00",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/family-airsoft-team/evenements/la-journee-doree",
+        "official_registration_url": "https://www.helloasso.com/associations/family-airsoft-team/evenements/la-journee-doree",
+        "source_locator": "La journée Dorée, journée airsoft caritative"
+      },
+      "location": {
+        "location_label": "Family Airsoft Team — Argancy",
+        "address": null,
+        "postal_code": "57640",
+        "city": "Argancy",
+        "department_code": "57",
+        "location_precision": "city",
+        "geocode_query": "Argancy, 57640"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-taos-luzille-2026-08-09",
+      "title": "Partie Luzillé 09/08/26",
+      "organizer": "Tactical Airsoft Operative Squad",
+      "starts_at": "2026-08-09T08:30:00+02:00",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/tactical-airsoft-operative-squad/evenements/partie-luzille-09-08-26",
+        "official_registration_url": "https://www.helloasso.com/associations/tactical-airsoft-operative-squad/evenements/partie-luzille-09-08-26",
+        "source_locator": "Billetterie officielle — Partie Luzillé 09/08/26"
+      },
+      "location": {
+        "location_label": "Terrain d'airsoft Luzillé — Moulin de Brosse",
+        "address": "Moulin de Brosse",
+        "postal_code": "37150",
+        "city": "Luzillé",
+        "department_code": "37",
+        "location_precision": "street",
+        "geocode_query": "Moulin de Brosse, 37150 Luzillé"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-taos-luzille-2026-08-30",
+      "title": "Partie Luzillé 30/08/26",
+      "organizer": "Tactical Airsoft Operative Squad",
+      "starts_at": "2026-08-30T08:30:00+02:00",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/tactical-airsoft-operative-squad/evenements/partie-luzille-30-08-26",
+        "official_registration_url": "https://www.helloasso.com/associations/tactical-airsoft-operative-squad/evenements/partie-luzille-30-08-26",
+        "source_locator": "Billetterie officielle — Partie Luzillé 30/08/26"
+      },
+      "location": {
+        "location_label": "Terrain d'airsoft Luzillé — Moulin de Brosse",
+        "address": "Moulin de Brosse",
+        "postal_code": "37150",
+        "city": "Luzillé",
+        "department_code": "37",
+        "location_precision": "street",
+        "geocode_query": "Moulin de Brosse, 37150 Luzillé"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-taos-luzille-2026-09-20",
+      "title": "Partie Luzillé 20/09/26",
+      "organizer": "Tactical Airsoft Operative Squad",
+      "starts_at": "2026-09-20T08:30:00+02:00",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/tactical-airsoft-operative-squad/evenements/partie-luzille-20-09-26",
+        "official_registration_url": "https://www.helloasso.com/associations/tactical-airsoft-operative-squad/evenements/partie-luzille-20-09-26",
+        "source_locator": "Billetterie officielle — Partie Luzillé 20/09/26"
+      },
+      "location": {
+        "location_label": "Terrain d'airsoft Luzillé — Moulin de Brosse",
+        "address": "Moulin de Brosse",
+        "postal_code": "37150",
+        "city": "Luzillé",
+        "department_code": "37",
+        "location_precision": "street",
+        "geocode_query": "Moulin de Brosse, 37150 Luzillé"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-taos-luzille-2026-10-04",
+      "title": "Partie Luzillé 04/10/26",
+      "organizer": "Tactical Airsoft Operative Squad",
+      "starts_at": "2026-10-04T08:30:00+02:00",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/tactical-airsoft-operative-squad/evenements/partie-luzille-04-10-26",
+        "official_registration_url": "https://www.helloasso.com/associations/tactical-airsoft-operative-squad/evenements/partie-luzille-04-10-26",
+        "source_locator": "Billetterie officielle — Partie Luzillé 04/10/26"
+      },
+      "location": {
+        "location_label": "Terrain d'airsoft Luzillé — Moulin de Brosse",
+        "address": "Moulin de Brosse",
+        "postal_code": "37150",
+        "city": "Luzillé",
+        "department_code": "37",
+        "location_precision": "street",
+        "geocode_query": "Moulin de Brosse, 37150 Luzillé"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-taos-luzille-2026-10-18",
+      "title": "Partie Luzillé 18/10/26",
+      "organizer": "Tactical Airsoft Operative Squad",
+      "starts_at": "2026-10-18T08:30:00+02:00",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/tactical-airsoft-operative-squad/evenements/partie-luzille-18-11-26",
+        "official_registration_url": "https://www.helloasso.com/associations/tactical-airsoft-operative-squad/evenements/partie-luzille-18-11-26",
+        "source_locator": "Billetterie officielle — titre 18/10/26 ; slug de la page à recontrôler avant publication"
+      },
+      "location": {
+        "location_label": "Terrain d'airsoft Luzillé — Moulin de Brosse",
+        "address": "Moulin de Brosse",
+        "postal_code": "37150",
+        "city": "Luzillé",
+        "department_code": "37",
+        "location_precision": "street",
+        "geocode_query": "Moulin de Brosse, 37150 Luzillé"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-ama-mercurow-2026-08-02",
+      "title": "Mercurow GBBR / Spring / AEP — 02/08/2026",
+      "organizer": "AMA France",
+      "starts_at": "2026-08-02",
+      "source": {
+        "official_source_url": "https://www.amafrance.fr/evenements-2",
+        "official_registration_url": "https://www.monetico-online-asso.com/amafranceanimation/mercurowpartiegbbraepspringdu02082026",
+        "source_locator": "Calendrier officiel AMA France — Mercurow GBBR/SPRING/AEP"
+      },
+      "location": {
+        "location_label": "Mercurow",
+        "address": null,
+        "postal_code": null,
+        "city": "Meulan-en-Yvelines",
+        "department_code": "78",
+        "location_precision": "city",
+        "geocode_query": "Meulan-en-Yvelines"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-ama-taniere-2026-08-09",
+      "title": "Dominicale La Tanière — 09/08/2026",
+      "organizer": "AMA France",
+      "starts_at": "2026-08-09",
+      "source": {
+        "official_source_url": "https://www.amafrance.fr/evenements-2",
+        "official_registration_url": "https://www.monetico-online-asso.com/amafranceanimation/la-tanierepartiedu090826",
+        "source_locator": "Calendrier officiel AMA France — Dominicale La Tanière"
+      },
+      "location": {
+        "location_label": "La Tanière",
+        "address": "Chemin de la Mare aux pois",
+        "postal_code": "78440",
+        "city": "Lainville-en-Vexin",
+        "department_code": "78",
+        "location_precision": "street",
+        "geocode_query": "Chemin de la Mare aux pois, 78440 Lainville-en-Vexin"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-ama-mercurow-2026-08-16",
+      "title": "Mercurow Real Cap — 16/08/2026",
+      "organizer": "AMA France",
+      "starts_at": "2026-08-16",
+      "source": {
+        "official_source_url": "https://www.amafrance.fr/evenements-2",
+        "official_registration_url": "https://www.monetico-online-asso.com/amafranceanimation/partierealcap16082026",
+        "source_locator": "Calendrier officiel AMA France — Mercurow Real Cap"
+      },
+      "location": {
+        "location_label": "Mercurow",
+        "address": null,
+        "postal_code": null,
+        "city": "Meulan-en-Yvelines",
+        "department_code": "78",
+        "location_precision": "city",
+        "geocode_query": "Meulan-en-Yvelines"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-ama-mercurow-2026-08-23",
+      "title": "Mercurow — partie classique nouvelle génération — 23/08/2026",
+      "organizer": "AMA France",
+      "starts_at": "2026-08-23",
+      "source": {
+        "official_source_url": "https://www.amafrance.fr/evenements-2",
+        "official_registration_url": "https://www.monetico-online-asso.com/amafranceanimation/partie-classique-nouvelle-generation-230826",
+        "source_locator": "Calendrier officiel AMA France — partie classique nouvelle génération"
+      },
+      "location": {
+        "location_label": "Mercurow",
+        "address": null,
+        "postal_code": null,
+        "city": "Meulan-en-Yvelines",
+        "department_code": "78",
+        "location_precision": "city",
+        "geocode_query": "Meulan-en-Yvelines"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-ama-taniere-2026-08-30",
+      "title": "Dominicale La Tanière — 30/08/2026",
+      "organizer": "AMA France",
+      "starts_at": "2026-08-30",
+      "source": {
+        "official_source_url": "https://www.amafrance.fr/evenements-2",
+        "official_registration_url": "https://www.monetico-online-asso.com/amafranceanimation/la-tanierepartiedu300826",
+        "source_locator": "Calendrier officiel AMA France — Dominicale La Tanière"
+      },
+      "location": {
+        "location_label": "La Tanière",
+        "address": "Chemin de la Mare aux pois",
+        "postal_code": "78440",
+        "city": "Lainville-en-Vexin",
+        "department_code": "78",
+        "location_precision": "street",
+        "geocode_query": "Chemin de la Mare aux pois, 78440 Lainville-en-Vexin"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-ama-mercurow-2026-09-06",
+      "title": "Mercurow GBBR / Spring / AEP — 06/09/2026",
+      "organizer": "AMA France",
+      "starts_at": "2026-09-06",
+      "source": {
+        "official_source_url": "https://www.amafrance.fr/evenements-2",
+        "official_registration_url": "https://www.monetico-online-asso.com/amafranceanimation/mercurowpartiegbbraepspringdu06092026",
+        "source_locator": "Calendrier officiel AMA France — Mercurow GBBR/SPRING/AEP"
+      },
+      "location": {
+        "location_label": "Mercurow",
+        "address": null,
+        "postal_code": null,
+        "city": "Meulan-en-Yvelines",
+        "department_code": "78",
+        "location_precision": "city",
+        "geocode_query": "Meulan-en-Yvelines"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-umbrella-delta-zone-2026-08-02",
+      "title": "Delta Zone — Umbrella Team Airsoft 77 — 02/08/2026",
+      "organizer": "Umbrella Team Airsoft 77",
+      "starts_at": "2026-08-02T08:30:00+02:00",
+      "source": {
+        "official_source_url": "https://www.aad-zone.fr/evenements-a-venir",
+        "official_registration_url": "https://www.aad-zone.fr/events/delta-zone-umbrella-team-airsoft-77-53",
+        "source_locator": "Planning officiel A.A.D. / Delta Zone — Umbrella Team Airsoft 77"
+      },
+      "location": {
+        "location_label": "Delta Zone — La Grange le Roi",
+        "address": "Angle D471 et D96",
+        "postal_code": "77166",
+        "city": "Grisy-Suisnes",
+        "department_code": "77",
+        "location_precision": "street",
+        "geocode_query": "Angle D471 et D96, 77166 Grisy-Suisnes"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-umbrella-delta-zone-2026-09-06",
+      "title": "Delta Zone — Umbrella Team Airsoft 77 — 06/09/2026",
+      "organizer": "Umbrella Team Airsoft 77",
+      "starts_at": "2026-09-06T08:30:00+02:00",
+      "source": {
+        "official_source_url": "https://www.aad-zone.fr/evenements-a-venir",
+        "official_registration_url": "https://www.aad-zone.fr/events/delta-zone-umbrella-team-airsoft-77-54",
+        "source_locator": "Planning officiel A.A.D. / Delta Zone — Umbrella Team Airsoft 77"
+      },
+      "location": {
+        "location_label": "Delta Zone — La Grange le Roi",
+        "address": "Angle D471 et D96",
+        "postal_code": "77166",
+        "city": "Grisy-Suisnes",
+        "department_code": "77",
+        "location_precision": "street",
+        "geocode_query": "Angle D471 et D96, 77166 Grisy-Suisnes"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-umbrella-delta-zone-2026-10-04",
+      "title": "Delta Zone — Umbrella Team Airsoft 77 — 04/10/2026",
+      "organizer": "Umbrella Team Airsoft 77",
+      "starts_at": "2026-10-04T08:30:00+02:00",
+      "source": {
+        "official_source_url": "https://www.aad-zone.fr/evenements-a-venir",
+        "official_registration_url": "https://www.aad-zone.fr/events/delta-zone-umbrella-team-airsoft-77-1-56",
+        "source_locator": "Planning officiel A.A.D. / Delta Zone — Umbrella Team Airsoft 77"
+      },
+      "location": {
+        "location_label": "Delta Zone — La Grange le Roi",
+        "address": "Angle D471 et D96",
+        "postal_code": "77166",
+        "city": "Grisy-Suisnes",
+        "department_code": "77",
+        "location_precision": "street",
+        "geocode_query": "Angle D471 et D96, 77166 Grisy-Suisnes"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-reapers-2026-08-02",
+      "title": "Partie publique Reapers Team — 02/08/2026",
+      "organizer": "Reapers Team",
+      "starts_at": "2026-08-02T09:00:00+02:00",
+      "source": {
+        "official_source_url": "https://reapers.s2.yapla.com/fr/evenements",
+        "official_registration_url": "https://reapers.s2.yapla.com/fr/evenements/authentication/partie-publique-du-02082026/119537",
+        "source_locator": "Calendrier officiel Reapers Team — Partie publique du 02/08/2026"
+      },
+      "location": {
+        "location_label": "Terrain d'airsoft de la Reapers Team",
+        "address": "Rue du Pont Habert",
+        "postal_code": "37310",
+        "city": "Tauxigny-Saint-Bauld",
+        "department_code": "37",
+        "location_precision": "street",
+        "geocode_query": "Rue du Pont Habert, 37310 Tauxigny-Saint-Bauld"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-reapers-2026-09-13",
+      "title": "Partie publique Reapers Team — 13/09/2026",
+      "organizer": "Reapers Team",
+      "starts_at": "2026-09-13",
+      "source": {
+        "official_source_url": "https://reapers.s2.yapla.com/fr/evenements",
+        "official_registration_url": null,
+        "source_locator": "Calendrier officiel Reapers Team — prochaine partie du 13 septembre"
+      },
+      "location": {
+        "location_label": "Terrain d'airsoft de la Reapers Team",
+        "address": "Rue du Pont Habert",
+        "postal_code": "37310",
+        "city": "Tauxigny-Saint-Bauld",
+        "department_code": "37",
+        "location_precision": "street",
+        "geocode_query": "Rue du Pont Habert, 37310 Tauxigny-Saint-Bauld"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-reapers-2026-10-11",
+      "title": "Partie publique Reapers Team — 11/10/2026",
+      "organizer": "Reapers Team",
+      "starts_at": "2026-10-11",
+      "source": {
+        "official_source_url": "https://reapers.s2.yapla.com/fr/evenements",
+        "official_registration_url": null,
+        "source_locator": "Calendrier officiel Reapers Team — prochaine partie du 11 octobre"
+      },
+      "location": {
+        "location_label": "Terrain d'airsoft de la Reapers Team",
+        "address": "Rue du Pont Habert",
+        "postal_code": "37310",
+        "city": "Tauxigny-Saint-Bauld",
+        "department_code": "37",
+        "location_precision": "street",
+        "geocode_query": "Rue du Pont Habert, 37310 Tauxigny-Saint-Bauld"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-agb-session-2026-08-09",
+      "title": "Session d'airsoft AGB — 09/08/2026",
+      "organizer": "AGB Airsoft Glory Battle",
+      "starts_at": "2026-08-09",
+      "source": {
+        "official_source_url": "https://airsoftagb.com/2026/07/06/session-dairsoft-dimanche-9-aout-2026/",
+        "official_registration_url": null,
+        "source_locator": "Site officiel AGB — Session d'airsoft dimanche 9 août 2026"
+      },
+      "location": {
+        "location_label": "Terrain AGB",
+        "address": null,
+        "postal_code": "02260",
+        "city": "Saint-Algis",
+        "department_code": "02",
+        "location_precision": "city",
+        "geocode_query": "Saint-Algis, 02260"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-black-tiger-2026-08-30",
+      "title": "Terrain BTA Dominicale — 30/08/2026",
+      "organizer": "Black Tiger Airsoft",
+      "starts_at": "2026-08-30T08:00:00+02:00",
+      "source": {
+        "official_source_url": "https://blacktigerairsoft.fr/",
+        "official_registration_url": "https://blacktigerairsoft.fr/produit/dominicale-aout/",
+        "source_locator": "Site et réservation officiels Black Tiger Airsoft — Dominicale août"
+      },
+      "location": {
+        "location_label": "Terrain BTA",
+        "address": null,
+        "postal_code": null,
+        "city": "Benay",
+        "department_code": "02",
+        "location_precision": "city",
+        "geocode_query": "Benay, Aisne"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-auvergne6mm-ragnarok-2026-08-15",
+      "title": "OP RAGNAROK",
+      "organizer": "Auvergne 6mm",
+      "starts_at": "2026-08-15",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/auvergne-6mm",
+        "official_registration_url": null,
+        "source_locator": "Page officielle Auvergne 6mm — RAGNAROK"
+      },
+      "location": {
+        "location_label": "Chazemais",
+        "address": null,
+        "postal_code": null,
+        "city": "Chazemais",
+        "department_code": "03",
+        "location_precision": "city",
+        "geocode_query": "Chazemais, Allier"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-alpha-command-conquer-2026-09-13",
+      "title": "Command and Conquer 7",
+      "organizer": "Alpha Unit",
+      "starts_at": "2026-09-13",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/alpha-unit",
+        "official_registration_url": "https://www.helloasso.com/associations/alpha-unit/evenements/command-and-conquer-7-le-13-09-2026-orga-alpha-unit",
+        "source_locator": "Billetterie officielle Alpha Unit — Command and Conquer 7"
+      },
+      "location": {
+        "location_label": "Sanatorium Alpha Unit",
+        "address": "1 allée des Pins",
+        "postal_code": "95510",
+        "city": "Aincourt",
+        "department_code": "95",
+        "location_precision": "street",
+        "geocode_query": "1 allée des Pins, 95510 Aincourt"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-cia-hunter-games-2026-08-23",
+      "title": "The Hunter Games 2026 — Sniper Edition",
+      "organizer": "Club indépendant d'airsoft",
+      "starts_at": "2026-08-23",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/club-independant-d-airsoft",
+        "official_registration_url": "https://www.helloasso.com/associations/club-independant-d-airsoft/evenements/the-hunter-games-2026-sniper-edition",
+        "source_locator": "Billetterie officielle Club indépendant d'airsoft — The Hunter Games 2026"
+      },
+      "location": {
+        "location_label": "Terrain La Ferme — CIA",
+        "address": null,
+        "postal_code": "82370",
+        "city": "Campsas",
+        "department_code": "82",
+        "location_precision": "city",
+        "geocode_query": "Campsas, 82370"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-fox-survie-stage-2026-09-19",
+      "title": "Stage Commando Ops — Libération d'Otage",
+      "organizer": "Fox-survie",
+      "starts_at": "2026-09-19",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/fox-survie/evenements/stage-commando",
+        "official_registration_url": "https://www.helloasso.com/associations/fox-survie/evenements/stage-commando",
+        "source_locator": "Billetterie officielle Fox-survie — stage du 19 septembre 2026"
+      },
+      "location": {
+        "location_label": "Rendez-vous Fox-survie",
+        "address": "1 Lotissement des Plantes",
+        "postal_code": "21200",
+        "city": "Marigny-lès-Reullée",
+        "department_code": "21",
+        "location_precision": "street",
+        "geocode_query": "1 Lotissement des Plantes, 21200 Marigny-lès-Reullée"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-bearsoft-malabry-2026-08-02",
+      "title": "Partie ouverte Bearsoft 44 — Malabry — 02/08/2026",
+      "organizer": "Bearsoft 44",
+      "starts_at": "2026-08-02",
+      "source": {
+        "official_source_url": "https://bearsoft44.fr/",
+        "official_registration_url": "https://www.helloasso.com/associations/bearsoft44/evenements/02-08-2026-malabry-partie-ouverte",
+        "source_locator": "Site et billetterie officiels Bearsoft 44 — Malabry"
+      },
+      "location": {
+        "location_label": "Malabry",
+        "address": null,
+        "postal_code": "44350",
+        "city": "Guérande",
+        "department_code": "44",
+        "location_precision": "city",
+        "geocode_query": "Guérande, 44350"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-bearsoft-marais-2026-08-23",
+      "title": "Partie ouverte Bearsoft 44 — Le Marais — 23/08/2026",
+      "organizer": "Bearsoft 44",
+      "starts_at": "2026-08-23",
+      "source": {
+        "official_source_url": "https://bearsoft44.fr/",
+        "official_registration_url": "https://www.helloasso.com/associations/bearsoft44/evenements/23-08-2026-le-marais-partie-ouverte",
+        "source_locator": "Site et billetterie officiels Bearsoft 44 — Le Marais"
+      },
+      "location": {
+        "location_label": "Le Marais",
+        "address": null,
+        "postal_code": "44115",
+        "city": "Basse-Goulaine",
+        "department_code": "44",
+        "location_precision": "city",
+        "geocode_query": "Basse-Goulaine, 44115"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-bearsoft-marais-2026-09-13",
+      "title": "Partie ouverte Bearsoft 44 — Le Marais — 13/09/2026",
+      "organizer": "Bearsoft 44",
+      "starts_at": "2026-09-13",
+      "source": {
+        "official_source_url": "https://bearsoft44.fr/",
+        "official_registration_url": "https://www.helloasso.com/associations/bearsoft44/evenements/13-09-2026-le-marais-partie-ouverte",
+        "source_locator": "Site et billetterie officiels Bearsoft 44 — Le Marais"
+      },
+      "location": {
+        "location_label": "Le Marais",
+        "address": null,
+        "postal_code": "44115",
+        "city": "Basse-Goulaine",
+        "department_code": "44",
+        "location_precision": "city",
+        "geocode_query": "Basse-Goulaine, 44115"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-bearsoft-malabry-2026-09-26",
+      "title": "Partie ouverte Bearsoft 44 — Malabry — 26/09/2026",
+      "organizer": "Bearsoft 44",
+      "starts_at": "2026-09-26",
+      "source": {
+        "official_source_url": "https://bearsoft44.fr/",
+        "official_registration_url": "https://www.helloasso.com/associations/bearsoft44/evenements/26-09-2026-malabry-partie-ouverte",
+        "source_locator": "Site et billetterie officiels Bearsoft 44 — Malabry"
+      },
+      "location": {
+        "location_label": "Malabry",
+        "address": null,
+        "postal_code": "44350",
+        "city": "Guérande",
+        "department_code": "44",
+        "location_precision": "city",
+        "geocode_query": "Guérande, 44350"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "external_key": "primary-black-sheep-dominicale-2026-08-02",
+      "title": "Dominicale — Warhouse — 02/08/2026",
+      "organizer": "Black Sheep Airsoft",
+      "starts_at": "2026-08-02T07:00:00+02:00",
+      "source": {
+        "official_source_url": "https://www.helloasso.com/associations/black-sheep-airsoft/evenements/dominicale-2-aout",
+        "official_registration_url": "https://www.helloasso.com/associations/black-sheep-airsoft/evenements/dominicale-2-aout",
+        "source_locator": "Billetterie officielle Black Sheep Airsoft — lieu nommé Warhouse ; commune/CP recoupés avec une autre page officielle du même organisateur utilisant le même lieu, à garder comme point ville approximatif."
+      },
+      "location": {
+        "location_label": "Warhouse",
+        "address": null,
+        "postal_code": "16270",
+        "city": "Terres-de-Haute-Charente",
+        "department_code": "16",
+        "location_precision": "city",
+        "geocode_query": "Terres-de-Haute-Charente, 16270"
+      },
+      "research_status": "pending_official_source_audit",
+      "required_rules": [
+        {
+          "type": "assault",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "dmr",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "sniper",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "cqb",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "detonating_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "co2_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        },
+        {
+          "type": "smoke_grenades",
+          "state": "not_communicated",
+          "joules": null,
+          "details": "NC",
+          "evidence": null
+        }
+      ]
+    }
+  ]
+}

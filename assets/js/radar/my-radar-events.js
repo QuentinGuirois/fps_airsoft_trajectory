@@ -40,15 +40,30 @@ function value(form, name) {
 }
 
 export function collectOwnerPayload(form, currentEvent, ruleEditor) {
-  const rules = [...ruleEditor.querySelectorAll('[data-rule-type]')].map((row) => ({
-    type: row.dataset.ruleType,
-    state: row.querySelector('[data-rule-state]').value,
-    joules: row.querySelector('[data-rule-joules]').value || null,
-    details: row.querySelector('[data-rule-details]').value || null,
-  }));
-  const links = ['website', 'facebook', 'helloasso', 'discord', 'instagram']
+  const rules = [...ruleEditor.querySelectorAll('[data-rule-type]')].map((row) => {
+    const state = row.querySelector('[data-rule-state]').value;
+    const checkedAt = row.querySelector('[data-rule-evidence-checked-at]').value;
+    return {
+      type: row.dataset.ruleType,
+      state,
+      joules: state === 'not_communicated' ? null : (row.querySelector('[data-rule-joules]').value || null),
+      details: state === 'not_communicated' ? 'NC' : (row.querySelector('[data-rule-details]').value || null),
+      evidence: state === 'not_communicated' ? null : {
+        url: row.querySelector('[data-rule-evidence-url]').value.trim(),
+        locator: row.querySelector('[data-rule-evidence-locator]').value.trim(),
+        excerpt: row.querySelector('[data-rule-evidence-excerpt]').value.trim(),
+        scope: row.querySelector('[data-rule-evidence-scope]').value,
+        checkedAt: checkedAt ? new Date(checkedAt).toISOString() : '',
+      },
+    };
+  });
+  const officialLinks = (currentEvent.links || [])
+    .filter(({ type, url }) => ['organizer', 'registration'].includes(type) && url)
+    .map(({ type, url }) => ({ type, url }));
+  const communityLinks = ['website', 'facebook', 'helloasso', 'discord', 'instagram']
     .map((type) => ({ type, url: value(form, `link_${type}`).trim() }))
     .filter(({ url }) => url);
+  const links = [...officialLinks, ...communityLinks];
   const toilets = value(form, 'toiletsAvailable');
   const payload = {
     version: currentEvent.version,
@@ -111,8 +126,53 @@ function initializeRuleEditor(ruleEditor, documentRef) {
     details.maxLength = 240;
     details.placeholder = 'Détail facultatif';
     details.setAttribute('aria-label', `Détail ${type}`);
-    row.append(select, joules, details);
+    const evidence = element(documentRef, 'div', 'radar-rule-evidence-editor');
+    evidence.dataset.ruleEvidenceEditor = '';
+    const evidenceUrl = element(documentRef, 'input');
+    evidenceUrl.dataset.ruleEvidenceUrl = '';
+    evidenceUrl.type = 'url';
+    evidenceUrl.maxLength = 2048;
+    evidenceUrl.placeholder = 'URL HTTPS de la preuve officielle';
+    evidenceUrl.setAttribute('aria-label', `URL de preuve ${type}`);
+    const evidenceLocator = element(documentRef, 'input');
+    evidenceLocator.dataset.ruleEvidenceLocator = '';
+    evidenceLocator.maxLength = 500;
+    evidenceLocator.placeholder = 'Repère : section, page ou titre';
+    evidenceLocator.setAttribute('aria-label', `Repère de preuve ${type}`);
+    const evidenceExcerpt = element(documentRef, 'input');
+    evidenceExcerpt.dataset.ruleEvidenceExcerpt = '';
+    evidenceExcerpt.maxLength = 500;
+    evidenceExcerpt.placeholder = 'Résumé factuel court';
+    evidenceExcerpt.setAttribute('aria-label', `Résumé de preuve ${type}`);
+    const evidenceScope = element(documentRef, 'select');
+    evidenceScope.dataset.ruleEvidenceScope = '';
+    evidenceScope.setAttribute('aria-label', `Portée de preuve ${type}`);
+    for (const [scope, label] of [['event', 'Cette partie'], ['organizer_general', 'Règle générale organisateur']]) {
+      const option = element(documentRef, 'option', '', label);
+      option.value = scope;
+      evidenceScope.append(option);
+    }
+    const evidenceCheckedAt = element(documentRef, 'input');
+    evidenceCheckedAt.dataset.ruleEvidenceCheckedAt = '';
+    evidenceCheckedAt.type = 'datetime-local';
+    evidenceCheckedAt.setAttribute('aria-label', `Date de contrôle de preuve ${type}`);
+    evidence.append(evidenceUrl, evidenceLocator, evidenceExcerpt, evidenceScope, evidenceCheckedAt);
+    const toggleEvidence = () => {
+      const unknown = select.value === 'not_communicated';
+      evidence.hidden = unknown;
+      for (const field of evidence.querySelectorAll('input, select')) field.required = !unknown;
+    };
+    select.addEventListener('change', toggleEvidence);
+    row.append(select, joules, details, evidence);
+    toggleEvidence();
   }
+}
+
+function localDateTimeValue(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
 }
 
 function fill(form, event, ruleEditor) {
@@ -158,6 +218,15 @@ function fill(form, event, ruleEditor) {
     row.querySelector('[data-rule-state]').value = rule?.state || 'not_communicated';
     row.querySelector('[data-rule-joules]').value = rule?.joules ?? '';
     row.querySelector('[data-rule-details]').value = rule?.details || '';
+    row.querySelector('[data-rule-evidence-url]').value = rule?.evidence?.url || '';
+    row.querySelector('[data-rule-evidence-locator]').value = rule?.evidence?.locator || '';
+    row.querySelector('[data-rule-evidence-excerpt]').value = rule?.evidence?.excerpt || '';
+    row.querySelector('[data-rule-evidence-scope]').value = rule?.evidence?.scope || 'event';
+    row.querySelector('[data-rule-evidence-checked-at]').value = localDateTimeValue(rule?.evidence?.checkedAt);
+    const unknown = (rule?.state || 'not_communicated') === 'not_communicated';
+    const evidenceEditor = row.querySelector('[data-rule-evidence-editor]');
+    evidenceEditor.hidden = unknown;
+    for (const field of evidenceEditor.querySelectorAll('input, select')) field.required = !unknown;
   }
 }
 

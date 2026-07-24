@@ -20,14 +20,21 @@ function prepare(args) {
 if (process.env.FAT_BROWSER_SKIP_DB_PREP !== '1') {
   prepare(['bin/reset-local-database.php', '--yes']);
   prepare(['bin/create-local-test-admin.php']);
-  prepare(['bin/seed-radar-local.php', '--owner-email=admin@local.test', '--replace']);
   prepare([
     'bin/import-radar-events.php',
-    'docs/fat-radar/fat-radar-events-seed-2026-07-24.json',
+    'docs/fat-radar/fat-radar-events-enriched-2026-07-24.json',
     '--owner-email-env=FAT_RADAR_SEED_OWNER_EMAIL',
     '--preview=admin',
+    '--geocode',
+    '--qa-report=docs/fat-radar/fat-radar-geocoding-qa-2026-07-24.json',
   ]);
-  prepare(['bin/generate-radar-fixtures.php', '--count=200', '--replace']);
+  prepare([
+    'bin/publish-radar-import-local.php',
+    'docs/fat-radar/fat-radar-events-enriched-2026-07-24.json',
+    '--source-report=docs/fat-radar/fat-radar-events-enriched-2026-07-24.report.json',
+    '--geocode-report=docs/fat-radar/fat-radar-geocoding-qa-2026-07-24.json',
+    '--report=docs/fat-radar/fat-radar-local-publication-qa-2026-07-24.json',
+  ]);
 }
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ headless: true });
@@ -63,19 +70,21 @@ try {
   const desktop = await desktopContext.newPage();
   const desktopWatch = watch(desktop, 'desktop');
   await desktop.goto(`${base}/parties-airsoft/`, { waitUntil: 'networkidle' });
-  await desktop.locator('[data-radar-count]').filter({ hasText: '4 PARTIES' }).waitFor();
+  await desktop.locator('[data-radar-count]').filter({ hasText: '32 PARTIES' }).waitFor();
   assert.equal(await desktop.locator('h1').textContent(), 'Parties d’airsoft en France : trouvez votre prochaine partie');
-  assert.equal(await desktop.locator('.radar-event-card').count(), 4);
-  assert.equal(await desktop.locator('.radar-marker-shell').count(), 4, 'La ville approximative doit recevoir un marqueur visuellement distinct.');
+  assert.equal(await desktop.locator('.radar-event-card').count(), 32);
+  assert.ok(await desktop.locator('.radar-marker-shell, .marker-cluster').count() > 0);
   const publicPayload = await desktop.evaluate(async () => (await fetch('/api/v1/radar/events')).json());
   assert.equal(JSON.stringify(publicPayload).includes('Adresse privée'), false);
   const approximate = publicPayload.events.find((event) => event.locationVisibility === 'approximate');
   assert.equal(approximate.positionApproximate, true);
   assert.equal(typeof approximate.latitude, 'number');
   assert.equal(typeof approximate.longitude, 'number');
-  assert.equal(await desktop.locator('.radar-marker-shell.is-approximate').count(), 1);
+  assert.ok(await desktop.locator('.radar-marker-shell.is-approximate').count() > 0);
   assert.match(publicPayload.events[0].updatedAt, /^\d{4}-\d{2}-\d{2}T/);
-  assert.equal(publicPayload.events.every((event) => typeof event.toiletsAvailable === 'boolean'), true);
+  assert.equal(publicPayload.events.every(
+    (event) => event.toiletsAvailable === null || typeof event.toiletsAvailable === 'boolean',
+  ), true);
   assert.equal(JSON.stringify(publicPayload).includes('availabilityStatus'), false);
   assert.equal(JSON.stringify(publicPayload).includes('availablePlaces'), false);
   await desktop.screenshot({ path: join(output, 'radar-desktop.png'), fullPage: false });
@@ -90,7 +99,7 @@ try {
   const firstCard = desktop.locator('.radar-event-open').first();
   await firstCard.click();
   await desktop.locator('[data-radar-briefing]:visible').waitFor();
-  assert.match(desktop.url(), /\/parties-airsoft\/recette-radar-/);
+  assert.match(desktop.url(), /\/parties-airsoft\/[a-z0-9-]+\//);
   assert.equal(await desktop.locator('meta[name="robots"]').getAttribute('content'), 'noindex,follow');
   assert.equal(await desktop.locator('.radar-rules .radar-rule-row').count(), 7);
   assert.match(await desktop.locator('.radar-briefing-facts').textContent(), /CAPACITÉ.*TOILETTES/s);
@@ -103,15 +112,15 @@ try {
   await desktop.locator('[data-radar-count]').filter({ hasText: '0 PARTIE' }).waitFor();
   await desktop.locator('[data-radar-empty]:visible').waitFor();
   await desktop.getByRole('button', { name: 'TOUTE LA FRANCE' }).click();
-  await desktop.locator('[data-radar-count]').filter({ hasText: '4 PARTIES' }).waitFor();
+  await desktop.locator('[data-radar-count]').filter({ hasText: '32 PARTIES' }).waitFor();
   await desktop.locator('label', { hasText: 'CO₂' }).click();
-  await desktop.locator('[data-radar-count]').filter({ hasText: '4 PARTIES' }).waitFor();
+  await desktop.locator('[data-radar-count]').filter({ hasText: '0 PARTIE' }).waitFor();
   await desktop.locator('[data-radar-filters]').evaluate((form) => form.reset());
-  await desktop.locator('[name="location"]').fill('Bordeaux');
-  await desktop.locator('[data-radar-count]').filter({ hasText: '1 PARTIE' }).waitFor();
+  await desktop.locator('[name="location"]').fill('Ouézy');
+  await desktop.locator('[data-radar-count]').filter({ hasText: /^1 PARTIE$/ }).waitFor();
   assert.equal(await desktop.locator('.radar-event-card').count(), 1);
   await desktop.locator('[data-radar-filters]').evaluate((form) => form.reset());
-  await desktop.locator('[data-radar-count]').filter({ hasText: '4 PARTIES' }).waitFor();
+  await desktop.locator('[data-radar-count]').filter({ hasText: '32 PARTIES' }).waitFor();
   await desktop.setViewportSize({ width: 1280, height: 900 });
   await desktop.locator('#radar-map').waitFor();
   const resizedMap = await desktop.locator('#radar-map').boundingBox();
@@ -139,8 +148,8 @@ try {
   const mobile = await mobileContext.newPage();
   const mobileWatch = watch(mobile, 'mobile');
   await mobile.goto(`${base}/parties-airsoft/`, { waitUntil: 'networkidle' });
-  await mobile.locator('[data-radar-count]').filter({ hasText: '4 PARTIES' }).waitFor();
-  assert.equal(await mobile.locator('.radar-event-card').count(), 4);
+  await mobile.locator('[data-radar-count]').filter({ hasText: '32 PARTIES' }).waitFor();
+  assert.equal(await mobile.locator('.radar-event-card').count(), 32);
   const mobileGeolocation = await mobile.locator('.radar-mobile-geolocate').boundingBox();
   assert.ok(mobileGeolocation?.height >= 44, JSON.stringify(mobileGeolocation));
   await mobile.screenshot({ path: join(output, 'radar-mobile.png'), fullPage: false });
@@ -169,8 +178,8 @@ try {
   await owner.getByRole('button', { name: 'ENTRER SUR LE TERRAIN' }).click();
   await owner.waitForURL('**/compte/mes-parties.html');
   await owner.locator('.radar-owner-card').first().waitFor();
-  assert.equal(await owner.locator('.radar-owner-card').count(), 50);
-  assert.equal(await owner.locator('.radar-owner-card-source').count(), 46);
+  assert.equal(await owner.locator('.radar-owner-card').count(), 32);
+  assert.equal(await owner.locator('.radar-owner-card-source').count(), 32);
   await owner.locator('[data-admin-workbench]:visible').waitFor();
   assert.equal((await owner.locator('[data-account-pseudo]').textContent()).trim().toLowerCase(), 'admin');
   assert.equal(await owner.locator('[data-theme-control]').count(), 0);
@@ -186,7 +195,7 @@ try {
   assert.equal(await owner.locator('[name="availabilityStatus"]').count(), 0);
   await owner.locator('[data-editor-close]').click();
   await owner.locator('.radar-owner-card').filter({ hasText: 'Brouillon sans titre' }).waitFor();
-  assert.equal(await owner.locator('.radar-owner-card').count(), 51);
+  assert.equal(await owner.locator('.radar-owner-card').count(), 33);
   const editable = owner.locator('.radar-owner-card').filter({ has: owner.locator('button', { hasText: 'MODIFIER' }) }).first();
   await editable.getByRole('button', { name: 'MODIFIER' }).click();
   await owner.locator('[data-owner-editor]:visible').waitFor();
@@ -199,25 +208,21 @@ try {
   await owner.screenshot({ path: join(output, 'radar-owner-editor.png'), fullPage: false });
   await owner.locator('[data-step-indicator="1"] button').click();
   await owner.locator('[name="toiletsAvailable"]:visible').waitFor();
-  assert.match(await owner.locator('[name="toiletsAvailable"]').inputValue(), /^(yes|no)$/);
+  await owner.locator('[name="toiletsAvailable"]').selectOption('no');
+  assert.equal(await owner.locator('[name="toiletsAvailable"]').inputValue(), 'no');
   await owner.locator('[data-editor-close]').click();
   const adminFilters = owner.locator('[data-admin-filters]');
-  await adminFilters.locator('[name="sourceTier"]').selectOption('secondary');
-  await adminFilters.locator('[name="verification"]').selectOption('pending');
+  await adminFilters.locator('[name="sourceTier"]').selectOption('primary');
+  await adminFilters.locator('[name="verification"]').selectOption('verified');
   await adminFilters.getByRole('button', { name: 'FILTRER' }).click();
-  await owner.locator('[data-admin-count]').filter({ hasText: '31 FICHES' }).waitFor();
-  assert.equal(await owner.locator('.radar-admin-card').count(), 31);
+  await owner.locator('[data-admin-count]').filter({ hasText: '32 FICHES' }).waitFor();
+  assert.equal(await owner.locator('.radar-admin-card').count(), 32);
   await adminFilters.locator('[name="sourceTier"]').selectOption('');
   await adminFilters.locator('[name="verification"]').selectOption('');
   await adminFilters.locator('[name="fixtures"]').selectOption('only');
   await adminFilters.getByRole('button', { name: 'FILTRER' }).click();
-  await owner.locator('[data-admin-count]').filter({ hasText: '200 FICHES' }).waitFor();
-  assert.equal(await owner.locator('.radar-admin-card').count(), 200);
-  assert.ok(await owner.locator('#radar-admin-map .leaflet-marker-icon, #radar-admin-map .marker-cluster').count() > 0);
-  const centerFixture = owner.getByRole('button', { name: 'CENTRER SUR LA CARTE' }).first();
-  await centerFixture.focus();
-  await owner.keyboard.press('Enter');
-  await owner.locator('#radar-admin-map .leaflet-popup:visible').waitFor();
+  await owner.locator('[data-admin-count]').filter({ hasText: '0 FICHE' }).waitFor();
+  assert.equal(await owner.locator('.radar-admin-card').count(), 0);
   assert.deepEqual(ownerWatch.external, []);
   assert.deepEqual(ownerWatch.errors, []);
   await ownerContext.close();

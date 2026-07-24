@@ -15,27 +15,35 @@ test('le lot Radar est validé strictement sans donnée personnelle', () => {
   });
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.deepEqual(JSON.parse(result.stdout), {
-    events: 46,
-    primary: 15,
-    secondary: 31,
-    undisclosed: 1,
+    events: 40,
+    rules: 280,
+    known: 3,
+    dateOnly: 22,
   });
 });
 
 test('la migration ajoute provenance, revendication, visibilité et garde-fous', async () => {
-  const migration = await read('database', 'migrations', '006_radar_import_foundation.sql');
+  const [foundation, evidence] = await Promise.all([
+    read('database', 'migrations', '006_radar_import_foundation.sql'),
+    read('database', 'migrations', '007_radar_rule_evidence.sql'),
+  ]);
   for (const token of [
     'external_key', 'record_visibility', 'admin_preview_only', 'location_precision',
     'geocode_status', 'price_min_cents', 'price_max_cents', 'is_fixture',
     'radar_event_sources', 'source_fingerprint', 'radar_event_claims',
     'requires_pre_publication_check',
-  ]) assert.ok(migration.includes(token), token);
-  assert.match(migration, /DECIMAL\(9,6\)/);
-  assert.match(migration, /ADD COLUMN IF NOT EXISTS/);
-  assert.match(migration, /state <> 'published'[\s\S]*record_visibility = 'public'[\s\S]*is_fixture = 0/);
+  ]) assert.ok(foundation.includes(token), token);
+  assert.match(foundation, /DECIMAL\(9,6\)/);
+  assert.match(foundation, /ADD COLUMN IF NOT EXISTS/);
+  assert.match(foundation, /state <> 'published'[\s\S]*record_visibility = 'public'[\s\S]*is_fixture = 0/);
+  for (const token of [
+    'evidence_url', 'evidence_locator', 'evidence_excerpt', 'evidence_scope',
+    'evidence_checked_at', "'organizer'", "'registration'",
+  ]) assert.ok(evidence.includes(token), token);
+  assert.match(evidence, /not_communicated[\s\S]*joules IS NULL[\s\S]*details='NC'/);
 });
 
-test('l’importeur n’accepte que le preview admin et ne peut jamais publier', async () => {
+test('l’importeur synchronise règles et liens officiels en preview admin uniquement', async () => {
   const importer = await read('bin', 'import-radar-events.php');
   assert.match(importer, /--owner-email-env=FAT_RADAR_SEED_OWNER_EMAIL/);
   assert.match(importer, /\$result\['preview'\] !== 'admin'/);
@@ -43,8 +51,27 @@ test('l’importeur n’accepte que le preview admin et ne peut jamais publier',
   assert.match(importer, /requires_pre_publication_check=1/);
   assert.match(importer, /WHERE external_key=\?/);
   assert.match(importer, /if \(!\$options\['dryRun'\]\)/);
+  assert.match(importer, /evidence_url/);
+  assert.match(importer, /link_type IN \('organizer','registration'\)/);
+  assert.match(importer, /VALUES \(\?,\?,\?,\?,\?\)/);
   assert.doesNotMatch(importer, /--publish|auto.?publish/i);
   assert.doesNotMatch(importer, /FAT_RADAR_SEED_OWNER_EMAIL\s*=\s*[^.…'"\s]/);
+});
+
+test('l’enrichisseur reste officiel, mis en cache et sans contournement anti-bot', async () => {
+  const [enricher, publisher, report] = await Promise.all([
+    read('bin', 'enrich-radar-events.php'),
+    read('bin', 'publish-radar-import-local.php'),
+    read('docs', 'fat-radar', 'fat-radar-events-enriched-2026-07-24.report.md'),
+  ]);
+  assert.match(enricher, /--offline-cache=/);
+  assert.match(enricher, /User-Agent: F\.A\.T\.-Radar/);
+  assert.match(enricher, /count\(\$explicitJoules\) === 1/);
+  assert.match(enricher, /Aucun contournement ni déduction/);
+  assert.match(publisher, /APP_ENV/);
+  assert.match(publisher, /DELETE FROM radar_events/);
+  assert.match(report, /Sources officielles contrôlées/);
+  assert.match(report, /\| 404 \|/);
 });
 
 test('le public exclut previews et fixtures tandis que les écritures admin exigent session et CSRF', async () => {

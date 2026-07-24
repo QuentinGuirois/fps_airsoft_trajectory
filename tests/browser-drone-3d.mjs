@@ -192,7 +192,7 @@ if (replayStart !== 'playing') throw new Error(`Replay non lancé: ${replayStart
 
 await waitFor(`navigator.serviceWorker.controller !== null`);
 await wait(500);
-const cached = await evaluate(`Promise.all(${JSON.stringify(lazyPaths)}.map(async path=>Boolean(await (await caches.open('fat-v3-2026-07-24-48')).match(path.endsWith('three.core.min.js')?path:path+'?v=20260723-47'))))`, true);
+const cached = await evaluate(`Promise.all(${JSON.stringify(lazyPaths)}.map(async path=>Boolean(await (await caches.open('fat-v3-2026-07-24-49')).match(path.endsWith('three.core.min.js')?path:path+'?v=20260723-47'))))`, true);
 if (cached.some((value) => !value)) throw new Error(`Cache 3D incomplet: ${JSON.stringify(cached)}`);
 
 await evaluate(`document.querySelector('[data-view-mode="2d"]').click()`);

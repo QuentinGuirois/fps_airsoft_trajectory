@@ -70,7 +70,7 @@ try {
         . "NULL,NULL,NULL,NULL,?,?,?,?,UTC_TIMESTAMP(),?,?,?,UTC_TIMESTAMP(),?,?,?,?,?,0,1,'local-load-fixtures')"
     );
     $rule = $db->prepare(
-        "INSERT INTO radar_event_rules (event_id,rule_type,rule_state) VALUES (?,?,'not_communicated')"
+        "INSERT INTO radar_event_rules (event_id,rule_type,rule_state,details) VALUES (?,?,'not_communicated','NC')"
     );
     $base = new DateTimeImmutable('2026-08-01 07:00:00', new DateTimeZone('UTC'));
     for ($index = 1; $index <= $count; $index++) {
