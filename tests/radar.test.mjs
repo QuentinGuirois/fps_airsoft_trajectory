@@ -137,6 +137,8 @@ test('la carte tactile inline reste inerte et réserve les gestes directs au ple
   assert.match(map, /Maintenez Ctrl et utilisez la molette pour zoomer/);
   assert.match(map, /new windowRef\.ResizeObserver/);
   assert.match(map, /deltaY > 80/);
+  assert.match(map, /setTimeout\(\(\) => filterCloseButton\?\.focus\(\{ preventScroll: true \}\), 250\)/);
+  assert.match(map, /if \(state\.filterSheetOpen\)/);
 });
 
 test('la popup de lancement est versionnée, accessible et réservée à la racine du Radar', async () => {
@@ -233,11 +235,11 @@ test('le schéma et les routes couvrent cycle de vie, règles, signalement et mo
 
 test('le cache PWA inclut seulement le Radar public et contourne compte et API', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /fat-v3-2026-07-24-51/);
+  assert.match(worker, /fat-v3-2026-07-24-52/);
   for (const asset of [
     '/parties-airsoft/',
-    '/assets/radar.css?v=20260724-51',
-    '/assets/js/radar/radar-map.js?v=20260724-51',
+    '/assets/radar.css?v=20260724-52',
+    '/assets/js/radar/radar-map.js?v=20260724-52',
     '/data/radar-france-departments.geojson',
   ]) assert.ok(worker.includes(`'${asset}'`), asset);
   const optional = worker.match(/const OPTIONAL = \[([\s\S]*?)\n\];/)?.[1] || '';

@@ -275,11 +275,11 @@ try {
   });
   await offline.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
   await offline.waitForFunction(async () => {
-    const cache = await caches.open('fat-v3-2026-07-24-51');
+    const cache = await caches.open('fat-v3-2026-07-24-52');
     return Boolean(
       await cache.match('/parties-airsoft/')
-      && await cache.match('/assets/radar.css?v=20260724-51')
-      && await cache.match('/assets/js/radar/radar-map.js?v=20260724-51'),
+      && await cache.match('/assets/radar.css?v=20260724-52')
+      && await cache.match('/assets/js/radar/radar-map.js?v=20260724-52'),
     );
   });
   await offlineContext.setOffline(true);

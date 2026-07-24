@@ -56,7 +56,7 @@ test('l’enregistrement conserve une URL complète et les paramètres avancés'
 
 test('le cache PWA contient les modules 2D avec une nouvelle version', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /fat-v3-2026-07-24-51/);
+  assert.match(worker, /fat-v3-2026-07-24-52/);
   assert.match(worker, /'\/chart-data\.js\?v=20260723-47'/);
   assert.match(worker, /'\/app\.js\?v=20260723-47'/);
   assert.match(worker, /'\/assets\/site\.css\?v=20260723-47'/);

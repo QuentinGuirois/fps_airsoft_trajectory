@@ -512,7 +512,7 @@ export function initRadarMap({
     filterFocus = documentRef.activeElement;
     state.filterSheetOpen = true;
     syncFilterSheet();
-    filterCloseButton?.focus();
+    windowRef.setTimeout(() => filterCloseButton?.focus({ preventScroll: true }), 250);
   }
 
   function closeFilterSheet({ restoreFocus = true } = {}) {
@@ -672,7 +672,13 @@ export function initRadarMap({
   });
 
   documentRef.addEventListener('keydown', (event) => {
-    if (event.key !== 'Escape' || !state.fullscreen || !briefing.hidden) return;
+    if (event.key !== 'Escape') return;
+    if (state.filterSheetOpen) {
+      event.preventDefault();
+      closeFilterSheet();
+      return;
+    }
+    if (!state.fullscreen || !briefing.hidden) return;
     event.preventDefault();
     closeFullscreenMap();
   });
