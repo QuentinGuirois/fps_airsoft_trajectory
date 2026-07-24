@@ -187,6 +187,13 @@ function ownerCard(documentRef, event, handlers) {
     `${event.rules?.length || 0}/7 RÈGLES`,
     event.registrationUrl ? 'INSCRIPTION OK' : 'LIEN MANQUANT',
   ].join(' · '));
+  const provenance = event.source
+    ? element(documentRef, 'p', 'radar-owner-card-source', [
+      `SOURCE ${event.source.tier === 'primary' ? 'PRIMAIRE' : 'SECONDAIRE'}`,
+      event.requiresPrePublicationCheck ? 'CONTRÔLE REQUIS' : 'SOURCE VÉRIFIÉE',
+      event.locationPrecision === 'city' ? 'POSITION APPROXIMATIVE' : (event.locationPrecision || 'POSITION À QUALIFIER').toUpperCase(),
+    ].join(' · '))
+    : null;
   const actions = element(documentRef, 'div', 'radar-owner-card-actions');
   const duplicate = element(documentRef, 'button', 'button', 'DUPLIQUER');
   duplicate.type = 'button';
@@ -212,7 +219,9 @@ function ownerCard(documentRef, event, handlers) {
     remove.addEventListener('click', () => handlers.sensitive('delete', event));
     actions.append(remove);
   }
-  card.append(header, title, place, dates, progress, actions);
+  card.append(header, title, place, dates, progress);
+  if (provenance) card.append(provenance);
+  card.append(actions);
   return card;
 }
 
@@ -220,6 +229,7 @@ export function initMyRadarEvents({
   root,
   accountRepository,
   ownerRepository,
+  adminRepository,
   turnstileController,
   leaflet = globalThis.L,
   fetchImpl = globalThis.fetch,
@@ -252,6 +262,9 @@ export function initMyRadarEvents({
     saveQueued: false,
     geocodeController: null,
     pendingAction: null,
+    adminEvents: [],
+    adminMap: null,
+    adminClusters: null,
   };
   initializeRuleEditor(ruleEditor, documentRef);
 
@@ -367,7 +380,14 @@ export function initMyRadarEvents({
       element(documentRef, 'dt', '', label),
       element(documentRef, 'dd', '', text),
     );
-    const warning = element(documentRef, 'p', 'radar-owner-preview-note', 'Relisez le briefing public. La publication devient visible immédiatement si le contrôle serveur réussit.');
+    const warning = element(
+      documentRef,
+      'p',
+      'radar-owner-preview-note',
+      state.current.requiresPrePublicationCheck
+        ? 'Ce brouillon importé reste privé. Un administrateur doit confirmer la source, la date, le lieu et les règles avant toute publication.'
+        : 'Relisez le briefing public. La publication devient visible immédiatement si le contrôle serveur réussit.',
+    );
     preview.append(title, facts, warning);
   }
 
@@ -376,6 +396,8 @@ export function initMyRadarEvents({
     fill(form, state.current, ruleEditor);
     root.querySelector('[data-editor-title]').textContent = event.title;
     autosaveStatus.textContent = `Version ${event.version} · ${event.state === 'draft' ? 'brouillon' : 'publiée'}.`;
+    const publishButton = root.querySelector('[data-owner-publish]');
+    publishButton.hidden = Boolean(event.requiresPrePublicationCheck || event.recordVisibility === 'admin_preview_only' || event.isFixture);
     initializeMap();
     updateMarker({ center: true });
     setStep(0);
@@ -503,6 +525,151 @@ export function initMyRadarEvents({
     }
   }
 
+  function initializeAdminMap() {
+    if (state.adminMap || !leaflet || !root.querySelector('[data-admin-workbench]')) return;
+    state.adminMap = leaflet.map('radar-admin-map', {
+      center: [46.6, 2.4],
+      zoom: 5,
+      minZoom: 5,
+      maxZoom: 17,
+      attributionControl: true,
+    });
+    state.adminMap.attributionControl.setPrefix(false);
+    state.adminMap.attributionControl.addAttribution('Limites © IGN ADMIN EXPRESS COG CARTO PE 2026');
+    const boundary = leaflet.geoJSON(null, {
+      interactive: false,
+      style: { color: '#4a5537', weight: 1, fillColor: '#11170d', fillOpacity: .94 },
+    }).addTo(state.adminMap);
+    fetchImpl('/data/radar-france-departments.geojson', { credentials: 'same-origin' })
+      .then((response) => response.json())
+      .then((geojson) => boundary.addData(geojson))
+      .catch(() => {});
+    state.adminClusters = typeof leaflet.markerClusterGroup === 'function'
+      ? leaflet.markerClusterGroup({ maxClusterRadius: 48, showCoverageOnHover: false })
+      : leaflet.layerGroup();
+    state.adminClusters.addTo(state.adminMap);
+  }
+
+  function renderAdminEvents() {
+    const list = root.querySelector('[data-admin-list]');
+    const counter = root.querySelector('[data-admin-count]');
+    list.replaceChildren();
+    counter.textContent = `${state.adminEvents.length} FICHE${state.adminEvents.length > 1 ? 'S' : ''}`;
+    state.adminClusters?.clearLayers();
+    const bounds = [];
+    for (const radarEvent of state.adminEvents) {
+      const card = element(documentRef, 'article', 'radar-admin-card');
+      const header = element(documentRef, 'header');
+      header.append(
+        element(documentRef, 'span', 'radar-owner-state', ownerStateLabel(radarEvent)),
+        element(documentRef, 'small', '', `V${radarEvent.version}`),
+      );
+      const title = element(documentRef, 'h3', '', radarEvent.title);
+      const facts = element(documentRef, 'p', '', [
+        radarEvent.source?.tier ? `Source ${radarEvent.source.tier}` : 'Sans source importée',
+        radarEvent.requiresPrePublicationCheck ? 'À vérifier' : 'Vérifié',
+        radarEvent.geocodeStatus || 'Géocodage inconnu',
+        radarEvent.locationPrecision === 'city' ? 'Position approximative' : radarEvent.locationPrecision,
+      ].filter(Boolean).join(' · '));
+      const location = element(documentRef, 'p', '', [
+        radarEvent.locationLabel || radarEvent.city || 'Lieu non communiqué',
+        formatDate(radarEvent.startsAt),
+      ].join(' · '));
+      const actions = element(documentRef, 'div', 'radar-owner-card-actions');
+      if (radarEvent.source?.url) {
+        const source = element(documentRef, 'a', 'button', 'VÉRIFIER LA SOURCE');
+        source.href = radarEvent.source.url;
+        source.target = '_blank';
+        source.rel = 'noopener noreferrer';
+        actions.append(source);
+      }
+      if (radarEvent.state === 'draft' && radarEvent.requiresPrePublicationCheck && !radarEvent.isFixture) {
+        const review = element(documentRef, 'button', 'button', 'CONFIRMER LES 4 CONTRÔLES');
+        review.type = 'button';
+        review.addEventListener('click', async () => {
+          if (!windowRef.confirm('Confirmer la source, la date, le lieu et les règles de cette fiche ?')) return;
+          review.disabled = true;
+          try {
+            await adminRepository.review(radarEvent.id, radarEvent.version);
+            await loadAdminEvents();
+          } catch (error) {
+            root.querySelector('[data-admin-status]').textContent = error.message;
+          } finally {
+            review.disabled = false;
+          }
+        });
+        actions.append(review);
+      } else if (radarEvent.state === 'draft' && !radarEvent.isFixture) {
+        const publish = element(documentRef, 'button', 'button button-primary', 'PUBLIER');
+        publish.type = 'button';
+        publish.addEventListener('click', async () => {
+          const confirmation = windowRef.prompt('Dernier contrôle effectué. Saisis PUBLIER pour rendre cette fiche publique.');
+          if (confirmation !== 'PUBLIER') return;
+          publish.disabled = true;
+          try {
+            await adminRepository.publish(radarEvent.id, radarEvent.version, confirmation);
+            await Promise.all([loadAdminEvents(), loadEvents()]);
+          } catch (error) {
+            root.querySelector('[data-admin-status]').textContent = error.message;
+          } finally {
+            publish.disabled = false;
+          }
+        });
+        actions.append(publish);
+      }
+      card.append(header, title, facts, location, actions);
+
+      if (radarEvent.latitude != null && radarEvent.longitude != null && state.adminClusters) {
+        const coordinate = [Number(radarEvent.latitude), Number(radarEvent.longitude)];
+        const marker = leaflet.marker(coordinate, {
+          title: radarEvent.locationPrecision === 'city'
+            ? `${radarEvent.title} — position approximative`
+            : radarEvent.title,
+          keyboard: true,
+        });
+        const popup = element(documentRef, 'div', 'radar-admin-popup');
+        popup.append(
+          element(documentRef, 'strong', '', radarEvent.title),
+          element(
+            documentRef,
+            'p',
+            '',
+            radarEvent.locationPrecision === 'city' ? 'Position approximative à l’échelle de la ville.' : (radarEvent.locationLabel || ''),
+          ),
+        );
+        marker.bindPopup(popup);
+        state.adminClusters.addLayer(marker);
+        bounds.push(coordinate);
+        const center = element(documentRef, 'button', 'button', 'CENTRER SUR LA CARTE');
+        center.type = 'button';
+        center.addEventListener('click', () => {
+          state.adminMap.setView(coordinate, 12);
+          windowRef.setTimeout(() => marker.openPopup(), 120);
+        });
+        actions.append(center);
+      }
+      list.append(card);
+    }
+    if (bounds.length) state.adminMap?.fitBounds(bounds, { padding: [24, 24], maxZoom: 10 });
+    windowRef.setTimeout(() => state.adminMap?.invalidateSize({ pan: false }), 20);
+  }
+
+  async function loadAdminEvents() {
+    if (state.session?.user?.role !== 'admin' || !adminRepository) return;
+    const form = root.querySelector('[data-admin-filters]');
+    const filters = Object.fromEntries(new FormData(form).entries());
+    filters.limit = 500;
+    root.querySelector('[data-admin-status]').textContent = 'Chargement de la prévisualisation privée…';
+    try {
+      const payload = await adminRepository.list(filters);
+      state.adminEvents = payload.events || [];
+      renderAdminEvents();
+      root.querySelector('[data-admin-status]').textContent = `${state.adminEvents.length} fiche${state.adminEvents.length > 1 ? 's' : ''} chargée${state.adminEvents.length > 1 ? 's' : ''}.`;
+    } catch (error) {
+      root.querySelector('[data-admin-status]').textContent = error.message;
+    }
+  }
+
   async function initialize() {
     try {
       const session = await accountRepository.getSession();
@@ -516,6 +683,11 @@ export function initMyRadarEvents({
       ownerRepository.client.setCsrfToken(session.csrfToken);
       root.querySelector('[data-account-pseudo]').textContent = session.user.pseudo;
       await loadEvents();
+      if (session.user.role === 'admin' && adminRepository) {
+        root.querySelector('[data-admin-workbench]').hidden = false;
+        initializeAdminMap();
+        await loadAdminEvents();
+      }
       if (new URLSearchParams(windowRef.location.search).get('action') === 'create') {
         root.querySelector('[data-owner-create]').click();
       }
@@ -533,6 +705,10 @@ export function initMyRadarEvents({
     } catch (error) {
       announce(error.message, 'error');
     }
+  });
+  root.querySelector('[data-admin-filters]')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    loadAdminEvents();
   });
   root.querySelector('[data-editor-close]').addEventListener('click', closeEditor);
   root.querySelector('[data-step-previous]').addEventListener('click', () => setStep(state.step - 1));
@@ -641,5 +817,5 @@ export function initMyRadarEvents({
   });
 
   initialize();
-  return { state, loadEvents, saveNow, setStep, showEditor, closeEditor };
+  return { state, loadEvents, loadAdminEvents, saveNow, setStep, showEditor, closeEditor };
 }

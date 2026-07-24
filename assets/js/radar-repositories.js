@@ -75,6 +75,40 @@ export class RadarOwnerRepository {
   }
 }
 
+export class RadarAdminRepository {
+  constructor({ client = new HttpApiClient() } = {}) {
+    this.client = client;
+  }
+
+  list(filters = {}, { signal } = {}) {
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(filters)) {
+      if (value !== '' && value != null) query.set(key, String(value));
+    }
+    return this.client.request(`/admin/radar-events?${query}`, { signal });
+  }
+
+  review(id, version, { signal } = {}) {
+    return this.client.request(`/admin/radar-events/${encodeURIComponent(id)}/review`, {
+      method: 'POST',
+      body: {
+        version,
+        confirmSource: true,
+        confirmDate: true,
+        confirmLocation: true,
+        confirmRules: true,
+      },
+      signal,
+    });
+  }
+
+  publish(id, version, confirmation, { signal } = {}) {
+    return this.client.request(`/admin/radar-events/${encodeURIComponent(id)}/publish`, {
+      method: 'POST', body: { version, confirmation }, signal,
+    });
+  }
+}
+
 export function createRadarRepositories(options = {}) {
   const client = new HttpApiClient(options);
   return {
@@ -82,5 +116,6 @@ export function createRadarRepositories(options = {}) {
     accountRepository: new HttpAccountRepository({ client }),
     publicRepository: new RadarPublicRepository({ client }),
     ownerRepository: new RadarOwnerRepository({ client }),
+    adminRepository: new RadarAdminRepository({ client }),
   };
 }

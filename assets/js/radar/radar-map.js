@@ -138,7 +138,7 @@ function nextWeekday(from, weekday) {
 }
 
 function locationText(event) {
-  if (event.locationVisibility === 'approximate') {
+  if (event.positionApproximate || event.locationVisibility === 'approximate') {
     return `${event.locationLabel || event.city || 'Commune non précisée'} · position approximative`;
   }
   return event.locationLabel || [event.city, event.departmentCode].filter(Boolean).join(' · ') || 'Lieu communiqué';
@@ -148,14 +148,24 @@ function plural(count) {
   return `${count} PARTIE${count > 1 ? 'S' : ''}`;
 }
 
-function markerIcon(L) {
+function markerIcon(L, event) {
   return L.divIcon({
-    className: 'radar-marker-shell',
+    className: `radar-marker-shell${event.positionApproximate ? ' is-approximate' : ''}`,
     html: '<span class="radar-pin" aria-hidden="true"><i></i></span>',
     iconSize: [44, 50],
     iconAnchor: [22, 48],
     tooltipAnchor: [0, -34],
   });
+}
+
+function priceText(event, empty = 'Non communiqué') {
+  const minimum = event.priceMinCents ?? event.priceCents;
+  const maximum = event.priceMaxCents ?? event.priceCents;
+  if (minimum == null && maximum == null) return empty;
+  if (minimum === maximum) return Number(minimum) === 0 ? 'Gratuit' : PRICE.format(Number(minimum) / 100);
+  if (minimum == null) return `Jusqu’à ${PRICE.format(Number(maximum) / 100)}`;
+  if (maximum == null) return `À partir de ${PRICE.format(Number(minimum) / 100)}`;
+  return `${PRICE.format(Number(minimum) / 100)} – ${PRICE.format(Number(maximum) / 100)}`;
 }
 
 function hoverCard(documentRef, event) {
@@ -194,7 +204,7 @@ function briefingContent(documentRef, event, handlers) {
   title.id = 'radar-briefing-title';
   const pills = element(documentRef, 'div', 'radar-briefing-pills');
   if (event.beginnersWelcome) pills.append(element(documentRef, 'span', '', 'DÉBUTANTS BIENVENUS'));
-  if (event.locationVisibility === 'approximate') pills.append(element(documentRef, 'span', '', 'POSITION APPROXIMATIVE'));
+  if (event.positionApproximate || event.locationVisibility === 'approximate') pills.append(element(documentRef, 'span', '', 'POSITION APPROXIMATIVE'));
 
   const facts = element(documentRef, 'dl', 'radar-briefing-facts');
   const factsData = [
@@ -203,7 +213,7 @@ function briefingContent(documentRef, event, handlers) {
     ['LIEU', locationText(event)],
     ['SECTEUR', [event.department, event.region].filter(Boolean).join(' · ') || 'Non communiqué'],
     ['CAPACITÉ', event.maxCapacity == null ? 'Non communiquée' : `${event.maxCapacity} joueurs maximum`],
-    ['TARIF', event.priceCents == null ? 'Non communiqué' : PRICE.format(event.priceCents / 100)],
+    ['TARIF', priceText(event)],
     ['NIVEAU', event.level || 'Non communiqué'],
     ['ÂGE', event.minimumAge == null ? 'Non communiqué' : `${event.minimumAge} ans minimum`],
     ['LOCATION', event.rentalDetails || 'Non communiquée'],
@@ -226,7 +236,7 @@ function briefingContent(documentRef, event, handlers) {
   if (event.state !== 'cancelled' && event.registrationUrl) {
     actions.append(link(documentRef, event.registrationUrl, 'S’INSCRIRE ↗', 'button button-primary'));
   }
-  if (isWgs84(event.latitude, event.longitude)) {
+  if (isWgs84(event.latitude, event.longitude) && !event.positionApproximate) {
     const destination = `${event.latitude},${event.longitude}`;
     actions.append(link(
       documentRef,
@@ -244,7 +254,7 @@ function briefingContent(documentRef, event, handlers) {
   for (const item of event.links || []) {
     community.append(link(documentRef, item.url, item.type.toUpperCase()));
   }
-  const organizer = element(documentRef, 'p', 'radar-organizer', `ORGANISATEUR // ${event.organizer?.pseudo || 'Compte F.A.T.'}`);
+  const organizer = element(documentRef, 'p', 'radar-organizer', `ORGANISATEUR // ${event.organizerName || event.organizer?.pseudo || 'Compte F.A.T.'}`);
   const privacy = element(documentRef, 'p', 'radar-privacy-note', 'Aucune adresse email de l’organisateur n’est affichée. Vérifiez les informations sur le lien d’inscription.');
   const report = element(documentRef, 'button', 'radar-report-button', 'SIGNALER UNE INFORMATION INCORRECTE');
   report.type = 'button';
@@ -266,7 +276,7 @@ function listCard(documentRef, event, onSelect) {
   const place = element(documentRef, 'span', 'radar-event-location', locationText(event));
   const meta = element(documentRef, 'span', 'radar-event-meta', [
     event.maxCapacity == null ? '' : `${event.maxCapacity} joueurs max.`,
-    event.priceCents == null ? '' : PRICE.format(event.priceCents / 100),
+    priceText(event, ''),
     event.beginnersWelcome ? 'Débutants' : '',
   ].filter(Boolean).join(' · '));
   button.append(heading, place, meta);
@@ -443,7 +453,7 @@ export function initRadarMap({
     for (const event of state.filtered) {
       list.append(listCard(documentRef, event, openBriefing));
       const latLng = toLeafletLatLng(event);
-      if (!latLng || event.locationVisibility !== 'exact') continue;
+      if (!latLng) continue;
       const marker = leaflet.marker(latLng, {
         icon: markerIcon(leaflet, event),
         title: `${event.title} — ${locationText(event)}`,

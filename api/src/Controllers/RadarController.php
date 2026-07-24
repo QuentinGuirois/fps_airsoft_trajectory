@@ -122,7 +122,8 @@ final class RadarController
                 'UPDATE radar_events SET slug=?,title=?,venue_name=?,short_description=?,starts_at_utc=?,ends_at_utc=?,'
                 . 'scenario=?,level_label=?,beginners_welcome=?,max_capacity=?,price_cents=?,minimum_age=?,'
                 . 'rental_details=?,catering_details=?,toilets_available=?,latitude=?,longitude=?,location_method=?,'
-                . 'location_confirmed_at=?,location_visibility=?,exact_address=?,public_location_label=?,city=?,postal_code=?,'
+                . 'location_confirmed_at=?,location_visibility=?,location_precision=?,geocode_status=?,geocode_checked_at=?,'
+                . 'exact_address=?,public_location_label=?,city=?,postal_code=?,'
                 . 'department_code=?,department=?,region=?,registration_url=?,contact_email_ciphertext=?,version=version+1 '
                 . 'WHERE id=? AND user_id=? AND version=?'
             );
@@ -133,6 +134,7 @@ final class RadarController
                 $values['toiletsAvailable'] === null ? null : ($values['toiletsAvailable'] ? 1 : 0),
                 $values['latitude'], $values['longitude'],
                 $values['locationMethod'], $values['locationConfirmedAt'], $values['locationVisibility'],
+                $values['locationPrecision'], $values['geocodeStatus'], $values['geocodeCheckedAt'],
                 $values['exactAddress'], $values['publicLocationLabel'], $values['city'], $values['postalCode'],
                 $values['departmentCode'], $values['department'], $values['region'], $values['registrationUrl'],
                 $values['contactEmailCiphertext'], $params['id'], $session['id'], $version,
@@ -170,11 +172,24 @@ final class RadarController
         if ($row['state'] !== 'draft') {
             throw new HttpException(409, 'radar_publish_conflict', 'Seul un brouillon peut être publié.');
         }
+        if (
+            (int) $row['is_fixture'] === 1
+            || (int) $row['requires_pre_publication_check'] === 1
+            || $row['record_visibility'] === 'admin_preview_only'
+        ) {
+            throw new HttpException(
+                403,
+                'radar_admin_review_required',
+                'Cette fiche importée doit être recontrôlée puis publiée depuis les outils d’administration.',
+            );
+        }
         $values = $this->mergedValues($row, []);
         $rules = $this->rules($params['id']);
         $this->assertPublishable($values, $rules);
         $statement = $this->db->prepare(
-            "UPDATE radar_events SET state='published',published_at=UTC_TIMESTAMP(),expires_at=ends_at_utc,version=version+1 "
+            "UPDATE radar_events SET state='published',record_visibility='public',"
+            . "location_precision=COALESCE(location_precision,IF(location_visibility='exact','street','locality')),"
+            . "published_at=UTC_TIMESTAMP(),expires_at=ends_at_utc,version=version+1 "
             . "WHERE id=? AND user_id=? AND version=? AND state='draft'"
         );
         $statement->execute([$params['id'], $session['id'], Validator::version($body['version'])]);
@@ -329,17 +344,25 @@ final class RadarController
         $longitude = $current['longitude'] === null ? null : (float) $current['longitude'];
         $method = $current['location_method'];
         $confirmedAt = $current['location_confirmed_at'];
-        if (array_key_exists('latitude', $body) || array_key_exists('longitude', $body)) {
+        $locationPrecision = $current['location_precision'];
+        $geocodeStatus = $current['geocode_status'];
+        $geocodeCheckedAt = $current['geocode_checked_at'];
+        $coordinatesChanged = array_key_exists('latitude', $body) || array_key_exists('longitude', $body);
+        if ($coordinatesChanged) {
             $rawLat = $body['latitude'] ?? $latitude;
             $rawLon = $body['longitude'] ?? $longitude;
             if ($rawLat === null && $rawLon === null) {
                 $latitude = $longitude = $method = $confirmedAt = null;
+                $geocodeStatus = $locationPrecision === 'undisclosed' ? 'needs_review' : 'not_requested';
+                $geocodeCheckedAt = null;
             } else {
                 [$latitude, $longitude] = RadarValidator::coordinates($rawLat, $rawLon);
                 $method = array_key_exists('locationMethod', $body)
                     ? RadarValidator::enum($body['locationMethod'], 'La méthode de localisation', ['geocoded','manual'])
                     : ($method ?? 'manual');
                 $confirmedAt = null;
+                $geocodeStatus = 'needs_review';
+                $geocodeCheckedAt = null;
             }
         } elseif (array_key_exists('locationMethod', $body)) {
             if ($latitude === null) {
@@ -353,6 +376,18 @@ final class RadarController
                 throw new HttpException(422, 'validation', 'Place et confirme le point sur la carte.');
             }
             $confirmedAt = $confirmed ? gmdate('Y-m-d H:i:s') : null;
+            if ($confirmed) {
+                $geocodeStatus = 'validated';
+                $geocodeCheckedAt = $confirmedAt;
+            } elseif ($latitude !== null && $longitude !== null) {
+                $geocodeStatus = 'needs_review';
+            }
+        }
+        $locationVisibility = array_key_exists('locationVisibility', $body)
+            ? RadarValidator::enum($body['locationVisibility'], 'La précision publique', ['exact','approximate'])
+            : $current['location_visibility'];
+        if ($locationPrecision === null && $latitude !== null && $longitude !== null) {
+            $locationPrecision = $locationVisibility === 'exact' ? 'street' : 'locality';
         }
 
         $emailCiphertext = $current['contact_email_ciphertext'];
@@ -386,9 +421,10 @@ final class RadarController
             'longitude' => $longitude,
             'locationMethod' => $method,
             'locationConfirmedAt' => $confirmedAt,
-            'locationVisibility' => array_key_exists('locationVisibility', $body)
-                ? RadarValidator::enum($body['locationVisibility'], 'La précision publique', ['exact','approximate'])
-                : $current['location_visibility'],
+            'locationVisibility' => $locationVisibility,
+            'locationPrecision' => $locationPrecision,
+            'geocodeStatus' => $geocodeStatus,
+            'geocodeCheckedAt' => $geocodeCheckedAt,
             'exactAddress' => $this->text($body, 'exactAddress', $current['exact_address'], 'L’adresse exacte', 255),
             'publicLocationLabel' => $this->text($body, 'publicLocationLabel', $current['public_location_label'], 'Le lieu public', 160),
             'city' => $this->text($body, 'city', $current['city'], 'La commune', 120),
@@ -499,7 +535,12 @@ final class RadarController
             'slug' => $row['slug'],
             'state' => $row['state'],
             'moderationState' => $row['moderation_state'],
+            'recordVisibility' => $row['record_visibility'],
             'title' => $row['title'],
+            'organizerName' => $row['organizer_name'],
+            'organizerType' => $row['organizer_type'],
+            'eventType' => $row['event_type'],
+            'terrainType' => $row['terrain_type'],
             'venueName' => $row['venue_name'],
             'description' => $row['short_description'],
             'startLocal' => $this->local((string) ($row['starts_at_utc'] ?? '')),
@@ -509,6 +550,8 @@ final class RadarController
             'beginnersWelcome' => (bool) $row['beginners_welcome'],
             'maxCapacity' => $row['max_capacity'] === null ? null : (int) $row['max_capacity'],
             'priceCents' => $row['price_cents'] === null ? null : (int) $row['price_cents'],
+            'priceMinCents' => $row['price_min_cents'] === null ? null : (int) $row['price_min_cents'],
+            'priceMaxCents' => $row['price_max_cents'] === null ? null : (int) $row['price_max_cents'],
             'minimumAge' => $row['minimum_age'] === null ? null : (int) $row['minimum_age'],
             'rentalDetails' => $row['rental_details'],
             'cateringDetails' => $row['catering_details'],
@@ -518,6 +561,8 @@ final class RadarController
             'locationMethod' => $row['location_method'],
             'locationConfirmed' => $row['location_confirmed_at'] !== null,
             'locationVisibility' => $row['location_visibility'],
+            'locationPrecision' => $row['location_precision'],
+            'geocodeStatus' => $row['geocode_status'],
             'exactAddress' => $row['exact_address'],
             'publicLocationLabel' => $row['public_location_label'],
             'city' => $row['city'],
@@ -526,6 +571,10 @@ final class RadarController
             'department' => $row['department'],
             'region' => $row['region'],
             'registrationUrl' => $row['registration_url'],
+            'source' => $this->source((string) $row['id']),
+            'requiresPrePublicationCheck' => (bool) $row['requires_pre_publication_check'],
+            'lastSourceVerifiedAt' => $row['last_source_verified_at'],
+            'isFixture' => (bool) $row['is_fixture'],
             'contactEmailConfigured' => $row['contact_email_ciphertext'] !== null,
             'rules' => $this->rules((string) $row['id']),
             'links' => $this->links((string) $row['id']),
@@ -546,6 +595,27 @@ final class RadarController
         return (new DateTimeImmutable($utc, new DateTimeZone('UTC')))
             ->setTimezone(new DateTimeZone('Europe/Paris'))
             ->format('Y-m-d\TH:i');
+    }
+
+    /** @return array<string,mixed>|null */
+    private function source(string $eventId): ?array
+    {
+        $statement = $this->db->prepare(
+            'SELECT source_tier,source_url,source_locator,last_verified_at,requires_pre_publication_check '
+            . 'FROM radar_event_sources WHERE event_id=? ORDER BY updated_at DESC,id DESC LIMIT 1'
+        );
+        $statement->execute([$eventId]);
+        $row = $statement->fetch();
+        if (!$row) {
+            return null;
+        }
+        return [
+            'tier' => $row['source_tier'],
+            'url' => $row['source_url'],
+            'locator' => $row['source_locator'],
+            'lastVerifiedAt' => $row['last_verified_at'],
+            'requiresPrePublicationCheck' => (bool) $row['requires_pre_publication_check'],
+        ];
     }
 
     private function slug(string $title, string $id): string

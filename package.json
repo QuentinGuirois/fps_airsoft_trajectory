@@ -16,6 +16,7 @@
     "test:browser:radar": "node tests/run-browser-radar.mjs",
     "test:api": "node tests/api.integration.mjs",
     "test:radar-api": "node tests/radar-api.integration.mjs",
+    "test:radar-import": "node tests/radar-import.integration.mjs",
     "test:background-removal": "python tests/test_background_removal.py",
     "lighthouse:mobile": "lhci autorun --config=./lighthouserc-mobile.cjs",
     "lighthouse:desktop": "lhci autorun --config=./lighthouserc-desktop.cjs",

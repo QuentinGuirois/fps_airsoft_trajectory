@@ -35,7 +35,13 @@ final class PublicRadarController
             'from','to','city','department','region','beginner','rental','rules',
             'bbox','latitude','longitude','radiusKm','limit',
         ]);
-        $where = ["r.state='published'", "r.moderation_state='visible'", 'r.ends_at_utc>UTC_TIMESTAMP()'];
+        $where = [
+            "r.state='published'",
+            "r.record_visibility='public'",
+            'r.is_fixture=0',
+            "r.moderation_state='visible'",
+            'r.ends_at_utc>UTC_TIMESTAMP()',
+        ];
         $parameters = [];
         if (($query['from'] ?? '') !== '') {
             $where[] = 'r.starts_at_utc>=?';
@@ -80,7 +86,7 @@ final class PublicRadarController
             if ($west >= $east || $south >= $north || $south < -90 || $north > 90 || $west < -180 || $east > 180) {
                 throw new HttpException(422, 'validation', 'La zone de carte est invalide.');
             }
-            $where[] = "r.location_visibility='exact' AND r.longitude BETWEEN ? AND ? AND r.latitude BETWEEN ? AND ?";
+            $where[] = "r.location_precision<>'undisclosed' AND r.longitude BETWEEN ? AND ? AND r.latitude BETWEEN ? AND ?";
             array_push($parameters, $west, $east, $south, $north);
         }
         $limit = isset($query['limit'])
@@ -117,7 +123,8 @@ final class PublicRadarController
     {
         $statement = $this->db->prepare(
             "SELECT r.*,u.pseudo AS owner_pseudo FROM radar_events r JOIN users u ON u.id=r.user_id "
-            . "WHERE r.slug=? AND r.state IN ('published','cancelled') AND r.moderation_state='visible' LIMIT 1"
+            . "WHERE r.slug=? AND r.state IN ('published','cancelled') AND r.record_visibility='public' "
+            . "AND r.is_fixture=0 AND r.moderation_state='visible' LIMIT 1"
         );
         $statement->execute([$params['slug']]);
         $row = $statement->fetch();
@@ -142,7 +149,8 @@ final class PublicRadarController
         $reason = RadarValidator::enum($body['reason'], 'Le motif de signalement', self::REPORT_REASONS);
         $message = RadarValidator::optionalText($body['message'] ?? null, 'Le détail du signalement', 1000);
         $event = $this->db->prepare(
-            "SELECT id FROM radar_events WHERE slug=? AND state IN ('published','cancelled') AND moderation_state='visible' LIMIT 1"
+            "SELECT id FROM radar_events WHERE slug=? AND state IN ('published','cancelled') "
+            . "AND record_visibility='public' AND is_fixture=0 AND moderation_state='visible' LIMIT 1"
         );
         $event->execute([$params['slug']]);
         $eventId = $event->fetchColumn();
@@ -164,12 +172,21 @@ final class PublicRadarController
     /** @param array<string,mixed> $row @return array<string,mixed> */
     private function present(array $row): array
     {
-        $exact = $row['location_visibility'] === 'exact';
+        $hasPublicPin = (
+                $row['location_visibility'] === 'exact'
+                || $row['location_precision'] === 'city'
+            )
+            && $row['location_precision'] !== 'undisclosed'
+            && $row['latitude'] !== null
+            && $row['longitude'] !== null;
         return [
             'id' => $row['slug'],
             'slug' => $row['slug'],
             'state' => $row['state'],
             'title' => $row['title'],
+            'organizerName' => $row['organizer_name'],
+            'eventType' => $row['event_type'],
+            'terrainType' => $row['terrain_type'],
             'venueName' => $row['venue_name'],
             'description' => $row['short_description'],
             'startsAt' => $this->atom($row['starts_at_utc']),
@@ -181,13 +198,17 @@ final class PublicRadarController
             'beginnersWelcome' => (bool) $row['beginners_welcome'],
             'maxCapacity' => $row['max_capacity'] === null ? null : (int) $row['max_capacity'],
             'priceCents' => $row['price_cents'] === null ? null : (int) $row['price_cents'],
+            'priceMinCents' => $row['price_min_cents'] === null ? null : (int) $row['price_min_cents'],
+            'priceMaxCents' => $row['price_max_cents'] === null ? null : (int) $row['price_max_cents'],
             'minimumAge' => $row['minimum_age'] === null ? null : (int) $row['minimum_age'],
             'rentalDetails' => $row['rental_details'],
             'cateringDetails' => $row['catering_details'],
             'toiletsAvailable' => $row['toilets_available'] === null ? null : (bool) $row['toilets_available'],
             'locationVisibility' => $row['location_visibility'],
-            'latitude' => $exact && $row['latitude'] !== null ? (float) $row['latitude'] : null,
-            'longitude' => $exact && $row['longitude'] !== null ? (float) $row['longitude'] : null,
+            'locationPrecision' => $row['location_precision'],
+            'positionApproximate' => $row['location_precision'] === 'city',
+            'latitude' => $hasPublicPin ? (float) $row['latitude'] : null,
+            'longitude' => $hasPublicPin ? (float) $row['longitude'] : null,
             'locationLabel' => $row['public_location_label'],
             'city' => $row['city'],
             'postalCode' => $row['postal_code'],

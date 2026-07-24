@@ -10,7 +10,7 @@ use PDO;
 
 final class GeocodingService
 {
-    private const OFFICIAL_URL = 'https://data.geopf.fr/geocodage/search';
+    private const OFFICIAL_URL = 'https://data.geopf.fr/geocodage/search/';
 
     /** @var \Closure(string,int):array{status:int,body:string} */
     private readonly \Closure $transport;
@@ -25,14 +25,14 @@ final class GeocodingService
     }
 
     /** @return list<array<string,mixed>> */
-    public function search(string $rawQuery): array
+    public function search(string $rawQuery, bool $writeCache = true): array
     {
         $query = Support::normalizeText($rawQuery);
         if (mb_strlen($query) < 4 || mb_strlen($query) > 120 || preg_match('/[\x00-\x1F\x7F<>]/u', $query)) {
             throw new HttpException(422, 'validation', 'Saisis au moins quatre caractères pour rechercher un lieu.');
         }
         $endpoint = $this->config->get('RADAR_GEOCODER_URL', self::OFFICIAL_URL);
-        if ($this->config->isProduction() && !hash_equals(self::OFFICIAL_URL, $endpoint)) {
+        if ($this->config->isProduction() && !hash_equals(rtrim(self::OFFICIAL_URL, '/'), rtrim($endpoint, '/'))) {
             throw new \RuntimeException('URL de géocodage IGN non officielle en production.');
         }
         $cacheKey = hash('sha256', mb_strtolower($query) . "\0" . $endpoint, true);
@@ -69,8 +69,42 @@ final class GeocodingService
             throw new HttpException(503, 'geocoder_unavailable', 'La recherche IGN a renvoyé une réponse invalide.');
         }
         $suggestions = $this->normalize($decoded);
-        $this->store($cacheKey, $suggestions);
+        if ($writeCache) {
+            $this->store($cacheKey, $suggestions);
+        }
         return $suggestions;
+    }
+
+    /**
+     * Retient une seule réponse concordant strictement avec la commune et, lorsqu'ils
+     * sont fournis, le code postal et le département attendus.
+     *
+     * @param list<array<string,mixed>> $suggestions
+     * @return array{status:string,suggestion:?array<string,mixed>}
+     */
+    public function matchExpected(array $suggestions, string $city, ?string $postalCode, ?string $departmentCode): array
+    {
+        $expectedCity = $this->placeKey($city);
+        $matches = [];
+        foreach ($suggestions as $suggestion) {
+            if (
+                $this->placeKey((string) ($suggestion['city'] ?? '')) !== $expectedCity
+                || ($postalCode !== null && (string) ($suggestion['postalCode'] ?? '') !== $postalCode)
+                || ($departmentCode !== null && strtoupper((string) ($suggestion['departmentCode'] ?? '')) !== strtoupper($departmentCode))
+            ) {
+                continue;
+            }
+            $coordinateKey = sprintf(
+                '%.6F,%.6F',
+                (float) ($suggestion['latitude'] ?? 999),
+                (float) ($suggestion['longitude'] ?? 999),
+            );
+            $matches[$coordinateKey] = $suggestion;
+        }
+        if (count($matches) !== 1) {
+            return ['status' => 'needs_review', 'suggestion' => null];
+        }
+        return ['status' => 'validated', 'suggestion' => array_values($matches)[0]];
     }
 
     /** @return list<array<string,mixed>>|null */
@@ -125,8 +159,8 @@ final class GeocodingService
             $context = array_map('trim', explode(',', (string) ($properties['context'] ?? '')));
             $suggestions[] = [
                 'label' => mb_substr(Support::normalizeText($properties['label'] ?? ''), 0, 255),
-                'latitude' => round((float) $latitude, 7),
-                'longitude' => round((float) $longitude, 7),
+                'latitude' => round((float) $latitude, 6),
+                'longitude' => round((float) $longitude, 6),
                 'city' => mb_substr(Support::normalizeText($properties['city'] ?? $properties['municipality'] ?? ''), 0, 120),
                 'postalCode' => mb_substr((string) ($properties['postcode'] ?? ''), 0, 10),
                 'departmentCode' => mb_substr((string) ($properties['depcode'] ?? ''), 0, 3),
@@ -153,5 +187,13 @@ final class GeocodingService
             throw new \RuntimeException('Service IGN indisponible.');
         }
         return ['status' => (int) $matches[1], 'body' => $body];
+    }
+
+    private function placeKey(string $value): string
+    {
+        $value = mb_strtolower(Support::normalizeText($value));
+        $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+        $value = is_string($ascii) ? $ascii : $value;
+        return preg_replace('/[^a-z0-9]+/', '', $value) ?? $value;
     }
 }

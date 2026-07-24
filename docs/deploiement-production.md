@@ -173,10 +173,12 @@ PHP et Python` et `API et MariaDB` obligatoires.
 
 Le Radar requiert PHP 8.3, MariaDB, `pdo_mysql`, `mbstring`, `openssl` et
 `json`. Avant le premier déploiement qui contient
-`database/migrations/005_radar.sql`, ajouter au fichier privé `fat.env` :
+`database/migrations/005_radar.sql`, puis la fondation d’import
+`database/migrations/006_radar_import_foundation.sql`, ajouter au fichier privé
+`fat.env` :
 
 ```text
-RADAR_GEOCODER_URL=https://data.geopf.fr/geocodage/search
+RADAR_GEOCODER_URL=https://data.geopf.fr/geocodage/search/
 RADAR_GEOCODER_TIMEOUT_SECONDS=4
 RADAR_GEOCODER_CACHE_TTL_SECONDS=604800
 RADAR_DELETED_RETENTION_DAYS=30
@@ -201,8 +203,9 @@ purge les caches/données selon les durées configurées.
 La route Apache `/parties-airsoft/<slug>/` doit servir
 `parties-airsoft/index.html` avec `X-Robots-Tag: noindex, follow`. Tester aussi
 que `/api/` et `/compte/` ne rejoignent jamais le cache PWA. La recette
-détaillée, l’attribution IGN et la procédure locale figurent dans
-`docs/radar.md`.
+détaillée et l’attribution IGN figurent dans `docs/radar.md`. La migration 006,
+le dry-run d’import et le retour arrière vérifiable sont documentés dans
+`docs/radar-import.md`. Aucun import réel ne fait partie du déploiement.
 
 1. Laisser `DEPLOY_LIVE_ENABLED=false`.
 2. Lancer **Actions → Tests et release production → Run workflow → dry-run**.

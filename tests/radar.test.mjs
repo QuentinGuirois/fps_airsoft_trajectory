@@ -88,16 +88,20 @@ test('la carte administrative locale contient les 96 départements métropolitai
   assert.ok((await stat(path)).size < 150_000);
 });
 
-test('le public ne reçoit jamais adresse exacte, email chiffré ou faux point approximatif', async () => {
+test('le public ne reçoit jamais adresse exacte, email chiffré, brouillon ou fixture', async () => {
   const controller = await read('api', 'src', 'Controllers', 'PublicRadarController.php');
-  assert.match(controller, /\$exact = \$row\['location_visibility'\] === 'exact'/);
-  assert.match(controller, /'latitude' => \$exact/);
-  assert.match(controller, /'longitude' => \$exact/);
+  assert.match(controller, /\$hasPublicPin = \(/);
+  assert.match(controller, /\$row\['location_precision'\] === 'city'/);
+  assert.match(controller, /\$row\['location_precision'\] !== 'undisclosed'/);
+  assert.match(controller, /'latitude' => \$hasPublicPin/);
+  assert.match(controller, /'longitude' => \$hasPublicPin/);
+  assert.match(controller, /"r\.record_visibility='public'"/);
+  assert.match(controller, /r\.is_fixture=0/);
   assert.match(controller, /'updatedAt' => \$this->atom\(\$row\['updated_at'\]\)/);
   assert.match(controller, /'toiletsAvailable' =>/);
   assert.doesNotMatch(controller, /exact_address\s*=>|contact_email_ciphertext\s*=>/);
   assert.doesNotMatch(controller, /availablePlaces|availabilityStatus/);
-  assert.match(controller, /state='published'.*moderation_state='visible'.*ends_at_utc>UTC_TIMESTAMP\(\)/s);
+  assert.match(controller, /state='published'.*record_visibility='public'.*is_fixture=0.*moderation_state='visible'.*ends_at_utc>UTC_TIMESTAMP\(\)/s);
 });
 
 test('le schéma et les routes couvrent cycle de vie, règles, signalement et modération', async () => {
@@ -120,11 +124,11 @@ test('le schéma et les routes couvrent cycle de vie, règles, signalement et mo
 
 test('le cache PWA inclut seulement le Radar public et contourne compte et API', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /fat-v3-2026-07-23-47/);
+  assert.match(worker, /fat-v3-2026-07-24-48/);
   for (const asset of [
     '/parties-airsoft/',
-    '/assets/radar.css?v=20260723-47',
-    '/assets/js/radar/radar-map.js?v=20260723-47',
+    '/assets/radar.css?v=20260724-48',
+    '/assets/js/radar/radar-map.js?v=20260724-48',
     '/data/radar-france-departments.geojson',
   ]) assert.ok(worker.includes(`'${asset}'`), asset);
   const optional = worker.match(/const OPTIONAL = \[([\s\S]*?)\n\];/)?.[1] || '';

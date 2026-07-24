@@ -26,6 +26,7 @@ const env = {
   TURNSTILE_EXPECTED_HOSTNAME: '127.0.0.1',
   TURNSTILE_SITEVERIFY_URL: `${VERIFY_ORIGIN}/siteverify`,
   RADAR_GEOCODER_URL: `${VERIFY_ORIGIN}/geocode`,
+  FAT_RADAR_SEED_OWNER_EMAIL: 'radar-admin@example.test',
 };
 
 function command(executable, args) {
@@ -36,6 +37,12 @@ function command(executable, args) {
 
 command(PHP, ['bin/reset-local-database.php', '--yes']);
 const identities = JSON.parse(command(PHP, ['tests/radar-api-fixture.php']));
+command(PHP, [
+  'bin/import-radar-events.php',
+  'docs/fat-radar/fat-radar-events-seed-2026-07-24.json',
+  '--owner-email-env=FAT_RADAR_SEED_OWNER_EMAIL',
+  '--preview=admin',
+]);
 
 let tokenSequence = 0;
 const token = (action) => `radar-test-${action}-${++tokenSequence}`;
@@ -131,6 +138,43 @@ try {
   await waitForServer();
   const empty = await api('/radar/events', { publicCache: true });
   assert.deepEqual(empty.events, []);
+  await api('/admin/radar-events?sourceTier=secondary&verification=pending&state=draft', {
+    identity: identities.owner,
+    expected: 403,
+  });
+  const imported = await api('/admin/radar-events?sourceTier=primary&verification=pending&state=draft&limit=100', {
+    identity: identities.admin,
+  });
+  assert.equal(imported.events.length, 15);
+  assert.equal(imported.events.every((event) => event.recordVisibility === 'admin_preview_only'), true);
+  assert.equal(JSON.stringify(imported).includes('@'), false);
+  const importedEvent = imported.events[0];
+  const reviewBody = {
+    version: importedEvent.version,
+    confirmSource: true,
+    confirmDate: true,
+    confirmLocation: true,
+    confirmRules: true,
+  };
+  await api(`/admin/radar-events/${importedEvent.id}/review`, {
+    method: 'POST',
+    body: reviewBody,
+    identity: { ...identities.admin, csrf: '' },
+    expected: 403,
+  });
+  const reviewed = await api(`/admin/radar-events/${importedEvent.id}/review`, {
+    method: 'POST',
+    body: reviewBody,
+    identity: identities.admin,
+  });
+  assert.equal(reviewed.verified, true);
+  await api(`/admin/radar-events/${importedEvent.id}/publish`, {
+    method: 'POST',
+    body: { version: reviewed.version, confirmation: 'PUBLIER' },
+    identity: identities.admin,
+    expected: 422,
+  });
+  assert.equal((await api('/radar/events', { publicCache: true })).count, 0);
 
   const created = await api('/me/radar-events', {
     method: 'POST', body: {}, identity: identities.owner, expected: 201,

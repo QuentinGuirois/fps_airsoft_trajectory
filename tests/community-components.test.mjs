@@ -224,8 +224,8 @@ test('l’administration publiée est visible uniquement aux admins et archive s
 
 test('le service worker précache les surfaces publiques et contourne les API ainsi que les comptes', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /const CACHE = 'fat-v3-2026-07-23-47'/);
-  for (const path of ['/tu-joues-avec-quoi/', '/parties-airsoft/', '/assets/site.css?v=20260723-47', '/assets/radar.css?v=20260723-47', '/assets/js/replica-card.js?v=20260723-47', '/assets/js/community-repositories.js?v=20260723-47', '/assets/js/community-gallery.js?v=20260723-47', '/assets/js/turnstile-client.js?v=20260723-47']) {
+  assert.match(worker, /const CACHE = 'fat-v3-2026-07-24-48'/);
+  for (const path of ['/tu-joues-avec-quoi/', '/parties-airsoft/', '/assets/site.css?v=20260723-47', '/assets/radar.css?v=20260724-48', '/assets/js/replica-card.js?v=20260723-47', '/assets/js/community-repositories.js?v=20260723-47', '/assets/js/community-gallery.js?v=20260723-47', '/assets/js/turnstile-client.js?v=20260723-47']) {
     assert.ok(worker.includes(`'${path}'`), path);
   }
   assert.match(worker, /url\.pathname\.startsWith\('\/api\/'\)[\s\S]*event\.respondWith\(fetch\(event\.request\)\);[\s\S]*return;/);

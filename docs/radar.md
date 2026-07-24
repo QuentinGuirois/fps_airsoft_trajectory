@@ -54,11 +54,17 @@ La migration additive `database/migrations/005_radar.sql` crée :
 - `radar_event_reports` : signalements pseudonymisés par HMAC ;
 - `radar_geocoding_cache` : cache serveur temporaire de l’IGN.
 
+La migration `database/migrations/006_radar_import_foundation.sql` ajoute la
+provenance, la clé externe idempotente, les prix min/max, la visibilité
+`admin_preview_only`, la précision de localisation, les contrôles avant
+publication, les fixtures privées et le squelette de revendication. La
+procédure complète est décrite dans `docs/radar-import.md`.
+
 Les événements utilisent des UUID. Les mutations propriétaire et modérateur
 combinent ownership SQL, cookie HttpOnly, Origin strict, CSRF, quotas et version
-optimiste. Il n’existe aucune publication manuelle par un administrateur :
-un brouillon complet devient public automatiquement après validation serveur et
-Turnstile.
+optimiste. Un brouillon créé normalement par son propriétaire peut être publié
+après validation serveur et Turnstile. Un brouillon importé ne suit jamais ce
+chemin : il exige une relecture puis une publication administrateur explicite.
 
 Cycle de vie :
 
@@ -73,6 +79,8 @@ publique de liste exige toujours :
 
 ```sql
 state = 'published'
+AND record_visibility = 'public'
+AND is_fixture = 0
 AND moderation_state = 'visible'
 AND ends_at_utc > UTC_TIMESTAMP()
 ```
@@ -87,12 +95,14 @@ serveur exige une latitude et une longitude WGS84 valides, dans cet ordre dans
 les objets applicatifs ; Leaflet reçoit explicitement `[latitude, longitude]`.
 Tout déplacement invalide la confirmation et demande une nouvelle validation.
 
-Deux modes publics existent :
+Quatre précisions de lieu existent :
 
-- `exact` : le point confirmé est envoyé à la carte ;
-- `approximate` : l’API envoie `latitude: null` et `longitude: null`, conserve
-  l’adresse et le point côté privé et affiche seulement le libellé public/la
-  commune. Aucun point fictif n’est dessiné.
+- `street` et `locality` : le point validé est exact ;
+- `city` : le centre validé est envoyé avec le badge et le marqueur visuel
+  « position approximative », jamais comme une adresse de terrain ;
+- `undisclosed` : aucune coordonnée et aucun marqueur public ;
+- l’ancien mode propriétaire `approximate` conserve ses coordonnées côté privé
+  lorsqu’il ne correspond pas à une précision `city`.
 
 L’adresse exacte ne figure jamais dans les contrôleurs publics. L’email de
 contact optionnel est chiffré en AES-256-GCM avec une clé dérivée de `APP_KEY`.
@@ -118,7 +128,7 @@ Le navigateur ne contacte pas directement l’IGN. L’API privée
 URL actuelle :
 
 ```text
-https://data.geopf.fr/geocodage/search
+https://data.geopf.fr/geocodage/search/
 ```
 
 Documentation officielle :
@@ -177,6 +187,9 @@ Routes propriétaire :
 
 Routes administrateur :
 
+- `GET /api/v1/admin/radar-events`
+- `POST /api/v1/admin/radar-events/{id}/review`
+- `POST /api/v1/admin/radar-events/{id}/publish`
 - `GET /api/v1/admin/radar-reports`
 - `POST /api/v1/admin/radar-events/{id}/hide`
 - `POST /api/v1/admin/radar-events/{id}/restore`
@@ -265,6 +278,7 @@ Tours, Bordeaux, Strasbourg et Haute-Savoie.
 FAT_TEST_PHP=/chemin/php-8.3 npm test
 FAT_TEST_PHP=/chemin/php-8.3 npm run test:api
 FAT_TEST_PHP=/chemin/php-8.3 npm run test:radar-api
+FAT_TEST_PHP=/chemin/php-8.3 npm run test:radar-import
 npm run test:browser:radar
 npm audit
 ```

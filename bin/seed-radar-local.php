@@ -45,13 +45,15 @@ $fixtures = [
 ];
 
 $insert = $db->prepare(
-    "INSERT INTO radar_events (id,user_id,slug,state,title,venue_name,short_description,starts_at_utc,"
+    "INSERT INTO radar_events (id,user_id,slug,state,record_visibility,title,venue_name,short_description,starts_at_utc,"
     . "ends_at_utc,scenario,level_label,beginners_welcome,max_capacity,price_cents,minimum_age,"
     . "rental_details,catering_details,toilets_available,latitude,longitude,location_method,location_confirmed_at,location_visibility,"
-    . "exact_address,public_location_label,city,postal_code,department_code,department,region,registration_url,"
-    . "published_at,expires_at) VALUES (:id,:user_id,:slug,'published',:title,:venue,:description,:starts_at,"
+    . "location_precision,geocode_status,geocode_checked_at,exact_address,public_location_label,city,postal_code,"
+    . "department_code,department,region,registration_url,published_at,expires_at) "
+    . "VALUES (:id,:user_id,:slug,'published','public',:title,:venue,:description,:starts_at,"
     . ":ends_at,:scenario,:level,1,80,2500,16,'Répliques AEG disponibles sur réservation','Repas tiré du sac',:toilets,"
-    . ":latitude,:longitude,'geocoded',UTC_TIMESTAMP(),:visibility,:exact_address,:public_label,:city,:postal_code,"
+    . ":latitude,:longitude,'geocoded',UTC_TIMESTAMP(),:visibility,:precision,'validated',UTC_TIMESTAMP(),"
+    . ":exact_address,:public_label,:city,:postal_code,"
     . ":department_code,:department,:region,'https://example.org/inscription-radar',UTC_TIMESTAMP(),:expires_at)"
 );
 $ruleInsert = $db->prepare(
@@ -83,6 +85,7 @@ try {
             'latitude' => $latitude,
             'longitude' => $longitude,
             'visibility' => $visibility,
+            'precision' => $visibility === 'approximate' ? 'city' : 'street',
             'exact_address' => "Adresse privée de recette {$name}",
             'public_label' => $visibility === 'approximate' ? "Commune d’{$city}" : $venue,
             'city' => $city,

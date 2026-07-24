@@ -10,8 +10,10 @@
   <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
   <script src="/theme-bootstrap.js?v=20260723-47" data-cfasync="false"></script>
   <link rel="stylesheet" href="/assets/site.css?v=20260723-47">
-  <link rel="stylesheet" href="/assets/radar.css?v=20260723-47">
+  <link rel="stylesheet" href="/assets/radar.css?v=20260724-48">
   <link rel="stylesheet" href="/assets/vendor/leaflet-1.9.4/leaflet.css?v=1.9.4">
+  <link rel="stylesheet" href="/assets/vendor/leaflet.markercluster-1.5.3/MarkerCluster.css?v=1.5.3">
+  <link rel="stylesheet" href="/assets/vendor/leaflet.markercluster-1.5.3/MarkerCluster.Default.css?v=1.5.3">
 </head>
 <body class="armory-page radar-owner-page">
   <a class="skip-link" href="#mes-parties">Aller à mes parties</a>
@@ -49,9 +51,26 @@
           <a class="button button-primary armory-login-link" href="/compte/?return=%2Fcompte%2Fmes-parties.html" data-owner-login hidden>SE CONNECTER →</a>
           <section class="radar-owner-grid" data-owner-grid aria-label="Mes parties"></section>
           <aside class="radar-owner-notice">
-            <strong>PUBLICATION AUTOMATIQUE APRÈS VALIDATION</strong>
-            <p>F.A.T. ne crée aucune fausse partie et ne corrige pas silencieusement vos règles. Confirmez la position, la capacité, les services et le lien d’inscription avant publication.</p>
+            <strong>PUBLICATION CONTRÔLÉE</strong>
+            <p>F.A.T. ne crée aucune fausse partie et ne corrige pas silencieusement vos règles. Les brouillons importés exigent une relecture administrative explicite avant publication.</p>
           </aside>
+          <section class="radar-admin-workbench" data-admin-workbench hidden aria-labelledby="radar-admin-title">
+            <header>
+              <div><p class="eyebrow">MODÉRATION GLOBALE</p><h2 id="radar-admin-title">Prévisualisation administrateur</h2></div>
+              <strong data-admin-count>0 FICHE</strong>
+            </header>
+            <form class="radar-admin-filters" data-admin-filters>
+              <label>SOURCE<select name="sourceTier"><option value="">Toutes</option><option value="primary">Primaire</option><option value="secondary">Secondaire</option></select></label>
+              <label>CONTRÔLE<select name="verification"><option value="">Tous</option><option value="pending">À vérifier</option><option value="verified">Vérifié</option></select></label>
+              <label>GÉOCODAGE<select name="geocodeStatus"><option value="">Tous</option><option value="not_requested">Non demandé</option><option value="validated">Validé</option><option value="needs_review">À revoir</option></select></label>
+              <label>STATUT<select name="state"><option value="">Tous</option><option value="draft">Brouillon</option><option value="published">Publié</option><option value="cancelled">Annulé</option><option value="expired">Expiré</option></select></label>
+              <label>DONNÉES<select name="fixtures"><option value="exclude">Événements</option><option value="only">Fixtures privées</option><option value="include">Tout</option></select></label>
+              <button class="button" type="submit">FILTRER</button>
+            </form>
+            <p class="radar-admin-status" data-admin-status role="status" aria-live="polite"></p>
+            <div class="radar-admin-map" id="radar-admin-map" role="application" aria-label="Carte privée des brouillons et fixtures"></div>
+            <div class="radar-admin-list" data-admin-list></div>
+          </section>
         </section>
 
         <section class="radar-owner-editor" data-owner-editor hidden aria-labelledby="owner-editor-title">
@@ -62,7 +81,7 @@
 
           <ol class="radar-stepper" data-stepper aria-label="Étapes de publication">
             <li data-step-indicator="0"><button type="button">01 <span>Infos</span></button></li>
-            <li data-step-indicator="1"><button type="button">02 <span>Places</span></button></li>
+            <li data-step-indicator="1"><button type="button">02 <span>Services</span></button></li>
             <li data-step-indicator="2"><button type="button">03 <span>Règles</span></button></li>
             <li data-step-indicator="3"><button type="button">04 <span>Liens</span></button></li>
             <li data-step-indicator="4"><button type="button">05 <span>Aperçu</span></button></li>
@@ -184,6 +203,7 @@
     </dialog>
   </div>
   <script src="/assets/vendor/leaflet-1.9.4/leaflet.js?v=1.9.4" data-cfasync="false"></script>
-  <script type="module" data-cfasync="false" src="/assets/js/radar/mes-parties-entry.js?v=20260723-47"></script>
+  <script src="/assets/vendor/leaflet.markercluster-1.5.3/leaflet.markercluster.js?v=1.5.3" data-cfasync="false"></script>
+  <script type="module" data-cfasync="false" src="/assets/js/radar/mes-parties-entry.js?v=20260724-48"></script>
 </body>
 </html>
