@@ -48,12 +48,17 @@ const browser = await chromium.launch({ headless: true });
 function watch(page, label) {
   const errors = [];
   const external = [];
+  const basemap = [];
   page.on('console', (message) => {
     if (message.type() === 'error') errors.push(`${label} console: ${message.text()}`);
   });
   page.on('pageerror', (error) => errors.push(`${label} page: ${error.message}`));
   page.on('request', (request) => {
     const url = new URL(request.url());
+    if (url.hostname === 'data.geopf.fr') {
+      basemap.push(url.href);
+      return;
+    }
     if (
       url.origin !== base
       && !url.href.startsWith('data:')
@@ -62,9 +67,12 @@ function watch(page, label) {
     ) external.push(url.href);
   });
   page.on('response', (response) => {
-    if (response.status() >= 400) errors.push(`${label} HTTP ${response.status()}: ${response.url()}`);
+    const url = new URL(response.url());
+    if (response.status() >= 400 && url.hostname !== 'data.geopf.fr') {
+      errors.push(`${label} HTTP ${response.status()}: ${response.url()}`);
+    }
   });
-  return { errors, external };
+  return { errors, external, basemap };
 }
 
 try {
@@ -98,7 +106,9 @@ try {
   assert.equal(await desktop.locator('.radar-event-card').count(), expectedEventCount);
   assert.ok(await desktop.locator('.radar-marker-shell, .marker-cluster').count() > 0);
   assert.equal(await desktop.locator('.radar-city-marker').count(), 11);
-  assert.equal(await desktop.locator('.radar-city-marker:visible').count(), 11);
+  await desktop.locator('[data-radar-app].has-live-basemap').waitFor();
+  assert.ok(desktopWatch.basemap.length > 0);
+  assert.equal(await desktop.locator('.radar-city-marker:visible').count(), 0);
   assert.equal(await desktop.locator('.radar-city-marker[aria-hidden="true"]').count(), 11);
   assert.equal(await desktop.locator('.radar-city-marker[tabindex="-1"]').count(), 11);
   await desktop.locator('.leaflet-control-zoom-in').evaluate((node) => node.click());
@@ -108,7 +118,7 @@ try {
   assert.equal(await desktop.locator('.radar-city-marker:visible').count(), 0);
   await desktop.locator('.leaflet-control-zoom-out').evaluate((node) => node.click());
   await desktop.locator('[data-radar-app][data-cities-visible="true"]').waitFor();
-  assert.equal(await desktop.locator('.radar-city-marker:visible').count(), 11);
+  assert.equal(await desktop.locator('.radar-city-marker:visible').count(), 0);
   const publicPayload = await desktop.evaluate(async () => (await fetch('/api/v1/radar/events')).json());
   assert.equal(JSON.stringify(publicPayload).includes('Adresse privée'), false);
   const approximate = publicPayload.events.find((event) => event.locationVisibility === 'approximate');
@@ -275,17 +285,20 @@ try {
   });
   await offline.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
   await offline.waitForFunction(async () => {
-    const cache = await caches.open('fat-v3-2026-07-24-52');
+    const cache = await caches.open('fat-v3-2026-07-24-53');
     return Boolean(
       await cache.match('/parties-airsoft/')
-      && await cache.match('/assets/radar.css?v=20260724-52')
-      && await cache.match('/assets/js/radar/radar-map.js?v=20260724-52'),
+      && await cache.match('/assets/radar.css?v=20260724-53')
+      && await cache.match('/assets/js/radar/radar-map.js?v=20260724-53'),
     );
   });
   await offlineContext.setOffline(true);
   await offline.goto(`${base}/parties-airsoft/`, { waitUntil: 'domcontentloaded' });
   await offline.locator('h1').filter({ hasText: 'Parties d’airsoft en France' }).waitFor();
   assert.equal(await offline.evaluate(() => navigator.serviceWorker.controller !== null), true);
+  assert.equal(await offline.locator('[data-radar-app].has-live-basemap').count(), 0);
+  await offline.locator('.radar-city-marker').first().waitFor();
+  assert.equal(await offline.locator('.radar-city-marker:visible').count(), 11);
   await offlineContext.setOffline(false);
   await offlineContext.close();
 
@@ -383,6 +396,60 @@ try {
   await mobile.setViewportSize({ width: 430, height: 932 });
   assert.equal(await mobile.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   await mobile.screenshot({ path: join(output, 'radar-mobile-430.png'), fullPage: false });
+  for (const [width, height] of [[320, 568], [360, 640], [375, 667]]) {
+    await mobile.setViewportSize({ width, height });
+    await mobile.evaluate(() => window.scrollTo(0, 0));
+    await mobile.waitForTimeout(250);
+    const tiny = await mobile.locator('[data-radar-app]').evaluate((app) => {
+      const stage = app.querySelector('.radar-map-stage').getBoundingClientRect();
+      const hero = document.querySelector('.radar-hero').getBoundingClientRect();
+      const header = document.querySelector('.site-header').getBoundingClientRect();
+      return {
+        viewport: [innerWidth, innerHeight],
+        pageWidth: document.documentElement.scrollWidth,
+        headerHeight: header.height,
+        heroHeight: hero.height,
+        mapTop: stage.top,
+        mapHeight: stage.height,
+      };
+    });
+    assert.deepEqual(tiny.viewport, [width, height]);
+    assert.ok(tiny.pageWidth <= width, JSON.stringify(tiny));
+    assert.ok(tiny.headerHeight <= 60, JSON.stringify(tiny));
+    assert.ok(tiny.heroHeight <= height * .5, JSON.stringify(tiny));
+    assert.ok(tiny.mapTop < height - 64, JSON.stringify(tiny));
+    assert.ok(tiny.mapHeight >= 216 && tiny.mapHeight <= height * .46 + 1, JSON.stringify(tiny));
+    await mobile.screenshot({ path: join(output, `radar-mobile-${width}x${height}.png`), fullPage: false });
+  }
+  await mobile.setViewportSize({ width: 320, height: 568 });
+  await mobile.locator('[data-radar-filter-open]').click();
+  const tinySheet = await mobile.locator('[data-radar-filters]').evaluate((sheet) => ({
+    height: sheet.getBoundingClientRect().height,
+    closeHeight: sheet.querySelector('[data-radar-filter-close]').getBoundingClientRect().height,
+  }));
+  assert.ok(tinySheet.height <= 568 && tinySheet.closeHeight >= 44, JSON.stringify(tinySheet));
+  await mobile.locator('[data-radar-filter-close]').click();
+  await mobile.locator('[data-radar-fullscreen-open]').click();
+  const tinyFullscreen = await mobile.locator('.radar-map-stage.is-fullscreen').evaluate((stage) => ({
+    width: stage.getBoundingClientRect().width,
+    height: stage.getBoundingClientRect().height,
+    footer: getComputedStyle(stage.querySelector('.radar-fullscreen-footer')).display,
+    closeHeight: stage.querySelector('[data-radar-fullscreen-close]').getBoundingClientRect().height,
+  }));
+  assert.deepEqual(tinyFullscreen, {
+    width: 320,
+    height: 568,
+    footer: 'none',
+    closeHeight: 44,
+  });
+  await mobile.screenshot({ path: join(output, 'radar-mobile-fullscreen-320x568.png'), fullPage: false });
+  await mobile.locator('[data-radar-fullscreen-close]').click();
+  await mobile.locator('.radar-event-open').first().click();
+  const tinyBriefing = await mobile.locator('[data-radar-briefing]:visible').boundingBox();
+  assert.ok(tinyBriefing.width >= 319 && tinyBriefing.height >= 567, JSON.stringify(tinyBriefing));
+  await mobile.screenshot({ path: join(output, 'radar-mobile-briefing-320x568.png'), fullPage: false });
+  await mobile.keyboard.press('Escape');
+  assert.ok(mobileWatch.basemap.length > 0);
   assert.deepEqual(mobileWatch.external, []);
   assert.deepEqual(mobileWatch.errors, []);
   await mobileContext.close();

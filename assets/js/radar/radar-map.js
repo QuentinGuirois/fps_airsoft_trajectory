@@ -47,6 +47,7 @@ export const RADAR_CITIES = Object.freeze([
   ['NICE', 43.7102, 7.2620],
 ]);
 
+export const RADAR_BASEMAP_URL = 'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&TILEMATRIXSET=PM_0_19&FORMAT=image/png&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}';
 export const RADAR_LAUNCH_NOTICE_KEY = 'fat.radar.launch-notice.v1';
 
 export function radarInteractionMode({ coarsePointer, compactViewport, fullscreen }) {
@@ -427,7 +428,7 @@ export function initRadarMap({
     center: [46.6, 2.4],
     zoom: 6,
     minZoom: 5,
-    maxZoom: 12,
+    maxZoom: 17,
     zoomControl: true,
     attributionControl: true,
     maxBounds: [[40.5, -7], [52.5, 11]],
@@ -435,6 +436,36 @@ export function initRadarMap({
   });
   map.attributionControl.setPrefix(false);
   map.attributionControl.addAttribution('Limites © IGN ADMIN EXPRESS COG CARTO PE 2026');
+  map.createPane('radarFallback');
+  const fallbackPane = map.getPane('radarFallback');
+  fallbackPane.classList.add('radar-fallback-pane');
+  fallbackPane.setAttribute('aria-hidden', 'true');
+  fallbackPane.style.zIndex = '250';
+
+  let basemapFailed = false;
+  const basemap = leaflet.tileLayer(RADAR_BASEMAP_URL, {
+    minZoom: 5,
+    maxZoom: 17,
+    maxNativeZoom: 19,
+    tileSize: 256,
+    updateWhenIdle: true,
+    keepBuffer: 2,
+    crossOrigin: true,
+    referrerPolicy: 'no-referrer',
+    attribution: '<a href="https://www.ign.fr/" rel="external noopener">© IGN</a> · Plan IGN',
+  });
+  basemap.on('loading', () => {
+    basemapFailed = false;
+    root.classList.remove('has-live-basemap');
+  });
+  basemap.on('tileerror', () => {
+    basemapFailed = true;
+    root.classList.remove('has-live-basemap');
+  });
+  basemap.on('load', () => {
+    root.classList.toggle('has-live-basemap', !basemapFailed);
+  });
+  basemap.addTo(map);
 
   let interactionMode = '';
   let gestureHintTimer = 0;
@@ -730,6 +761,7 @@ export function initRadarMap({
   syncCityVisibility();
 
   const departments = leaflet.geoJSON(null, {
+    pane: 'radarFallback',
     interactive: false,
     style: {
       color: '#4a5537',
@@ -1113,6 +1145,7 @@ export function initRadarMap({
 
   return {
     map,
+    basemap,
     state,
     cities,
     render,

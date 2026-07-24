@@ -9,6 +9,7 @@ import {
   eventMatchesFilters,
   haversineKm,
   isWgs84,
+  RADAR_BASEMAP_URL,
   RADAR_CITIES,
   RADAR_LAUNCH_NOTICE_KEY,
   radarInteractionMode,
@@ -96,6 +97,30 @@ test('les onze grandes villes restent un calque décoratif séparé jusqu’au z
   assert.match(css, /\.radar-city-marker\s*\{[^}]*pointer-events:\s*none/s);
 });
 
+test('Plan IGN apporte villes et villages avec un repli administratif local', async () => {
+  const [map, css, rootRules] = await Promise.all([
+    read('assets', 'js', 'radar', 'radar-map.js'),
+    read('assets', 'radar.css'),
+    read('.htaccess'),
+  ]);
+  const basemap = new URL(RADAR_BASEMAP_URL);
+  assert.equal(basemap.protocol, 'https:');
+  assert.equal(basemap.hostname, 'data.geopf.fr');
+  assert.equal(basemap.pathname, '/wmts');
+  assert.equal(basemap.searchParams.get('LAYER'), 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2');
+  assert.equal(basemap.searchParams.get('TILEMATRIXSET'), 'PM_0_19');
+  assert.equal(basemap.searchParams.get('TILEMATRIX'), '{z}');
+  assert.equal(basemap.searchParams.get('TILEROW'), '{y}');
+  assert.equal(basemap.searchParams.get('TILECOL'), '{x}');
+  assert.match(map, /maxZoom:\s*17/);
+  assert.match(map, /referrerPolicy:\s*'no-referrer'/);
+  assert.match(map, /has-live-basemap/);
+  assert.match(map, /pane:\s*'radarFallback'/);
+  assert.match(css, /\.radar-console\.has-live-basemap \.radar-fallback-pane/);
+  assert.match(rootRules, /img-src 'self' data: https:\/\/data\.geopf\.fr/);
+  assert.doesNotMatch(rootRules, /script-src[^;"]*data\.geopf\.fr/);
+});
+
 test('la carte tactile inline reste inerte et réserve les gestes directs au plein écran', async () => {
   const [html, css, map] = await Promise.all([
     read('parties-airsoft', 'index.html'),
@@ -139,6 +164,8 @@ test('la carte tactile inline reste inerte et réserve les gestes directs au ple
   assert.match(map, /deltaY > 80/);
   assert.match(map, /setTimeout\(\(\) => filterCloseButton\?\.focus\(\{ preventScroll: true \}\), 250\)/);
   assert.match(map, /if \(state\.filterSheetOpen\)/);
+  assert.match(css, /@media \(max-width: 820px\) and \(max-height: 700px\)/);
+  assert.match(css, /height:\s*clamp\(13\.5rem,\s*39svh,\s*16rem\)/);
 });
 
 test('la popup de lancement est versionnée, accessible et réservée à la racine du Radar', async () => {
@@ -235,11 +262,11 @@ test('le schéma et les routes couvrent cycle de vie, règles, signalement et mo
 
 test('le cache PWA inclut seulement le Radar public et contourne compte et API', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /fat-v3-2026-07-24-52/);
+  assert.match(worker, /fat-v3-2026-07-24-53/);
   for (const asset of [
     '/parties-airsoft/',
-    '/assets/radar.css?v=20260724-52',
-    '/assets/js/radar/radar-map.js?v=20260724-52',
+    '/assets/radar.css?v=20260724-53',
+    '/assets/js/radar/radar-map.js?v=20260724-53',
     '/data/radar-france-departments.geojson',
   ]) assert.ok(worker.includes(`'${asset}'`), asset);
   const optional = worker.match(/const OPTIONAL = \[([\s\S]*?)\n\];/)?.[1] || '';
