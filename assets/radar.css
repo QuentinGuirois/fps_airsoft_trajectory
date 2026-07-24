@@ -83,17 +83,15 @@
   overflow: hidden;
   background: #11170d;
 }
-.radar-page .radar-map.leaflet-container { z-index: 0; width: 100%; height: 100%; background: #11170d; }
+.radar-page .radar-map.leaflet-container { z-index: 0; width: 100%; height: 100%; background: #182018; }
 .radar-map .leaflet-tile-pane {
   opacity: 0;
-  filter: brightness(.86) saturate(.82) contrast(1.06);
-  transition: opacity 180ms ease;
+  filter: invert(.82) hue-rotate(180deg) brightness(.95) saturate(.75) contrast(1.05);
 }
 .radar-console.has-live-basemap .radar-map .leaflet-tile-pane { opacity: 1; }
 .radar-fallback-pane {
   opacity: 1;
   pointer-events: none;
-  transition: opacity 180ms ease, visibility 180ms ease;
 }
 .radar-console.has-live-basemap .radar-fallback-pane,
 .radar-console.has-live-basemap .radar-cities-pane {
@@ -131,13 +129,13 @@
   background: #10140c;
   color: var(--paper);
 }
-.radar-map .leaflet-control-attribution {
+.radar-page .radar-map.leaflet-container .leaflet-control-attribution {
   max-width: min(70vw, 34rem);
   background: rgb(12 16 8 / 84%);
   color: var(--muted);
   font: 500 .55rem/1.35 var(--font-mono);
 }
-.radar-map .leaflet-control-attribution a { color: var(--muted-strong); }
+.radar-page .radar-map.leaflet-container .leaflet-control-attribution a { color: var(--muted-strong); }
 .radar-scan {
   position: absolute;
   z-index: 200;

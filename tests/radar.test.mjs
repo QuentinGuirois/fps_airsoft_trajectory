@@ -115,8 +115,14 @@ test('Plan IGN apporte villes et villages avec un repli administratif local', as
   assert.match(map, /maxZoom:\s*17/);
   assert.match(map, /referrerPolicy:\s*'no-referrer'/);
   assert.match(map, /has-live-basemap/);
+  assert.match(map, /basemap\.on\('tileload'/);
+  assert.match(map, /basemapReady\s*=\s*true/);
+  const loadingHandler = map.match(/basemap\.on\('loading',[\s\S]*?\n\s*\}\);/)?.[0] || '';
+  assert.doesNotMatch(loadingHandler, /classList\.remove/);
   assert.match(map, /pane:\s*'radarFallback'/);
   assert.match(css, /\.radar-console\.has-live-basemap \.radar-fallback-pane/);
+  assert.match(css, /filter:\s*invert\(\.82\) hue-rotate\(180deg\) brightness\(\.95\) saturate\(\.75\) contrast\(1\.05\)/);
+  assert.match(css, /\.radar-page \.radar-map\.leaflet-container \.leaflet-control-attribution/);
   assert.match(rootRules, /img-src 'self' data: https:\/\/data\.geopf\.fr/);
   assert.doesNotMatch(rootRules, /script-src[^;"]*data\.geopf\.fr/);
 });
@@ -262,11 +268,11 @@ test('le schéma et les routes couvrent cycle de vie, règles, signalement et mo
 
 test('le cache PWA inclut seulement le Radar public et contourne compte et API', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /fat-v3-2026-07-24-53/);
+  assert.match(worker, /fat-v3-2026-07-24-54/);
   for (const asset of [
     '/parties-airsoft/',
-    '/assets/radar.css?v=20260724-53',
-    '/assets/js/radar/radar-map.js?v=20260724-53',
+    '/assets/radar.css?v=20260724-54',
+    '/assets/js/radar/radar-map.js?v=20260724-54',
     '/data/radar-france-departments.geojson',
   ]) assert.ok(worker.includes(`'${asset}'`), asset);
   const optional = worker.match(/const OPTIONAL = \[([\s\S]*?)\n\];/)?.[1] || '';

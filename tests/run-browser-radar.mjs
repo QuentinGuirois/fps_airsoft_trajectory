@@ -108,6 +108,17 @@ try {
   assert.equal(await desktop.locator('.radar-city-marker').count(), 11);
   await desktop.locator('[data-radar-app].has-live-basemap').waitFor();
   assert.ok(desktopWatch.basemap.length > 0);
+  await desktop.evaluate(() => {
+    const app = document.querySelector('[data-radar-app]');
+    window.__radarBasemapVisibility = [];
+    new MutationObserver(() => {
+      window.__radarBasemapVisibility.push(app.classList.contains('has-live-basemap'));
+    }).observe(app, { attributes: true, attributeFilter: ['class'] });
+  });
+  assert.match(
+    await desktop.locator('.radar-map .leaflet-tile-pane').evaluate((node) => getComputedStyle(node).filter),
+    /invert\(0\.82\).*hue-rotate\(180deg\).*brightness\(0\.95\)/,
+  );
   assert.equal(await desktop.locator('.radar-city-marker:visible').count(), 0);
   assert.equal(await desktop.locator('.radar-city-marker[aria-hidden="true"]').count(), 11);
   assert.equal(await desktop.locator('.radar-city-marker[tabindex="-1"]').count(), 11);
@@ -119,6 +130,10 @@ try {
   await desktop.locator('.leaflet-control-zoom-out').evaluate((node) => node.click());
   await desktop.locator('[data-radar-app][data-cities-visible="true"]').waitFor();
   assert.equal(await desktop.locator('.radar-city-marker:visible').count(), 0);
+  assert.equal(
+    await desktop.evaluate(() => window.__radarBasemapVisibility.includes(false)),
+    false,
+  );
   const publicPayload = await desktop.evaluate(async () => (await fetch('/api/v1/radar/events')).json());
   assert.equal(JSON.stringify(publicPayload).includes('Adresse privée'), false);
   const approximate = publicPayload.events.find((event) => event.locationVisibility === 'approximate');
@@ -285,11 +300,11 @@ try {
   });
   await offline.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
   await offline.waitForFunction(async () => {
-    const cache = await caches.open('fat-v3-2026-07-24-53');
+    const cache = await caches.open('fat-v3-2026-07-24-54');
     return Boolean(
       await cache.match('/parties-airsoft/')
-      && await cache.match('/assets/radar.css?v=20260724-53')
-      && await cache.match('/assets/js/radar/radar-map.js?v=20260724-53'),
+      && await cache.match('/assets/radar.css?v=20260724-54')
+      && await cache.match('/assets/js/radar/radar-map.js?v=20260724-54'),
     );
   });
   await offlineContext.setOffline(true);

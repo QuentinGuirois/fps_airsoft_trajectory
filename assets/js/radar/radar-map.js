@@ -442,7 +442,8 @@ export function initRadarMap({
   fallbackPane.setAttribute('aria-hidden', 'true');
   fallbackPane.style.zIndex = '250';
 
-  let basemapFailed = false;
+  let basemapReady = false;
+  let basemapBatchHasTile = false;
   const basemap = leaflet.tileLayer(RADAR_BASEMAP_URL, {
     minZoom: 5,
     maxZoom: 17,
@@ -455,15 +456,21 @@ export function initRadarMap({
     attribution: '<a href="https://www.ign.fr/" rel="external noopener">© IGN</a> · Plan IGN',
   });
   basemap.on('loading', () => {
-    basemapFailed = false;
-    root.classList.remove('has-live-basemap');
+    basemapBatchHasTile = false;
+  });
+  basemap.on('tileload', () => {
+    basemapBatchHasTile = true;
   });
   basemap.on('tileerror', () => {
-    basemapFailed = true;
-    root.classList.remove('has-live-basemap');
+    if (!basemapReady) root.classList.remove('has-live-basemap');
   });
   basemap.on('load', () => {
-    root.classList.toggle('has-live-basemap', !basemapFailed);
+    if (basemapBatchHasTile) {
+      basemapReady = true;
+      root.classList.add('has-live-basemap');
+    } else if (!basemapReady) {
+      root.classList.remove('has-live-basemap');
+    }
   });
   basemap.addTo(map);
 

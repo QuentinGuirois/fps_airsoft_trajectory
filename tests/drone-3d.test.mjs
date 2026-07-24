@@ -89,7 +89,7 @@ test('le cache différé référence tous les modules 3D sans les précacher', a
     read('app.js'),
     read('advanced-3d-app.js'),
   ]);
-  assert.match(worker, /fat-v3-2026-07-24-53/);
+  assert.match(worker, /fat-v3-2026-07-24-54/);
   for (const path of [
     '/drone-3d.js?v=20260723-47',
     '/assets/vendor/three-r185/build/three.module.min.js?v=20260723-47',
