@@ -27,6 +27,7 @@ test('l’archive exclut données privées et lie le cache PWA au SHA', async ()
     assert.match(attributes, new RegExp(`${path.replace('/', '\\/')} export-ignore`));
   }
   assert.match(workflow, /git archive HEAD/);
+  assert.match(workflow, /database\/seeds\/fat-radar-events-enriched-2026-07-24\.json\.php/);
   assert.match(workflow, /fat-v3-\$\{process\.env\.GITHUB_SHA\}/);
   assert.match(workflow, /verify-release-archive\.sh/);
   for (const excluded of ['\\.git', '\\.github', 'docs', 'tests', 'node_modules', 'config', 'storage']) {
@@ -47,6 +48,12 @@ test('le déploiement sauvegarde, migre, active atomiquement et restaure sur éc
   assert.match(deploy, /mariadb-dump|mysqldump/);
   assert.match(deploy, /single-transaction/);
   assert.match(deploy, /FAT_CONFIG_FILE=.*bin\/migrate\.php/);
+  assert.match(deploy, /publish-radar-import-production\.php/);
+  assert.match(deploy, /--preflight/);
+  assert.match(deploy, /--apply/);
+  assert.match(deploy, /radar-import-\$radar_seed_sha\.ok/);
+  assert.match(deploy, /un administrateur actif et vérifié/);
+  assert.match(deploy, /rollback-radar-publish/);
   assert.match(deploy, /mv -Tf/);
   assert.match(deploy, /api\/v1\/health/);
   assert.match(deploy, /Health check en échec, release précédente restaurée/);

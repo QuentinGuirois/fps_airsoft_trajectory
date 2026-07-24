@@ -120,7 +120,9 @@ jobs:
           FAT_TEST_DB_USER: fat_test
           FAT_TEST_DB_PASSWORD: fat_ci_user_only
           FAT_TEST_SKIP_DB_RESET: "true"
-        run: npm run test:api
+        run: |
+          npm run test:api
+          npm run test:radar-import
 
   release:
     name: Construire l’archive immuable
@@ -136,6 +138,25 @@ jobs:
           release_root="$RUNNER_TEMP/release"
           mkdir -p "$release_root"
           git archive HEAD | tar -x -C "$release_root"
+          install -d "$release_root/database/seeds"
+          RELEASE_ROOT="$release_root" node --input-type=module <<'NODE'
+          import { readFile, writeFile } from 'node:fs/promises';
+          import { join } from 'node:path';
+          const source = await readFile(
+            'docs/fat-radar/fat-radar-events-enriched-2026-07-24.json',
+            'utf8',
+          );
+          const marker = 'FAT_RADAR_PRODUCTION_SEED_20260724';
+          if (source.includes(marker)) throw new Error('Marqueur présent dans le JSON Radar.');
+          const wrapped = `<?php\nreturn <<<'${marker}'\n${source.replace(/\s*$/, '\n')}${marker};\n`;
+          await writeFile(
+            join(
+              process.env.RELEASE_ROOT,
+              'database/seeds/fat-radar-events-enriched-2026-07-24.json.php',
+            ),
+            wrapped,
+          );
+          NODE
           RELEASE_ROOT="$release_root" node bin/build-sitemap.mjs
           RELEASE_ROOT="$release_root" node --input-type=module <<'NODE'
           import { readFile, writeFile } from 'node:fs/promises';
@@ -218,3 +239,34 @@ jobs:
           grep -qi '^strict-transport-security:' <<< "$root_headers"
           grep -qi '^content-security-policy:' <<< "$root_headers"
           grep -qi '^location: https://fps-airsoft-trajectory.com/' <<< "$www_headers"
+          radar_payload=$(curl --fail --silent --show-error \
+            --header 'Cache-Control: no-cache' \
+            'https://fps-airsoft-trajectory.com/api/v1/radar/events?from=2026-07-24&limit=250')
+          RADAR_PAYLOAD="$radar_payload" node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFile } from 'node:fs/promises';
+          const payload = JSON.parse(process.env.RADAR_PAYLOAD);
+          if (!Array.isArray(payload.events)) throw new Error('Réponse Radar invalide.');
+          const seed = JSON.parse(await readFile(
+            'docs/fat-radar/fat-radar-events-enriched-2026-07-24.json',
+            'utf8',
+          ));
+          const expectedKeys = seed.events.map((event) => event.external_key);
+          const expectedSlugs = new Set(expectedKeys.map((key) =>
+            `${key}-${createHash('sha256').update(key).digest('hex').slice(0, 8)}`));
+          const imported = payload.events.filter((event) => expectedSlugs.has(event.slug));
+          if (imported.length !== 40) throw new Error(`Radar incomplet : ${imported.length}/40.`);
+          if (!imported.every((event) =>
+            (event.postalCode || event.city)
+            && Array.isArray(event.links)
+            && event.links.some((link) => link.type === 'organizer' && /^https:\/\//.test(link.url))
+            && Array.isArray(event.rules)
+            && event.rules.length === 7
+          )) throw new Error('Une fiche Radar publiée ne respecte pas les critères.');
+          const signatures = new Set(imported.map((event) =>
+            [event.title, event.organizerName, event.startsAt, event.city, event.postalCode]
+              .map((value) => String(value || '').trim().toLocaleLowerCase('fr'))
+              .join('|')));
+          if (signatures.size !== 40) throw new Error('Doublon Radar détecté après publication.');
+          console.log('Radar production validé : 40 fiches, liens, lieux et règles présents.');
+          NODE

@@ -57,23 +57,28 @@ function options(array $arguments, string $root): array
     if ($result['preview'] !== 'admin') {
         fail('utilise le mode explicite --preview=admin. Aucun mode de publication n’est accepté.');
     }
-    $knownDirectory = realpath($root . '/docs/fat-radar');
+    $knownDirectories = array_values(array_filter([
+        realpath($root . '/docs/fat-radar'),
+        realpath($root . '/database/seeds'),
+    ], 'is_string'));
     $path = realpath($result['path']);
     if (
-        $knownDirectory === false
-        || $path === false
-        || dirname($path) !== $knownDirectory
+        $path === false
+        || !in_array(dirname($path), $knownDirectories, true)
         || !preg_match(
-            '/^fat-radar-events-(?:seed-\d{4}-\d{2}-\d{2}(?:\.importable-v1)?|enriched-\d{4}-\d{2}-\d{2})\.json$/D',
+            '/^fat-radar-events-(?:seed-\d{4}-\d{2}-\d{2}(?:\.importable-v1)?|enriched-\d{4}-\d{2}-\d{2})\.json(?:\.php)?$/D',
             basename($path),
         )
     ) {
-        fail('le fichier doit être un JSON de semences connu dans docs/fat-radar.');
+        fail('le fichier doit être un JSON de semences Radar connu.');
     }
     $result['path'] = $path;
     if ($result['qaReport'] !== null) {
+        $knownDirectory = realpath($root . '/docs/fat-radar');
         $reportDirectory = realpath(dirname($result['qaReport']));
         if (
+            $knownDirectory === false
+            ||
             $reportDirectory !== $knownDirectory
             || !preg_match('/^fat-radar-geocoding-qa-\d{4}-\d{2}-\d{2}\.json$/D', basename($result['qaReport']))
         ) {
@@ -110,8 +115,10 @@ function resolveOwner(PDO $db, string $environmentName): array
 
 try {
     $options = options($argv, $root);
-    $raw = file_get_contents($options['path']);
-    if ($raw === false || strlen($raw) > 5_000_000) {
+    $raw = str_ends_with($options['path'], '.json.php')
+        ? require $options['path']
+        : file_get_contents($options['path']);
+    if (!is_string($raw) || strlen($raw) > 5_000_000) {
         fail('le JSON est illisible ou trop volumineux.');
     }
     try {

@@ -1,7 +1,9 @@
-# F.A.T. Radar — enrichissement et import local
+# F.A.T. Radar — enrichissement, import local et lot de production
 
-Cette procédure est strictement locale. Elle n’exécute aucune commande Plesk,
-n’écrit dans aucune base distante et ne déploie rien.
+L’enrichissement, la recette et la publication de contrôle décrits en premier
+restent strictement locaux. Le lot enrichi du 24 juillet 2026 dispose en plus
+d’un import de production ponctuel, explicitement borné par son empreinte et
+par les critères décrits plus bas.
 
 ## Contrat et garde-fous
 
@@ -90,6 +92,37 @@ Publication locale après les contrôles automatiques :
 Cette dernière commande refuse une configuration non locale. Elle supprime les
 fiches non conformes du lot importé et rend publiques uniquement les fiches
 conformes dans la base locale.
+
+## Import de production ponctuel du lot enrichi
+
+Le déploiement transporte le contenu du JSON enrichi dans un fichier PHP sans
+sortie HTTP, sous `database/seeds/`, lui-même protégé par `Require all denied`.
+Le JSON brut et les rapports de travail restent exclus de l’archive.
+
+L’import ne s’exécute qu’en l’absence du marqueur privé associé à l’empreinte
+SHA-256
+`a1d2d8773e032fca8c3b55506229bcdc9f53484136be44d1bb4951d1e76c52d7`.
+Il applique successivement :
+
+1. validation stricte du contrat `1.1.0` et de ses 280 règles ;
+2. contrôle des doublons internes et des collisions avec toutes les fiches
+   existantes, y compris les brouillons invisibles ;
+3. exigence d’une ville ou d’un code postal et d’un lien source HTTPS ;
+4. import transactionnel en preview admin et géocodage IGN ;
+5. publication transactionnelle des seules fiches ayant un point validé, sept
+   règles et un lien organisateur ;
+6. contrôle HTTPS des 40 slugs attendus après activation.
+
+La commande de publication refuse toute écriture hors
+`APP_ENV=production`, exige l’empreinte exacte, ne supprime aucune fiche
+existante et conserve les règles absentes à `NC`. En cas de collision ou
+d’échec avant publication, aucune fiche du lot ne devient publique. Le
+déploiement restaure également la release précédente.
+
+Pour ce lot, les 40 fiches possèdent une ville et un lien HTTPS ; 32 possèdent
+également un code postal. Le critère de production est donc « code postal ou
+ville », et non l’ancien contrôle local plus strict qui supprimait les huit
+fiches sans code postal.
 
 ## Résultats du 24 juillet 2026
 

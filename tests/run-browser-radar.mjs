@@ -8,6 +8,12 @@ const root = process.cwd();
 const base = process.env.FAT_BROWSER_BASE || 'http://127.0.0.1:8080';
 const output = join(root, 'output');
 const php = process.env.FAT_TEST_PHP || 'php';
+const expectedEventCount = Number(process.env.FAT_BROWSER_EXPECTED_COUNT || 32);
+const expectedPrimaryCount = Number(process.env.FAT_BROWSER_EXPECTED_PRIMARY_COUNT || expectedEventCount);
+assert.ok(Number.isInteger(expectedEventCount) && expectedEventCount > 0);
+assert.ok(Number.isInteger(expectedPrimaryCount) && expectedPrimaryCount > 0);
+const expectedEventLabel = `${expectedEventCount} PARTIES`;
+const expectedPrimaryLabel = `${expectedPrimaryCount} FICHES`;
 const testEnvironment = {
   ...process.env,
   FAT_CONFIG_FILE: process.env.FAT_TEST_CONFIG_FILE || join(root, 'config', '.env.local'),
@@ -70,7 +76,7 @@ try {
   const desktop = await desktopContext.newPage();
   const desktopWatch = watch(desktop, 'desktop');
   await desktop.goto(`${base}/parties-airsoft/`, { waitUntil: 'networkidle' });
-  await desktop.locator('[data-radar-count]').filter({ hasText: '32 PARTIES' }).waitFor();
+  await desktop.locator('[data-radar-count]').filter({ hasText: expectedEventLabel }).waitFor();
   const launch = desktop.locator('[data-radar-launch-notice]:visible');
   await launch.waitFor();
   assert.equal(await launch.getAttribute('role'), 'dialog');
@@ -89,7 +95,7 @@ try {
   assert.equal(await repeatNotice.locator('[data-radar-launch-notice]:visible').count(), 0);
   await repeatNotice.close();
   assert.equal(await desktop.locator('h1').textContent(), 'Parties d’airsoft en France : trouvez votre prochaine partie');
-  assert.equal(await desktop.locator('.radar-event-card').count(), 32);
+  assert.equal(await desktop.locator('.radar-event-card').count(), expectedEventCount);
   assert.ok(await desktop.locator('.radar-marker-shell, .marker-cluster').count() > 0);
   assert.equal(await desktop.locator('.radar-city-marker').count(), 11);
   assert.equal(await desktop.locator('.radar-city-marker:visible').count(), 11);
@@ -141,7 +147,7 @@ try {
   await desktop.locator('[data-radar-count]').filter({ hasText: '0 PARTIE' }).waitFor();
   await desktop.locator('[data-radar-empty]:visible').waitFor();
   await desktop.getByRole('button', { name: 'TOUTE LA FRANCE' }).click();
-  await desktop.locator('[data-radar-count]').filter({ hasText: '32 PARTIES' }).waitFor();
+  await desktop.locator('[data-radar-count]').filter({ hasText: expectedEventLabel }).waitFor();
   await desktop.locator('label', { hasText: 'CO₂' }).click();
   await desktop.locator('[data-radar-count]').filter({ hasText: '0 PARTIE' }).waitFor();
   await desktop.locator('[data-radar-filters]').evaluate((form) => form.reset());
@@ -149,7 +155,7 @@ try {
   await desktop.locator('[data-radar-count]').filter({ hasText: /^1 PARTIE$/ }).waitFor();
   assert.equal(await desktop.locator('.radar-event-card').count(), 1);
   await desktop.locator('[data-radar-filters]').evaluate((form) => form.reset());
-  await desktop.locator('[data-radar-count]').filter({ hasText: '32 PARTIES' }).waitFor();
+  await desktop.locator('[data-radar-count]').filter({ hasText: expectedEventLabel }).waitFor();
   await desktop.setViewportSize({ width: 1280, height: 900 });
   await desktop.locator('#radar-map').waitFor();
   const resizedMap = await desktop.locator('#radar-map').boundingBox();
@@ -210,7 +216,7 @@ try {
   const geoPage = await geoContext.newPage();
   const geoWatch = watch(geoPage, 'geolocation');
   await geoPage.goto(`${base}/parties-airsoft/`, { waitUntil: 'networkidle' });
-  await geoPage.locator('[data-radar-count]').filter({ hasText: '32 PARTIES' }).waitFor();
+  await geoPage.locator('[data-radar-count]').filter({ hasText: expectedEventLabel }).waitFor();
   await geoPage.locator('.radar-filter-console details > summary').click();
   await geoPage.locator('[name="radiusKm"]').selectOption('10');
   await geoPage.locator('[data-radar-geolocate]:visible').click();
@@ -225,7 +231,7 @@ try {
   await geoPage.locator('[data-radar-geolocate]:visible').click();
   assert.equal(await geoPage.evaluate(() => window.__radarGeoCalls), 1);
   await geoPage.getByRole('button', { name: 'RÉINITIALISER' }).click();
-  await geoPage.locator('[data-radar-count]').filter({ hasText: '32 PARTIES' }).waitFor();
+  await geoPage.locator('[data-radar-count]').filter({ hasText: expectedEventLabel }).waitFor();
   assert.match(await geoPage.locator('[data-radar-geolocation]').textContent(), /jamais enregistrée/);
   assert.deepEqual(geoWatch.external, []);
   assert.deepEqual(geoWatch.errors, []);
@@ -245,11 +251,11 @@ try {
   const denied = await deniedContext.newPage();
   const deniedWatch = watch(denied, 'geolocation-denied');
   await denied.goto(`${base}/parties-airsoft/`, { waitUntil: 'networkidle' });
-  await denied.locator('[data-radar-count]').filter({ hasText: '32 PARTIES' }).waitFor();
+  await denied.locator('[data-radar-count]').filter({ hasText: expectedEventLabel }).waitFor();
   await denied.locator('.radar-filter-console details > summary').click();
   await denied.locator('[data-radar-geolocate]:visible').click();
   await denied.locator('[data-radar-status]').filter({ hasText: /refusée/ }).waitFor();
-  assert.equal(await denied.locator('.radar-event-card').count(), 32);
+  assert.equal(await denied.locator('.radar-event-card').count(), expectedEventCount);
   assert.match(await denied.locator('[data-radar-geolocation]').textContent(), /jamais enregistrée/);
   assert.deepEqual(deniedWatch.external, []);
   assert.deepEqual(deniedWatch.errors, []);
@@ -293,7 +299,7 @@ try {
   const mobile = await mobileContext.newPage();
   const mobileWatch = watch(mobile, 'mobile');
   await mobile.goto(`${base}/parties-airsoft/`, { waitUntil: 'networkidle' });
-  await mobile.locator('[data-radar-count]').filter({ hasText: '32 PARTIES' }).waitFor();
+  await mobile.locator('[data-radar-count]').filter({ hasText: expectedEventLabel }).waitFor();
   const mobileLaunch = mobile.locator('[data-radar-launch-notice]:visible');
   await mobileLaunch.waitFor();
   const launchMetrics = await mobileLaunch.evaluate((node) => ({
@@ -308,7 +314,7 @@ try {
   await mobile.screenshot({ path: join(output, 'radar-launch-mobile-390.png'), fullPage: false });
   await mobileLaunch.locator('[data-radar-launch-close]').click();
   await mobileLaunch.waitFor({ state: 'hidden' });
-  assert.equal(await mobile.locator('.radar-event-card').count(), 32);
+  assert.equal(await mobile.locator('.radar-event-card').count(), expectedEventCount);
   const mobileGeolocation = await mobile.locator('.radar-mobile-geolocate').boundingBox();
   assert.ok(mobileGeolocation?.height >= 44, JSON.stringify(mobileGeolocation));
   const mobileRadius = await mobile.locator('[data-radar-mobile-radius]').boundingBox();
@@ -343,8 +349,8 @@ try {
   await owner.getByRole('button', { name: 'ENTRER SUR LE TERRAIN' }).click();
   await owner.waitForURL('**/compte/mes-parties.html');
   await owner.locator('.radar-owner-card').first().waitFor();
-  assert.equal(await owner.locator('.radar-owner-card').count(), 32);
-  assert.equal(await owner.locator('.radar-owner-card-source').count(), 32);
+  assert.equal(await owner.locator('.radar-owner-card').count(), expectedEventCount);
+  assert.equal(await owner.locator('.radar-owner-card-source').count(), expectedEventCount);
   await owner.locator('[data-admin-workbench]:visible').waitFor();
   assert.equal((await owner.locator('[data-account-pseudo]').textContent()).trim().toLowerCase(), 'admin');
   assert.equal(await owner.locator('[data-theme-control]').count(), 0);
@@ -360,7 +366,7 @@ try {
   assert.equal(await owner.locator('[name="availabilityStatus"]').count(), 0);
   await owner.locator('[data-editor-close]').click();
   await owner.locator('.radar-owner-card').filter({ hasText: 'Brouillon sans titre' }).waitFor();
-  assert.equal(await owner.locator('.radar-owner-card').count(), 33);
+  assert.equal(await owner.locator('.radar-owner-card').count(), expectedEventCount + 1);
   const editable = owner.locator('.radar-owner-card').filter({ has: owner.locator('button', { hasText: 'MODIFIER' }) }).first();
   await editable.getByRole('button', { name: 'MODIFIER' }).click();
   await owner.locator('[data-owner-editor]:visible').waitFor();
@@ -380,13 +386,13 @@ try {
   await adminFilters.locator('[name="sourceTier"]').selectOption('primary');
   await adminFilters.locator('[name="verification"]').selectOption('verified');
   await adminFilters.getByRole('button', { name: 'FILTRER' }).click();
-  await owner.locator('[data-admin-count]').filter({ hasText: '32 FICHES' }).waitFor();
-  assert.equal(await owner.locator('.radar-admin-card').count(), 32);
+  await owner.locator('[data-admin-count]').filter({ hasText: expectedPrimaryLabel }).waitFor();
+  assert.equal(await owner.locator('.radar-admin-card').count(), expectedPrimaryCount);
   await adminFilters.locator('[name="sourceTier"]').selectOption('');
   await adminFilters.locator('[name="verification"]').selectOption('');
   await adminFilters.locator('[name="fixtures"]').selectOption('only');
   await adminFilters.getByRole('button', { name: 'FILTRER' }).click();
-  await owner.locator('[data-admin-count]').filter({ hasText: '0 FICHE' }).waitFor();
+  await owner.locator('[data-admin-count]').filter({ hasText: /^0 FICHE/ }).waitFor();
   assert.equal(await owner.locator('.radar-admin-card').count(), 0);
   assert.deepEqual(ownerWatch.external, []);
   assert.deepEqual(ownerWatch.errors, []);

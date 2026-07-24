@@ -205,7 +205,10 @@ La route Apache `/parties-airsoft/<slug>/` doit servir
 que `/api/` et `/compte/` ne rejoignent jamais le cache PWA. La recette
 détaillée et l’attribution IGN figurent dans `docs/radar.md`. La migration 006,
 le dry-run d’import et le retour arrière vérifiable sont documentés dans
-`docs/radar-import.md`. Aucun import réel ne fait partie du déploiement.
+`docs/radar-import.md`. Le lot Radar enrichi du 24 juillet 2026 fait l’objet
+d’un import de production ponctuel : empreinte figée, préflight anti-doublon,
+ville ou code postal, lien HTTPS, géocodage validé et marqueur privé empêchant
+toute répétition lors des releases suivantes.
 
 1. Laisser `DEPLOY_LIVE_ENABLED=false`.
 2. Lancer **Actions → Tests et release production → Run workflow → dry-run**.

@@ -50,13 +50,16 @@ safe_extract() {
   # uploads et sauvegardes vivent hors de la release sous private/ (umask 077).
   find "$destination" -type d -exec chmod 755 {} +
   find "$destination" -type f -exec chmod 644 {} +
-  [[ -f "$destination/index.html" && -f "$destination/api/v1/index.php" && -f "$destination/bin/migrate.php" ]] || {
+  [[ -f "$destination/index.html" && -f "$destination/api/v1/index.php" && -f "$destination/bin/migrate.php" \
+    && -f "$destination/bin/publish-radar-import-production.php" \
+    && -f "$destination/database/seeds/fat-radar-events-enriched-2026-07-24.json.php" ]] || {
     echo "Release incomplète." >&2
     return 1
   }
   "$php_bin" -l "$destination/api/v1/index.php" >/dev/null
   "$php_bin" -l "$destination/bin/migrate.php" >/dev/null
   "$php_bin" -l "$destination/bin/promote-admin.php" >/dev/null
+  "$php_bin" -l "$destination/bin/publish-radar-import-production.php" >/dev/null
 }
 
 if [[ "$mode" == "--dry-run" ]]; then
@@ -128,6 +131,37 @@ backup="$private/backups/db-$sha.sql.gz"
 mv -- "$backup_tmp" "$backup"
 
 FAT_CONFIG_FILE="$app_config" "$php_bin" "$release/bin/migrate.php"
+radar_seed="$release/database/seeds/fat-radar-events-enriched-2026-07-24.json.php"
+radar_seed_sha=a1d2d8773e032fca8c3b55506229bcdc9f53484136be44d1bb4951d1e76c52d7
+radar_marker="$state_dir/radar-import-$radar_seed_sha.ok"
+radar_import_pending=false
+radar_owner=
+if [[ ! -f "$radar_marker" ]]; then
+  FAT_CONFIG_FILE="$app_config" "$php_bin" "$release/bin/publish-radar-import-production.php" \
+    "$radar_seed" --preflight "--confirm-sha256=$radar_seed_sha"
+  radar_owner=$(
+    FAT_CONFIG_FILE="$app_config" "$php_bin" -r '
+      require $argv[1] . "/api/src/autoload.php";
+      $config = Fat\Api\Config::load($argv[1]);
+      if (!$config->isProduction()) {
+          fwrite(STDERR, "Import Radar réservé à la production.\n");
+          exit(3);
+      }
+      $db = Fat\Api\Database::connect($config);
+      $owner = $db->query(
+          "SELECT email FROM users WHERE role=\"admin\" AND email_verified_at IS NOT NULL "
+          . "AND deletion_requested_at IS NULL ORDER BY created_at,id LIMIT 1"
+      )->fetchColumn();
+      if (!is_string($owner) || trim($owner) === "") {
+          fwrite(STDERR, "Le lot Radar exige un administrateur actif et vérifié.\n");
+          exit(3);
+      }
+      echo $owner;
+    ' "$release"
+  )
+  [[ -n "$radar_owner" ]] || { echo "Propriétaire Radar introuvable." >&2; exit 12; }
+  radar_import_pending=true
+fi
 next="$root/.current-$sha"
 rm -f -- "$next"
 ln -s "$release" "$next"
@@ -150,6 +184,36 @@ if [[ "$health_ok" != true ]]; then
   printf '%s rollback %s -> %s\n' "$(date -u +%FT%TZ)" "$sha" "$(basename "$previous")" >> "$log_dir/deploy.log"
   echo "Health check en échec, release précédente restaurée." >&2
   exit 11
+fi
+
+if [[ "$radar_import_pending" == true ]]; then
+  if ! FAT_CONFIG_FILE="$app_config" FAT_RADAR_SEED_OWNER_EMAIL="$radar_owner" \
+    "$php_bin" "$release/bin/import-radar-events.php" \
+      "$radar_seed" \
+      --owner-email-env=FAT_RADAR_SEED_OWNER_EMAIL \
+      --preview=admin \
+      --geocode; then
+    rollback_next="$root/.rollback-radar-$sha"
+    rm -f -- "$rollback_next"
+    ln -s "$previous" "$rollback_next"
+    mv -Tf -- "$rollback_next" "$root/current"
+    printf '%s rollback-radar-import %s -> %s\n' "$(date -u +%FT%TZ)" "$sha" "$(basename "$previous")" >> "$log_dir/deploy.log"
+    echo "Import Radar en échec, release précédente restaurée et aucune fiche publiée." >&2
+    exit 12
+  fi
+  if ! FAT_CONFIG_FILE="$app_config" "$php_bin" "$release/bin/publish-radar-import-production.php" \
+    "$radar_seed" --apply "--confirm-sha256=$radar_seed_sha"; then
+    rollback_next="$root/.rollback-radar-$sha"
+    rm -f -- "$rollback_next"
+    ln -s "$previous" "$rollback_next"
+    mv -Tf -- "$rollback_next" "$root/current"
+    printf '%s rollback-radar-publish %s -> %s\n' "$(date -u +%FT%TZ)" "$sha" "$(basename "$previous")" >> "$log_dir/deploy.log"
+    echo "Publication Radar en échec, release précédente restaurée." >&2
+    exit 13
+  fi
+  marker_tmp="$radar_marker.tmp"
+  printf '%s %s %s\n' "$(date -u +%FT%TZ)" "$sha" "$radar_seed_sha" > "$marker_tmp"
+  mv -- "$marker_tmp" "$radar_marker"
 fi
 
 printf '%s deploy %s previous=%s\n' "$(date -u +%FT%TZ)" "$sha" "$(basename "$previous")" >> "$log_dir/deploy.log"

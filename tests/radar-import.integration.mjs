@@ -115,4 +115,34 @@ for (const count of [1, 10, 50, 200]) {
 }
 assert.equal(scalar("SELECT COUNT(*) FROM radar_events WHERE state='published' AND record_visibility='public' AND is_fixture=0"), 0);
 
-console.log('Radar import intégration : migration fraîche, 40 brouillons, 280 règles, preuves, liens organisateur/inscription, idempotence et fixtures validés.');
+const prepareProduction = [
+  'require "api/src/autoload.php";',
+  '$config=Fat\\Api\\Config::load(getcwd());',
+  '$db=Fat\\Api\\Database::connect($config);',
+  '$db->exec("UPDATE radar_events SET latitude=46.500000,longitude=2.500000,location_method=\'geocoded\','
+    + 'location_confirmed_at=UTC_TIMESTAMP(),location_visibility=\'approximate\',location_precision=\'city\','
+    + 'geocode_status=\'validated\',geocode_checked_at=UTC_TIMESTAMP(),requires_pre_publication_check=1 '
+    + 'WHERE is_fixture=0");',
+].join('');
+run(['-r', prepareProduction]);
+const productionArguments = [
+  'bin/publish-radar-import-production.php',
+  seed,
+  '--apply',
+  '--confirm-sha256=a1d2d8773e032fca8c3b55506229bcdc9f53484136be44d1bb4951d1e76c52d7',
+];
+const productionEnvironment = {
+  APP_ENV: 'production',
+  TURNSTILE_ENABLED: 'false',
+  TURNSTILE_ACCEPT_TEST_KEYS: 'false',
+};
+const production = run(productionArguments, { extraEnv: productionEnvironment });
+assert.match(production.stdout, /"published":40/);
+assert.equal(scalar("SELECT COUNT(*) FROM radar_events WHERE state='published' AND record_visibility='public' AND is_fixture=0"), 40);
+assert.equal(scalar("SELECT COUNT(*) FROM radar_events WHERE is_fixture=0 AND requires_pre_publication_check<>0"), 0);
+assert.equal(scalar("SELECT COUNT(*) FROM radar_events WHERE is_fixture=1 AND state='published'"), 0);
+const productionAgain = run(productionArguments, { extraEnv: productionEnvironment });
+assert.match(productionAgain.stdout, /"published":0/);
+assert.match(productionAgain.stdout, /"already_public":40/);
+
+console.log('Radar import intégration : 40 brouillons, 280 règles, preuves, liens, idempotence, fixtures et publication production atomique validés.');

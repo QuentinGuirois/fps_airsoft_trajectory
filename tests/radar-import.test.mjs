@@ -43,8 +43,13 @@ test('la migration ajoute provenance, revendication, visibilité et garde-fous',
   assert.match(evidence, /not_communicated[\s\S]*joules IS NULL[\s\S]*details='NC'/);
 });
 
-test('l’importeur synchronise règles et liens officiels en preview admin uniquement', async () => {
-  const importer = await read('bin', 'import-radar-events.php');
+test('l’importeur synchronise en preview et la publication production reste figée et contrôlée', async () => {
+  const [importer, productionPublisher, databaseAccess, commandAccess] = await Promise.all([
+    read('bin', 'import-radar-events.php'),
+    read('bin', 'publish-radar-import-production.php'),
+    read('database', '.htaccess'),
+    read('bin', '.htaccess'),
+  ]);
   assert.match(importer, /--owner-email-env=FAT_RADAR_SEED_OWNER_EMAIL/);
   assert.match(importer, /\$result\['preview'\] !== 'admin'/);
   assert.match(importer, /'draft','visible','admin_preview_only','unclaimed'/);
@@ -56,6 +61,20 @@ test('l’importeur synchronise règles et liens officiels en preview admin uniq
   assert.match(importer, /VALUES \(\?,\?,\?,\?,\?\)/);
   assert.doesNotMatch(importer, /--publish|auto.?publish/i);
   assert.doesNotMatch(importer, /FAT_RADAR_SEED_OWNER_EMAIL\s*=\s*[^.…'"\s]/);
+  assert.match(productionPublisher, /RADAR_PRODUCTION_SEED_SHA256/);
+  assert.match(productionPublisher, /--preflight/);
+  assert.match(productionPublisher, /--apply/);
+  assert.match(productionPublisher, /APP_ENV=production|isProduction\(\)/);
+  assert.match(productionPublisher, /doublon interne/);
+  assert.match(productionPublisher, /doublon en base/);
+  assert.match(productionPublisher, /postalCode.*city/s);
+  assert.match(productionPublisher, /sourceUrl.*https:\/\//s);
+  assert.match(productionPublisher, /geocode_status.*validated/s);
+  assert.match(productionPublisher, /state='published',record_visibility='public'/);
+  assert.match(productionPublisher, /beginTransaction\(\)/);
+  assert.doesNotMatch(productionPublisher, /DELETE FROM radar_events/);
+  assert.match(databaseAccess, /^Require all denied\s*$/);
+  assert.match(commandAccess, /^Require all denied\s*$/);
 });
 
 test('l’enrichisseur reste officiel, mis en cache et sans contournement anti-bot', async () => {
