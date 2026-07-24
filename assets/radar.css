@@ -140,7 +140,7 @@
   text-decoration: underline;
   text-underline-offset: .2rem;
 }
-.radar-mobile-geolocate { display: none; }
+.radar-mobile-geolocate, .radar-mobile-radius { display: none; }
 .radar-filter-console label, .radar-filter-console summary {
   color: var(--muted);
   font: 600 .56rem/1.35 var(--font-mono);
@@ -250,6 +250,34 @@
 .radar-empty > div { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; }
 .radar-empty-publish { display: inline-block; margin-top: .85rem; color: var(--muted-strong); font: 600 .62rem/1.4 var(--font-mono); text-underline-offset: .2rem; }
 .radar-marker-shell { display: grid !important; border: 0; background: transparent; place-items: start center; }
+.radar-cities-pane {
+  z-index: 350;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 160ms ease, visibility 160ms ease;
+}
+.radar-cities-pane.is-hidden { visibility: hidden; opacity: 0; }
+.radar-city-marker {
+  border: 0;
+  background: transparent;
+  pointer-events: none !important;
+}
+.radar-city-marker span {
+  display: inline-flex;
+  align-items: center;
+  gap: .32rem;
+  color: var(--muted-strong);
+  font: 600 .52rem/1 var(--font-mono);
+  letter-spacing: .07em;
+  white-space: nowrap;
+}
+.radar-city-marker i {
+  display: inline-block;
+  width: .8rem;
+  height: 1px;
+  background: var(--ranger);
+  box-shadow: -.18rem 0 0 var(--ranger);
+}
 .radar-pin {
   position: relative;
   display: grid;
@@ -402,6 +430,73 @@
 .radar-report-dialog textarea { resize: vertical; }
 .radar-honeypot { position: absolute !important; left: -9999px !important; }
 .radar-report-dialog [role="status"] { margin: 0; color: var(--muted); font: 500 .6rem/1.4 var(--font-mono); }
+.radar-launch-dialog {
+  width: min(58rem, calc(100% - 1.5rem));
+  max-width: none;
+  max-height: min(46rem, calc(100dvh - 1.5rem));
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  background: var(--ink-0);
+  box-shadow: var(--shadow);
+  color: var(--paper);
+  padding: 0;
+}
+.radar-launch-dialog::backdrop {
+  background: color-mix(in srgb, var(--ink-0) 88%, transparent);
+  backdrop-filter: blur(6px);
+}
+.radar-launch-scene {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  min-height: min(38rem, calc(100dvh - 1.5rem));
+  max-height: min(46rem, calc(100dvh - 1.5rem));
+  overflow: auto;
+  place-items: center;
+  padding: clamp(1rem, 5vw, 4rem);
+  background:
+    radial-gradient(circle at 50% 18%, color-mix(in srgb, var(--olive) 62%, transparent), transparent 54%),
+    var(--ink-0);
+}
+.radar-launch-scene::before {
+  position: absolute;
+  z-index: -1;
+  inset: 42% -30% -40%;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--ranger) 45%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--ranger) 45%, transparent) 1px, transparent 1px);
+  background-size: 3.2rem 3.2rem;
+  content: "";
+  perspective: 24rem;
+  transform: rotateX(58deg);
+  transform-origin: top;
+}
+.radar-launch-panel {
+  width: min(43rem, 100%);
+  border: 1px solid var(--line-strong);
+  border-top: 3px solid var(--olive);
+  background: color-mix(in srgb, var(--ink-1) 96%, transparent);
+  box-shadow: var(--shadow);
+  padding: clamp(1.1rem, 4vw, 2.4rem);
+}
+.radar-launch-panel h2 {
+  margin: .4rem 0 1rem;
+  color: var(--paper);
+  font: 900 clamp(1.8rem, 5vw, 3.25rem)/.95 var(--font-display);
+  text-transform: uppercase;
+}
+.radar-launch-panel p:not(.eyebrow) {
+  max-width: 60ch;
+  color: var(--muted-strong);
+  line-height: 1.65;
+}
+.radar-launch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+  margin-top: 1.35rem;
+}
+.radar-launch-actions .button { min-height: 44px; }
 
 @media (max-width: 980px) {
   .radar-hero { align-items: flex-start; flex-direction: column; }
@@ -443,6 +538,11 @@
     display: inline-flex;
     flex: 0 0 auto;
     min-height: 44px;
+    scroll-snap-align: start;
+  }
+  .radar-mobile-radius {
+    display: block;
+    flex: 0 0 11.5rem;
     scroll-snap-align: start;
   }
   .radar-filter-console > label:first-of-type { min-width: 15rem; }
@@ -488,11 +588,21 @@
   .radar-console-bar > div h2 { font-size: .9rem; }
   .radar-briefing-actions { grid-template-columns: 1fr; }
   .radar-briefing-facts { grid-template-columns: 5.2rem 1fr; }
+  .radar-launch-dialog {
+    width: calc(100% - 1rem);
+    max-height: calc(100dvh - 1rem);
+  }
+  .radar-launch-scene {
+    min-height: calc(100dvh - 1rem);
+    max-height: calc(100dvh - 1rem);
+    padding: .75rem;
+  }
+  .radar-launch-actions { display: grid; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .radar-scan { display: none; }
-  .radar-pin, .radar-cluster { transition: none; animation: none; }
+  .radar-pin, .radar-cluster, .radar-cities-pane, .radar-launch-dialog { transition: none; animation: none; }
 }
 
 /* Espace organisateur du Radar. */

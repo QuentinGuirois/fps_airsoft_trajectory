@@ -19,7 +19,7 @@
   <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
   <script src="/theme-bootstrap.js?v=20260723-47" data-cfasync="false"></script>
   <link rel="stylesheet" href="/assets/site.css?v=20260723-47">
-  <link rel="stylesheet" href="/assets/radar.css?v=20260724-49">
+  <link rel="stylesheet" href="/assets/radar.css?v=20260724-50">
   <link rel="stylesheet" href="/assets/vendor/leaflet-1.9.4/leaflet.css?v=1.9.4">
   <link rel="stylesheet" href="/assets/vendor/leaflet.markercluster-1.5.3/MarkerCluster.css?v=1.5.3">
   <link rel="stylesheet" href="/assets/vendor/leaflet.markercluster-1.5.3/MarkerCluster.Default.css?v=1.5.3">
@@ -61,6 +61,9 @@
               <input name="location" type="search" autocomplete="off" maxlength="120" placeholder="Ex. Tours, 33, Grand Est">
             </label>
             <button class="button button-small radar-mobile-geolocate" type="button" data-radar-geolocate>UTILISER MA POSITION</button>
+            <label class="radar-mobile-radius">RAYON AUTOUR DE MA POSITION
+              <select data-radar-mobile-radius aria-label="Rayon autour de ma position"><option value="10">10 km</option><option value="25">25 km</option><option value="50" selected>50 km</option><option value="100">100 km</option></select>
+            </label>
             <div class="radar-filter-pair">
               <label>DU <input name="from" type="date"></label>
               <label>AU <input name="to" type="date"></label>
@@ -93,11 +96,11 @@
               <summary>RAYON AUTOUR DE MOI</summary>
               <div class="radar-radius-controls">
                 <label>RAYON
-                  <select name="radiusKm"><option value="25">25 km</option><option value="50" selected>50 km</option><option value="100">100 km</option><option value="200">200 km</option></select>
+                  <select name="radiusKm" aria-describedby="radar-geolocation-reading"><option value="10">10 km</option><option value="25">25 km</option><option value="50" selected>50 km</option><option value="100">100 km</option></select>
                 </label>
                 <button class="button button-small" type="button" data-radar-geolocate>UTILISER MA POSITION</button>
               </div>
-              <p data-radar-geolocation>Position non utilisée.</p>
+              <p id="radar-geolocation-reading" data-radar-geolocation>Position non utilisée. Elle n’est jamais enregistrée.</p>
             </details>
           </form>
 
@@ -176,10 +179,25 @@
     </form>
   </dialog>
 
+  <dialog class="radar-launch-dialog" data-radar-launch-notice role="dialog" aria-modal="true" aria-labelledby="radar-launch-title">
+    <div class="radar-launch-scene">
+      <div class="radar-launch-panel">
+        <p class="eyebrow">MESSAGE DE LANCEMENT</p>
+        <h2 id="radar-launch-title">RADAR EN DÉPLOIEMENT</h2>
+        <p>Le Radar se remplit : beaucoup de parties visibles viennent d’imports automatisés. Les dates et les liens sont là, mais certaines infos utiles — puissances, grenades, capacité ou consignes terrain — restent parfois NC.</p>
+        <p>Tu organises une partie ? Crée ton compte gratuit, publie-la directement et aide les joueurs à trouver les bonnes infos.</p>
+        <div class="radar-launch-actions">
+          <a class="button button-primary" href="/compte/" data-radar-launch-primary>ME CONNECTER / CRÉER MON COMPTE →</a>
+          <button class="button" type="button" data-radar-launch-close>VOIR LA CARTE</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
   <footer class="site-footer"><div class="shell"><p>F.A.T. — la physique airsoft rendue lisible.</p></div></footer>
   <script src="/assets/vendor/leaflet-1.9.4/leaflet.js?v=1.9.4" data-cfasync="false"></script>
   <script src="/assets/vendor/leaflet.markercluster-1.5.3/leaflet.markercluster.js?v=1.5.3" data-cfasync="false"></script>
-  <script type="module" data-cfasync="false" src="/assets/js/radar/radar-entry.js?v=20260724-49"></script>
+  <script type="module" data-cfasync="false" src="/assets/js/radar/radar-entry.js?v=20260724-50"></script>
   <script type="module" data-cfasync="false" src="/site.js?v=20260723-47"></script>
 </body>
 </html>

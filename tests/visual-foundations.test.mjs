@@ -201,7 +201,7 @@ test('les polices officielles, licences et modules visuels sont disponibles hors
     assert.ok(sw.includes(`'${resource}'`), resource);
   }
   assert.doesNotMatch(sw, /quentin-guirois-(?:320|640)|quentin-guirois-social|partage-fat\.png/);
-  assert.match(sw, /const CACHE = 'fat-v3-2026-07-24-49'/);
+  assert.match(sw, /const CACHE = 'fat-v3-2026-07-24-50'/);
 
   const production = (await walk(root)).filter((path) => /\.(?:html|css|js|webmanifest|svg)$/.test(path));
   for (const path of production) {

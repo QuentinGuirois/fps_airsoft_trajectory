@@ -1,7 +1,7 @@
 import { initTheme } from '../../../theme.js?v=20260723-47';
 import { createTurnstileController } from '../turnstile-client.js?v=20260723-47';
-import { createRadarRepositories } from '../radar-repositories.js?v=20260724-49';
-import { initMyRadarEvents } from './my-radar-events.js?v=20260724-49';
+import { createRadarRepositories } from '../radar-repositories.js?v=20260724-50';
+import { initMyRadarEvents } from './my-radar-events.js?v=20260724-50';
 
 initTheme();
 const root = document.querySelector('[data-my-radar]');

@@ -180,9 +180,22 @@ try {
     method: 'POST', body: {}, identity: identities.owner, expected: 201,
   });
   assert.equal(created.event.state, 'draft');
+  assert.equal(created.event.recordVisibility, 'private');
   assert.equal(created.event.rules.length, 7);
   const eventId = created.event.id;
   await api(`/me/radar-events/${eventId}`, { identity: identities.intruder, expected: 404 });
+  await api(`/me/radar-events/${eventId}`, {
+    method: 'PATCH',
+    body: { version: created.event.version, title: 'Intrusion refusée' },
+    identity: identities.intruder,
+    expected: 404,
+  });
+  await api(`/me/radar-events/${eventId}`, {
+    method: 'DELETE',
+    body: { version: created.event.version, turnstileToken: token('radar_delete') },
+    identity: identities.intruder,
+    expected: 409,
+  });
   await api(`/me/radar-events/${eventId}`, {
     method: 'PATCH',
     body: { version: created.event.version, title: 'CSRF refusé' },
@@ -266,7 +279,10 @@ try {
       registrationUrl: 'https://example.org/inscription',
       contactEmail: 'organisateur@example.test',
       rules,
-      links: [{ type: 'website', url: 'https://example.org' }],
+      links: [
+        { type: 'website', url: 'https://example.org' },
+        { type: 'facebook', url: 'https://www.facebook.com/events/123456789' },
+      ],
     },
   });
   assert.equal(patched.event.locationConfirmed, true);
@@ -283,13 +299,41 @@ try {
     method: 'PATCH', identity: identities.owner, expected: 422,
     body: { version: patched.event.version, registrationUrl: 'http://example.org/refuse' },
   });
+  for (const unsafeLinks of [
+    [{ type: 'website', url: 'https://association.example.org/boutique/billes-airsoft' }],
+    [{ type: 'website', url: 'https://bit.ly/operation-tours' }],
+    [{ type: 'facebook', url: 'https://fake-facebook.example.org/events/123' }],
+  ]) {
+    const rejected = await api(`/me/radar-events/${eventId}`, {
+      method: 'PATCH',
+      identity: identities.owner,
+      expected: 422,
+      body: { version: patched.event.version, links: unsafeLinks },
+    });
+    assert.equal(rejected.code, 'radar_link_rejected');
+    assert.equal(
+      rejected.message,
+      'Ce lien externe n’est pas accepté pour une partie. Utilise un lien organisateur, inscription ou réseau social officiel.',
+    );
+  }
 
+  const setRegistrationUrl = "require 'api/src/autoload.php'; $config=\\Fat\\Api\\Config::load(getcwd()); $db=\\Fat\\Api\\Database::connect($config); $statement=$db->prepare('UPDATE radar_events SET registration_url=? WHERE id=?'); $statement->execute([$argv[1],$argv[2]]);";
+  command(PHP, ['-r', setRegistrationUrl, 'https://association.example.org/boutique/billes-airsoft', eventId]);
+  const publishRejected = await api(`/me/radar-events/${eventId}/publish`, {
+    method: 'POST',
+    identity: identities.owner,
+    expected: 422,
+    body: { version: patched.event.version, turnstileToken: token('radar_publish') },
+  });
+  assert.equal(publishRejected.code, 'radar_link_rejected');
+  command(PHP, ['-r', setRegistrationUrl, 'https://example.org/inscription', eventId]);
   const published = await api(`/me/radar-events/${eventId}/publish`, {
     method: 'POST',
     identity: identities.owner,
     body: { version: patched.event.version, turnstileToken: token('radar_publish') },
   });
   assert.equal(published.event.state, 'published');
+  assert.equal(published.event.recordVisibility, 'public');
 
   const publicList = await api('/radar/events?city=Tours&beginner=1&rules=dmr&limit=20', { publicCache: true });
   assert.equal(publicList.events.length, 1);

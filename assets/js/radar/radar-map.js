@@ -33,6 +33,22 @@ const LINK_LABELS = Object.freeze({
   instagram: 'INSTAGRAM',
 });
 
+export const RADAR_CITIES = Object.freeze([
+  ['LILLE', 50.6292, 3.0573],
+  ['PARIS', 48.8566, 2.3522],
+  ['RENNES', 48.1173, -1.6778],
+  ['NANTES', 47.2184, -1.5536],
+  ['STRASBOURG', 48.5734, 7.7521],
+  ['LYON', 45.7640, 4.8357],
+  ['BORDEAUX', 44.8378, -0.5792],
+  ['TOULOUSE', 43.6047, 1.4442],
+  ['MONTPELLIER', 43.6119, 3.8772],
+  ['MARSEILLE', 43.2965, 5.3698],
+  ['NICE', 43.7102, 7.2620],
+]);
+
+export const RADAR_LAUNCH_NOTICE_KEY = 'fat.radar.launch-notice.v1';
+
 export function isWgs84(latitude, longitude) {
   return Number.isFinite(Number(latitude))
     && Number.isFinite(Number(longitude))
@@ -306,6 +322,56 @@ function focusable(container) {
     .filter((node) => !node.hidden && node.getClientRects().length);
 }
 
+export function initRadarLaunchNotice({
+  dialog,
+  windowRef = globalThis.window,
+  documentRef = globalThis.document,
+} = {}) {
+  if (!dialog || windowRef.location.pathname !== '/parties-airsoft/') return null;
+  try {
+    if (windowRef.localStorage.getItem(RADAR_LAUNCH_NOTICE_KEY) === 'seen') return null;
+  } catch {}
+
+  const previousFocus = documentRef.activeElement;
+  const close = () => {
+    if (dialog.open) dialog.close();
+    if (previousFocus && previousFocus !== documentRef.body && previousFocus.isConnected) {
+      previousFocus.focus();
+      return;
+    }
+    documentRef.body.setAttribute('tabindex', '-1');
+    documentRef.body.focus({ preventScroll: true });
+    documentRef.body.removeAttribute('tabindex');
+  };
+  dialog.querySelector('[data-radar-launch-close]')?.addEventListener('click', close);
+  dialog.addEventListener('cancel', (event) => {
+    event.preventDefault();
+    close();
+  });
+  dialog.addEventListener('keydown', (event) => {
+    if (event.key !== 'Tab') return;
+    const nodes = focusable(dialog);
+    if (!nodes.length) return;
+    const first = nodes[0];
+    const last = nodes.at(-1);
+    if (event.shiftKey && documentRef.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && documentRef.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+  try {
+    windowRef.localStorage.setItem(RADAR_LAUNCH_NOTICE_KEY, 'seen');
+  } catch {}
+  windowRef.requestAnimationFrame(() => {
+    dialog.showModal();
+    dialog.querySelector('[data-radar-launch-primary]')?.focus();
+  });
+  return { close };
+}
+
 export function initRadarMap({
   root,
   publicRepository,
@@ -350,6 +416,37 @@ export function initRadarMap({
   });
   map.attributionControl.setPrefix(false);
   map.attributionControl.addAttribution('Limites © IGN ADMIN EXPRESS COG CARTO PE 2026');
+
+  map.createPane('radarCities');
+  const cityPane = map.getPane('radarCities');
+  cityPane.classList.add('radar-cities-pane');
+  cityPane.setAttribute('aria-hidden', 'true');
+  const cities = leaflet.layerGroup().addTo(map);
+  for (const [name, latitude, longitude] of RADAR_CITIES) {
+    const marker = leaflet.marker([latitude, longitude], {
+      pane: 'radarCities',
+      interactive: false,
+      keyboard: false,
+      icon: leaflet.divIcon({
+        className: 'radar-city-marker',
+        html: `<span aria-hidden="true"><i></i>${name}</span>`,
+        iconSize: [104, 18],
+        iconAnchor: [7, 9],
+      }),
+    });
+    marker.on('add', () => {
+      const cityElement = marker.getElement();
+      cityElement?.setAttribute('aria-hidden', 'true');
+      cityElement?.setAttribute('tabindex', '-1');
+    });
+    cities.addLayer(marker);
+  }
+  const syncCityVisibility = () => {
+    const visible = map.getZoom() <= 7;
+    cityPane.classList.toggle('is-hidden', !visible);
+    root.dataset.citiesVisible = String(visible);
+  };
+  syncCityVisibility();
 
   const departments = leaflet.geoJSON(null, {
     interactive: false,
@@ -499,6 +596,8 @@ export function initRadarMap({
       state.markers.set(event.slug, marker);
     }
     count.textContent = plural(state.filtered.length);
+    root.dataset.radarFilteredCount = String(state.filtered.length);
+    root.dataset.radarMarkerCount = String(state.markers.size);
     empty.hidden = state.filtered.length !== 0;
     announce(state.filtered.length
       ? `${plural(state.filtered.length)} détectée${state.filtered.length > 1 ? 's' : ''}.`
@@ -507,16 +606,29 @@ export function initRadarMap({
   }
 
   let filterTimer = 0;
+  const mobileRadius = root.querySelector('[data-radar-mobile-radius]');
   filterForm.addEventListener('input', () => {
     windowRef.clearTimeout(filterTimer);
     filterTimer = windowRef.setTimeout(render, 120);
   });
-  filterForm.addEventListener('change', render);
+  filterForm.addEventListener('change', (event) => {
+    if (event.target === filterForm.elements.radiusKm && mobileRadius) {
+      mobileRadius.value = filterForm.elements.radiusKm.value;
+    }
+    render();
+  });
+  mobileRadius?.addEventListener('change', () => {
+    filterForm.elements.radiusKm.value = mobileRadius.value;
+    render();
+  });
   filterForm.addEventListener('reset', () => {
     state.position = null;
-    root.querySelector('[data-radar-geolocation]').textContent = 'Position non utilisée.';
+    root.querySelector('[data-radar-geolocation]').textContent = 'Position non utilisée. Elle n’est jamais enregistrée.';
     root.querySelectorAll('[data-radar-date]').forEach((button) => button.removeAttribute('aria-pressed'));
-    windowRef.setTimeout(render, 0);
+    windowRef.setTimeout(() => {
+      if (mobileRadius) mobileRadius.value = filterForm.elements.radiusKm.value;
+      render();
+    }, 0);
   });
   root.querySelectorAll('[data-radar-date]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -542,8 +654,17 @@ export function initRadarMap({
   });
   root.querySelectorAll('[data-radar-geolocate]').forEach((button) => {
     button.addEventListener('click', () => {
+      if (state.position) {
+        map.setView([state.position.latitude, state.position.longitude], 8, {
+          animate: !windowRef.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        });
+        return;
+      }
       if (!windowRef.navigator.geolocation) {
-        announce('La géolocalisation n’est pas disponible dans ce navigateur.');
+        state.position = null;
+        root.querySelector('[data-radar-geolocation]').textContent = 'Position non utilisée. Elle n’est jamais enregistrée.';
+        render();
+        announce('La géolocalisation n’est pas disponible dans ce navigateur. Aucun filtre n’est appliqué.');
         return;
       }
       announce('Recherche ponctuelle de votre position…');
@@ -554,11 +675,21 @@ export function initRadarMap({
         };
         root.querySelector('[data-radar-geolocation]').textContent = `Rayon appliqué · précision ± ${Math.round(position.coords.accuracy)} m.`;
         render();
-        map.setView([state.position.latitude, state.position.longitude], 8);
-      }, () => announce('Position refusée ou indisponible. Aucun emplacement n’a été conservé.'), {
+        map.setView([state.position.latitude, state.position.longitude], 8, {
+          animate: !windowRef.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        });
+      }, (error) => {
+        state.position = null;
+        root.querySelector('[data-radar-geolocation]').textContent = 'Position non utilisée. Elle n’est jamais enregistrée.';
+        const reason = error?.code === 1
+          ? 'Autorisation de position refusée.'
+          : (error?.code === 3 ? 'La recherche de position a expiré.' : 'Position indisponible.');
+        render();
+        announce(`${reason} Aucun emplacement n’a été conservé et aucun filtre n’est appliqué.`);
+      }, {
         enableHighAccuracy: false,
         timeout: 8_000,
-        maximumAge: 300_000,
+        maximumAge: 0,
       });
     });
   });
@@ -604,7 +735,11 @@ export function initRadarMap({
     }
   });
   windowRef.addEventListener('resize', () => map.invalidateSize({ pan: false }));
-  map.on('zoomend moveend', () => map.invalidateSize({ pan: false }));
+  map.on('zoomend', () => {
+    syncCityVisibility();
+    map.invalidateSize({ pan: false });
+  });
+  map.on('moveend', () => map.invalidateSize({ pan: false }));
   windowRef.addEventListener('popstate', async () => {
     const slug = deepSlugFromPath(windowRef.location.pathname);
     if (!slug) {
@@ -677,6 +812,13 @@ export function initRadarMap({
     }
   }
   load();
+  initRadarLaunchNotice({
+    dialog: documentRef.querySelector('[data-radar-launch-notice]'),
+    windowRef,
+    documentRef,
+  });
 
-  return { map, state, render, openBriefing, closeBriefing, load };
+  return {
+    map, state, cities, render, openBriefing, closeBriefing, load,
+  };
 }

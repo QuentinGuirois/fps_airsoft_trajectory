@@ -18,6 +18,7 @@ use Fat\Api\Services\GeocodingService;
 use Fat\Api\Services\MailerFactory;
 use Fat\Api\Services\ModerationNotifier;
 use Fat\Api\Services\RateLimiter;
+use Fat\Api\Services\RadarLinkSafety;
 use Fat\Api\Services\SensitiveData;
 use Fat\Api\Services\SessionService;
 use Fat\Api\Services\UploadService;
@@ -77,6 +78,7 @@ final class Application
             $turnstile,
             new SensitiveData($this->config),
             new GeocodingService($this->db, $this->config),
+            new RadarLinkSafety(),
         );
         $publicRadar = new PublicRadarController($this->db, $this->config, $limits, $turnstile);
         $radarAdmin = new RadarAdminController($this->db, $sessions, $limits, $audit);

@@ -71,9 +71,38 @@ try {
   const desktopWatch = watch(desktop, 'desktop');
   await desktop.goto(`${base}/parties-airsoft/`, { waitUntil: 'networkidle' });
   await desktop.locator('[data-radar-count]').filter({ hasText: '32 PARTIES' }).waitFor();
+  const launch = desktop.locator('[data-radar-launch-notice]:visible');
+  await launch.waitFor();
+  assert.equal(await launch.getAttribute('role'), 'dialog');
+  assert.equal(await launch.getAttribute('aria-modal'), 'true');
+  assert.equal(await desktop.evaluate(() => localStorage.getItem('fat.radar.launch-notice.v1')), 'seen');
+  assert.equal(await launch.locator('[data-radar-launch-primary]').evaluate((node) => node === document.activeElement), true);
+  await desktop.screenshot({ path: join(output, 'radar-launch-desktop.png'), fullPage: false });
+  await desktop.keyboard.press('Shift+Tab');
+  assert.equal(await launch.locator('[data-radar-launch-close]').evaluate((node) => node === document.activeElement), true);
+  await desktop.keyboard.press('Tab');
+  assert.equal(await launch.locator('[data-radar-launch-primary]').evaluate((node) => node === document.activeElement), true);
+  await desktop.keyboard.press('Escape');
+  await launch.waitFor({ state: 'hidden' });
+  const repeatNotice = await desktopContext.newPage();
+  await repeatNotice.goto(`${base}/parties-airsoft/`, { waitUntil: 'networkidle' });
+  assert.equal(await repeatNotice.locator('[data-radar-launch-notice]:visible').count(), 0);
+  await repeatNotice.close();
   assert.equal(await desktop.locator('h1').textContent(), 'Parties d’airsoft en France : trouvez votre prochaine partie');
   assert.equal(await desktop.locator('.radar-event-card').count(), 32);
   assert.ok(await desktop.locator('.radar-marker-shell, .marker-cluster').count() > 0);
+  assert.equal(await desktop.locator('.radar-city-marker').count(), 11);
+  assert.equal(await desktop.locator('.radar-city-marker:visible').count(), 11);
+  assert.equal(await desktop.locator('.radar-city-marker[aria-hidden="true"]').count(), 11);
+  assert.equal(await desktop.locator('.radar-city-marker[tabindex="-1"]').count(), 11);
+  await desktop.locator('.leaflet-control-zoom-in').evaluate((node) => node.click());
+  await desktop.waitForTimeout(400);
+  await desktop.locator('.leaflet-control-zoom-in').evaluate((node) => node.click());
+  await desktop.locator('[data-radar-app][data-cities-visible="false"]').waitFor();
+  assert.equal(await desktop.locator('.radar-city-marker:visible').count(), 0);
+  await desktop.locator('.leaflet-control-zoom-out').evaluate((node) => node.click());
+  await desktop.locator('[data-radar-app][data-cities-visible="true"]').waitFor();
+  assert.equal(await desktop.locator('.radar-city-marker:visible').count(), 11);
   const publicPayload = await desktop.evaluate(async () => (await fetch('/api/v1/radar/events')).json());
   assert.equal(JSON.stringify(publicPayload).includes('Adresse privée'), false);
   const approximate = publicPayload.events.find((event) => event.locationVisibility === 'approximate');
@@ -126,17 +155,133 @@ try {
   const resizedMap = await desktop.locator('#radar-map').boundingBox();
   assert.ok(resizedMap.width > 700 && resizedMap.height > 600, JSON.stringify(resizedMap));
 
-  const deep = await desktopContext.newPage();
+  const deepContext = await browser.newContext({
+    viewport: { width: 1440, height: 1000 },
+    reducedMotion: 'reduce',
+    colorScheme: 'dark',
+  });
+  const deep = await deepContext.newPage();
   const deepWatch = watch(deep, 'deep');
   await deep.goto(`${base}${publicPayload.events[0].publicUrl}`, { waitUntil: 'networkidle' });
   await deep.locator('[data-radar-briefing]:visible').waitFor();
+  assert.equal(await deep.locator('[data-radar-launch-notice]:visible').count(), 0);
+  assert.equal(await deep.evaluate(() => localStorage.getItem('fat.radar.launch-notice.v1')), null);
   assert.equal(await deep.locator('meta[name="robots"]').getAttribute('content'), 'noindex,follow');
   assert.match(await deep.locator('.radar-briefing-facts').textContent(), /SECTEUR.*MISE À JOUR/s);
   assert.deepEqual(deepWatch.external, []);
   assert.deepEqual(deepWatch.errors, []);
-  await deep.close();
+  await deepContext.close();
   assert.deepEqual(desktopWatch.external, []);
   assert.deepEqual(desktopWatch.errors, []);
+
+  const rad = (value) => value * Math.PI / 180;
+  const distance = (from, to) => {
+    const deltaLat = rad(to.latitude - from.latitude);
+    const deltaLon = rad(to.longitude - from.longitude);
+    const a = Math.sin(deltaLat / 2) ** 2
+      + Math.cos(rad(from.latitude)) * Math.cos(rad(to.latitude)) * Math.sin(deltaLon / 2) ** 2;
+    return 6371.0088 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+  const locatedEvents = publicPayload.events.filter(
+    (event) => Number.isFinite(event.latitude) && Number.isFinite(event.longitude),
+  );
+  const geoAnchor = locatedEvents.find((candidate) => {
+    const at10 = locatedEvents.filter((event) => distance(candidate, event) <= 10).length;
+    const at100 = locatedEvents.filter((event) => distance(candidate, event) <= 100).length;
+    return at100 > at10;
+  }) || locatedEvents[0];
+  const expectedAt = (radiusKm) => locatedEvents.filter((event) => distance(geoAnchor, event) <= radiusKm).length;
+  const geoContext = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+    reducedMotion: 'reduce',
+    colorScheme: 'dark',
+    permissions: ['geolocation'],
+    geolocation: { latitude: geoAnchor.latitude, longitude: geoAnchor.longitude, accuracy: 12 },
+  });
+  await geoContext.addInitScript(() => {
+    localStorage.setItem('fat.radar.launch-notice.v1', 'seen');
+    const original = navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
+    window.__radarGeoCalls = 0;
+    navigator.geolocation.getCurrentPosition = (...args) => {
+      window.__radarGeoCalls += 1;
+      return original(...args);
+    };
+  });
+  const geoPage = await geoContext.newPage();
+  const geoWatch = watch(geoPage, 'geolocation');
+  await geoPage.goto(`${base}/parties-airsoft/`, { waitUntil: 'networkidle' });
+  await geoPage.locator('[data-radar-count]').filter({ hasText: '32 PARTIES' }).waitFor();
+  await geoPage.locator('.radar-filter-console details > summary').click();
+  await geoPage.locator('[name="radiusKm"]').selectOption('10');
+  await geoPage.locator('[data-radar-geolocate]:visible').click();
+  await geoPage.locator(`[data-radar-app][data-radar-filtered-count="${expectedAt(10)}"]`).waitFor();
+  assert.equal(await geoPage.locator('.radar-event-card').count(), expectedAt(10));
+  assert.equal(Number(await geoPage.locator('[data-radar-app]').getAttribute('data-radar-marker-count')), expectedAt(10));
+  await geoPage.locator('[name="radiusKm"]').selectOption('100');
+  await geoPage.locator(`[data-radar-app][data-radar-filtered-count="${expectedAt(100)}"]`).waitFor();
+  assert.equal(await geoPage.locator('.radar-event-card').count(), expectedAt(100));
+  assert.equal(Number(await geoPage.locator('[data-radar-app]').getAttribute('data-radar-marker-count')), expectedAt(100));
+  assert.ok(expectedAt(100) > expectedAt(10), `${expectedAt(10)} → ${expectedAt(100)}`);
+  await geoPage.locator('[data-radar-geolocate]:visible').click();
+  assert.equal(await geoPage.evaluate(() => window.__radarGeoCalls), 1);
+  await geoPage.getByRole('button', { name: 'RÉINITIALISER' }).click();
+  await geoPage.locator('[data-radar-count]').filter({ hasText: '32 PARTIES' }).waitFor();
+  assert.match(await geoPage.locator('[data-radar-geolocation]').textContent(), /jamais enregistrée/);
+  assert.deepEqual(geoWatch.external, []);
+  assert.deepEqual(geoWatch.errors, []);
+  await geoContext.close();
+
+  const deniedContext = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+    reducedMotion: 'reduce',
+    colorScheme: 'dark',
+  });
+  await deniedContext.addInitScript(() => {
+    localStorage.setItem('fat.radar.launch-notice.v1', 'seen');
+    navigator.geolocation.getCurrentPosition = (_success, failure) => {
+      queueMicrotask(() => failure({ code: 1, message: 'Permission denied by Playwright' }));
+    };
+  });
+  const denied = await deniedContext.newPage();
+  const deniedWatch = watch(denied, 'geolocation-denied');
+  await denied.goto(`${base}/parties-airsoft/`, { waitUntil: 'networkidle' });
+  await denied.locator('[data-radar-count]').filter({ hasText: '32 PARTIES' }).waitFor();
+  await denied.locator('.radar-filter-console details > summary').click();
+  await denied.locator('[data-radar-geolocate]:visible').click();
+  await denied.locator('[data-radar-status]').filter({ hasText: /refusée/ }).waitFor();
+  assert.equal(await denied.locator('.radar-event-card').count(), 32);
+  assert.match(await denied.locator('[data-radar-geolocation]').textContent(), /jamais enregistrée/);
+  assert.deepEqual(deniedWatch.external, []);
+  assert.deepEqual(deniedWatch.errors, []);
+  await deniedContext.close();
+
+  const offlineContext = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+    reducedMotion: 'reduce',
+    colorScheme: 'dark',
+  });
+  await offlineContext.addInitScript(() => localStorage.setItem('fat.radar.launch-notice.v1', 'seen'));
+  const offline = await offlineContext.newPage();
+  await offline.goto(`${base}/parties-airsoft/`, { waitUntil: 'networkidle' });
+  await offline.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller) location.reload();
+  });
+  await offline.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+  await offline.waitForFunction(async () => {
+    const cache = await caches.open('fat-v3-2026-07-24-50');
+    return Boolean(
+      await cache.match('/parties-airsoft/')
+      && await cache.match('/assets/radar.css?v=20260724-50')
+      && await cache.match('/assets/js/radar/radar-map.js?v=20260724-50'),
+    );
+  });
+  await offlineContext.setOffline(true);
+  await offline.goto(`${base}/parties-airsoft/`, { waitUntil: 'domcontentloaded' });
+  await offline.locator('h1').filter({ hasText: 'Parties d’airsoft en France' }).waitFor();
+  assert.equal(await offline.evaluate(() => navigator.serviceWorker.controller !== null), true);
+  await offlineContext.setOffline(false);
+  await offlineContext.close();
 
   const mobileContext = await browser.newContext({
     viewport: { width: 390, height: 844 },
@@ -149,9 +294,25 @@ try {
   const mobileWatch = watch(mobile, 'mobile');
   await mobile.goto(`${base}/parties-airsoft/`, { waitUntil: 'networkidle' });
   await mobile.locator('[data-radar-count]').filter({ hasText: '32 PARTIES' }).waitFor();
+  const mobileLaunch = mobile.locator('[data-radar-launch-notice]:visible');
+  await mobileLaunch.waitFor();
+  const launchMetrics = await mobileLaunch.evaluate((node) => ({
+    width: node.getBoundingClientRect().width,
+    viewport: innerWidth,
+    pageWidth: document.documentElement.scrollWidth,
+    primaryHeight: node.querySelector('[data-radar-launch-primary]').getBoundingClientRect().height,
+  }));
+  assert.ok(launchMetrics.width <= launchMetrics.viewport, JSON.stringify(launchMetrics));
+  assert.ok(launchMetrics.pageWidth <= launchMetrics.viewport, JSON.stringify(launchMetrics));
+  assert.ok(launchMetrics.primaryHeight >= 44, JSON.stringify(launchMetrics));
+  await mobile.screenshot({ path: join(output, 'radar-launch-mobile-390.png'), fullPage: false });
+  await mobileLaunch.locator('[data-radar-launch-close]').click();
+  await mobileLaunch.waitFor({ state: 'hidden' });
   assert.equal(await mobile.locator('.radar-event-card').count(), 32);
   const mobileGeolocation = await mobile.locator('.radar-mobile-geolocate').boundingBox();
   assert.ok(mobileGeolocation?.height >= 44, JSON.stringify(mobileGeolocation));
+  const mobileRadius = await mobile.locator('[data-radar-mobile-radius]').boundingBox();
+  assert.ok(mobileRadius?.height >= 44, JSON.stringify(mobileRadius));
   await mobile.screenshot({ path: join(output, 'radar-mobile.png'), fullPage: false });
   await mobile.locator('.radar-event-open').first().click();
   const mobileBriefing = mobile.locator('[data-radar-briefing]:visible');
@@ -159,6 +320,10 @@ try {
   const box = await mobileBriefing.boundingBox();
   assert.ok(box.width >= 389 && box.height >= 843, JSON.stringify(box));
   await mobile.screenshot({ path: join(output, 'radar-mobile-briefing.png'), fullPage: false });
+  await mobile.keyboard.press('Escape');
+  await mobile.setViewportSize({ width: 430, height: 932 });
+  assert.equal(await mobile.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await mobile.screenshot({ path: join(output, 'radar-mobile-430.png'), fullPage: false });
   assert.deepEqual(mobileWatch.external, []);
   assert.deepEqual(mobileWatch.errors, []);
   await mobileContext.close();
@@ -228,8 +393,8 @@ try {
   await ownerContext.close();
   await desktopContext.close();
 
-  console.log('Radar navigateur: desktop, mobile, briefing, filtres, redimensionnement, confidentialité et espace organisateur validés.');
-  console.log(`Captures: ${join(output, 'radar-desktop.png')}, ${join(output, 'radar-mobile.png')}, ${join(output, 'radar-mobile-briefing.png')}, ${join(output, 'radar-owner-list.png')}, ${join(output, 'radar-owner-editor.png')}`);
+  console.log(`Radar navigateur: villes zoom 6/7/8, popup, rayon ${expectedAt(10)} → ${expectedAt(100)}, refus de position, desktop, mobile, briefing, confidentialité et espace organisateur validés.`);
+  console.log(`Captures: ${join(output, 'radar-launch-desktop.png')}, ${join(output, 'radar-desktop.png')}, ${join(output, 'radar-launch-mobile-390.png')}, ${join(output, 'radar-mobile.png')}, ${join(output, 'radar-mobile-430.png')}, ${join(output, 'radar-mobile-briefing.png')}, ${join(output, 'radar-owner-list.png')}, ${join(output, 'radar-owner-editor.png')}`);
 } finally {
   await browser.close();
 }

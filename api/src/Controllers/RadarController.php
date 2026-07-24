@@ -11,6 +11,7 @@ use Fat\Api\Response;
 use Fat\Api\Services\AuditLogger;
 use Fat\Api\Services\GeocodingService;
 use Fat\Api\Services\RateLimiter;
+use Fat\Api\Services\RadarLinkSafety;
 use Fat\Api\Services\SensitiveData;
 use Fat\Api\Services\SessionService;
 use Fat\Api\Services\TurnstileVerifier;
@@ -37,6 +38,7 @@ final class RadarController
         private readonly TurnstileVerifier $turnstile,
         private readonly SensitiveData $sensitive,
         private readonly GeocodingService $geocoder,
+        private readonly RadarLinkSafety $linkSafety,
     ) {
     }
 
@@ -109,6 +111,7 @@ final class RadarController
         $values = $this->mergedValues($current, $body);
         $rules = array_key_exists('rules', $body) ? RadarValidator::rules($body['rules']) : $this->rules($params['id']);
         $links = array_key_exists('links', $body) ? RadarValidator::links($body['links']) : $this->links($params['id']);
+        $this->linkSafety->assertEventLinks($values['registrationUrl'], $links);
         if ($current['state'] === 'published') {
             $this->assertPublishable($values, $rules, $links);
         }
@@ -185,7 +188,9 @@ final class RadarController
         }
         $values = $this->mergedValues($row, []);
         $rules = $this->rules($params['id']);
-        $this->assertPublishable($values, $rules, $this->links($params['id']));
+        $links = $this->links($params['id']);
+        $this->linkSafety->assertEventLinks($values['registrationUrl'], $links);
+        $this->assertPublishable($values, $rules, $links);
         $statement = $this->db->prepare(
             "UPDATE radar_events SET state='published',record_visibility='public',"
             . "location_precision=COALESCE(location_precision,IF(location_visibility='exact','street','locality')),"

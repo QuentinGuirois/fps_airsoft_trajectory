@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -8,6 +9,8 @@ import {
   eventMatchesFilters,
   haversineKm,
   isWgs84,
+  RADAR_CITIES,
+  RADAR_LAUNCH_NOTICE_KEY,
   toLeafletLatLng,
 } from '../assets/js/radar/radar-map.js';
 
@@ -61,6 +64,60 @@ test('les filtres date, lieu, débutants, location, règles et rayon se combinen
     position: { latitude: 48.8566, longitude: 2.3522 },
     radiusKm: 10,
   }), false);
+});
+
+test('les limites de rayon 10, 25, 50 et 100 km distinguent un point dedans et dehors', () => {
+  const origin = { latitude: 46.6, longitude: 2.4 };
+  const latitudeAtDistance = (distanceKm) => origin.latitude + distanceKm / 6371.0088 * 180 / Math.PI;
+  for (const radiusKm of [10, 25, 50, 100]) {
+    const inside = { ...tours, latitude: latitudeAtDistance(radiusKm - 0.01), longitude: origin.longitude };
+    const outside = { ...tours, latitude: latitudeAtDistance(radiusKm + 0.01), longitude: origin.longitude };
+    const filters = { position: origin, radiusKm };
+    assert.equal(eventMatchesFilters(inside, filters), true, `${radiusKm} km intérieur`);
+    assert.equal(eventMatchesFilters(outside, filters), false, `${radiusKm} km extérieur`);
+    assert.ok(haversineKm(origin.latitude, origin.longitude, inside.latitude, inside.longitude) < radiusKm);
+    assert.ok(haversineKm(origin.latitude, origin.longitude, outside.latitude, outside.longitude) > radiusKm);
+  }
+});
+
+test('les onze grandes villes restent un calque décoratif séparé jusqu’au zoom 7', async () => {
+  const [map, css] = await Promise.all([
+    read('assets', 'js', 'radar', 'radar-map.js'),
+    read('assets', 'radar.css'),
+  ]);
+  assert.equal(RADAR_CITIES.length, 11);
+  assert.deepEqual(RADAR_CITIES.find(([name]) => name === 'PARIS'), ['PARIS', 48.8566, 2.3522]);
+  assert.match(map, /map\.getZoom\(\) <= 7/);
+  assert.match(map, /interactive:\s*false/);
+  assert.match(map, /keyboard:\s*false/);
+  assert.match(map, /aria-hidden/);
+  assert.match(css, /\.radar-cities-pane\s*\{[^}]*pointer-events:\s*none/s);
+  assert.match(css, /\.radar-city-marker\s*\{[^}]*pointer-events:\s*none/s);
+});
+
+test('la popup de lancement est versionnée, accessible et réservée à la racine du Radar', async () => {
+  const [html, map] = await Promise.all([
+    read('parties-airsoft', 'index.html'),
+    read('assets', 'js', 'radar', 'radar-map.js'),
+  ]);
+  assert.equal(RADAR_LAUNCH_NOTICE_KEY, 'fat.radar.launch-notice.v1');
+  assert.match(html, /RADAR EN DÉPLOIEMENT/);
+  assert.match(html, /role="dialog" aria-modal="true"/);
+  assert.match(html, /ME CONNECTER \/ CRÉER MON COMPTE/);
+  assert.match(html, /data-radar-launch-close>VOIR LA CARTE/);
+  assert.match(map, /windowRef\.location\.pathname !== '\/parties-airsoft\/'/);
+  assert.match(map, /event\.key !== 'Tab'/);
+  assert.match(map, /addEventListener\('cancel'/);
+});
+
+test('la politique serveur des liens accepte les plateformes officielles et refuse les motifs défensifs', () => {
+  const php = process.env.FAT_TEST_PHP || (process.platform === 'win32' ? 'C:\\tools\\php\\php.exe' : 'php');
+  const result = spawnSync(php, ['tests/radar-link-safety-unit.php'], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.match(result.stdout, /cas sûrs et dangereux validés/);
 });
 
 test('les URL profondes Radar acceptent seulement un slug borné', () => {
@@ -132,11 +189,11 @@ test('le schéma et les routes couvrent cycle de vie, règles, signalement et mo
 
 test('le cache PWA inclut seulement le Radar public et contourne compte et API', async () => {
   const worker = await read('service-worker.js');
-  assert.match(worker, /fat-v3-2026-07-24-49/);
+  assert.match(worker, /fat-v3-2026-07-24-50/);
   for (const asset of [
     '/parties-airsoft/',
-    '/assets/radar.css?v=20260724-49',
-    '/assets/js/radar/radar-map.js?v=20260724-49',
+    '/assets/radar.css?v=20260724-50',
+    '/assets/js/radar/radar-map.js?v=20260724-50',
     '/data/radar-france-departments.geojson',
   ]) assert.ok(worker.includes(`'${asset}'`), asset);
   const optional = worker.match(/const OPTIONAL = \[([\s\S]*?)\n\];/)?.[1] || '';
