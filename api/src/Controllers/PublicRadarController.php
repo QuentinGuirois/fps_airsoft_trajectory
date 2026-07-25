@@ -10,6 +10,7 @@ use Fat\Api\HttpException;
 use Fat\Api\Request;
 use Fat\Api\Response;
 use Fat\Api\Services\RateLimiter;
+use Fat\Api\Services\RadarReportNotifier;
 use Fat\Api\Services\TurnstileVerifier;
 use Fat\Api\Support;
 use Fat\Api\Validation\RadarValidator;
@@ -25,6 +26,7 @@ final class PublicRadarController
         private readonly Config $config,
         private readonly RateLimiter $limits,
         private readonly TurnstileVerifier $turnstile,
+        private readonly RadarReportNotifier $reportNotifier,
     ) {
     }
 
@@ -149,12 +151,12 @@ final class PublicRadarController
         $reason = RadarValidator::enum($body['reason'], 'Le motif de signalement', self::REPORT_REASONS);
         $message = RadarValidator::optionalText($body['message'] ?? null, 'Le détail du signalement', 1000);
         $event = $this->db->prepare(
-            "SELECT id FROM radar_events WHERE slug=? AND state IN ('published','cancelled') "
+            "SELECT id,slug,title FROM radar_events WHERE slug=? AND state IN ('published','cancelled') "
             . "AND record_visibility='public' AND is_fixture=0 AND moderation_state='visible' LIMIT 1"
         );
         $event->execute([$params['slug']]);
-        $eventId = $event->fetchColumn();
-        if (is_string($eventId)) {
+        $reportedEvent = $event->fetch();
+        if (is_array($reportedEvent)) {
             $reporter = hash_hmac(
                 'sha256',
                 $request->ip() . "\0" . $request->header('user-agent'),
@@ -164,7 +166,9 @@ final class PublicRadarController
             $statement = $this->db->prepare(
                 'INSERT INTO radar_event_reports (id,event_id,reason,message,reporter_key_hash) VALUES (?,?,?,?,?)'
             );
-            $statement->execute([Support::uuid(), $eventId, $reason, $message, $reporter]);
+            $reportId = Support::uuid();
+            $statement->execute([$reportId, $reportedEvent['id'], $reason, $message, $reporter]);
+            $this->reportNotifier->notifyStored($reportId);
         }
         Response::json(['received' => true], 202);
     }

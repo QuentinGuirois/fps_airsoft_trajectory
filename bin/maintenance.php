@@ -6,6 +6,8 @@ require $root . '/api/src/autoload.php';
 
 use Fat\Api\Config;
 use Fat\Api\Database;
+use Fat\Api\Services\MailerFactory;
+use Fat\Api\Services\RadarReportNotifier;
 
 $config = Config::load($root);
 $db = Database::connect($config);
@@ -16,6 +18,8 @@ $db->exec('DELETE FROM email_verification_tokens WHERE expires_at<UTC_TIMESTAMP(
 $db->exec('DELETE FROM password_reset_tokens WHERE expires_at<UTC_TIMESTAMP()-INTERVAL 7 DAY');
 $db->exec("UPDATE radar_events SET state='expired',expires_at=ends_at_utc,version=version+1 WHERE state='published' AND ends_at_utc<=UTC_TIMESTAMP()");
 $db->exec('DELETE FROM radar_geocoding_cache WHERE expires_at<UTC_TIMESTAMP()');
+$radarReportNotifier = new RadarReportNotifier($config, $db, MailerFactory::create($config));
+$radarReportNotifier->flushPending();
 $radarReportRetentionDays = min(730, max(30, $config->int('RADAR_REPORT_RETENTION_DAYS', 365)));
 $purgeRadarReports = $db->prepare(
     'DELETE FROM radar_event_reports WHERE created_at<UTC_TIMESTAMP()-INTERVAL ' . $radarReportRetentionDays . ' DAY LIMIT 1000'

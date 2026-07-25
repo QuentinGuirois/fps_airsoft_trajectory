@@ -135,10 +135,14 @@ La configuration privée de production doit conserver :
 MAIL_MODE=native
 MAIL_FROM=noreply@fps-airsoft-trajectory.com
 MAIL_REPLY_TO=contact@fps-airsoft-trajectory.com
+MAIL_CONTACT_TO=contact@fps-airsoft-trajectory.com
 ```
 
 `MAIL_FROM` doit appartenir au domaine aligné SPF/DKIM. `MAIL_REPLY_TO` est une
-boîte réellement surveillée. Ces emails sont strictement transactionnels : ils
+boîte réellement surveillée. `MAIL_CONTACT_TO` reçoit les notifications des
+signalements Radar. Le signalement est toujours enregistré avant l’envoi ;
+la maintenance retente les notifications non remises jusqu’à dix fois. Ces
+emails sont strictement transactionnels : ils
 n’emploient ni en-tête de campagne ni faux lien de désinscription. Tester après
 chaque changement dans au moins Gmail, Outlook et Apple Mail, en contrôlant le
 contenu texte, le bouton, le lien de secours et l’authentification SPF/DKIM/DMARC

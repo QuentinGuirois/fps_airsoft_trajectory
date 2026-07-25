@@ -249,8 +249,9 @@ test('le public ne reçoit jamais adresse exacte, email chiffré, brouillon ou f
 });
 
 test('le schéma et les routes couvrent cycle de vie, règles, signalement et modération', async () => {
-  const [migration, app, maintenance, controller] = await Promise.all([
+  const [migration, reportDelivery, app, maintenance, controller] = await Promise.all([
     read('database', 'migrations', '005_radar.sql'),
+    read('database', 'migrations', '008_radar_report_delivery.sql'),
     read('api', 'src', 'Application.php'),
     read('bin', 'maintenance.php'),
     read('api', 'src', 'Controllers', 'RadarController.php'),
@@ -269,6 +270,9 @@ test('le schéma et les routes couvrent cycle de vie, règles, signalement et mo
   }
   assert.match(controller, /'admin\.radar\.update'/);
   assert.match(controller, /'admin\.radar\.delete'/);
+  assert.match(reportDelivery, /notification_sent_at/);
+  assert.match(reportDelivery, /notification_attempts/);
+  assert.match(maintenance, /flushPending/);
   assert.match(maintenance, /state='expired'/);
 });
 

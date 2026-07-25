@@ -19,6 +19,7 @@ use Fat\Api\Services\MailerFactory;
 use Fat\Api\Services\ModerationNotifier;
 use Fat\Api\Services\RateLimiter;
 use Fat\Api\Services\RadarLinkSafety;
+use Fat\Api\Services\RadarReportNotifier;
 use Fat\Api\Services\SensitiveData;
 use Fat\Api\Services\SessionService;
 use Fat\Api\Services\UploadService;
@@ -80,7 +81,13 @@ final class Application
             new GeocodingService($this->db, $this->config),
             new RadarLinkSafety(),
         );
-        $publicRadar = new PublicRadarController($this->db, $this->config, $limits, $turnstile);
+        $publicRadar = new PublicRadarController(
+            $this->db,
+            $this->config,
+            $limits,
+            $turnstile,
+            new RadarReportNotifier($this->config, $this->db, $mailer),
+        );
         $radarAdmin = new RadarAdminController($this->db, $sessions, $limits, $audit);
         $router = new Router();
         $router->add('GET', '/health', static fn(): never => Response::json(['status' => 'ok']));

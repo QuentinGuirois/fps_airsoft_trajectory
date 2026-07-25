@@ -63,6 +63,28 @@ test('la notification de modération cible les admins vérifiés sans bloquer la
   assert.match(application, /new ModerationNotifier\(\$this->db, \$mailer, \$emails\)/);
 });
 
+test('un signalement Radar est enregistré même si sa notification contact échoue', async () => {
+  const [notifier, controller, application, config] = await Promise.all([
+    read('api/src/Services/RadarReportNotifier.php'),
+    read('api/src/Controllers/PublicRadarController.php'),
+    read('api/src/Application.php'),
+    read('config/.env.example'),
+  ]);
+  assert.match(notifier, /MAIL_CONTACT_TO/);
+  assert.match(notifier, /MAIL_REPLY_TO/);
+  assert.match(notifier, /new EmailMessage/);
+  assert.match(notifier, /htmlspecialchars/);
+  assert.doesNotMatch(notifier, /reporter|user-agent|request->ip/i);
+  assert.match(notifier, /notification_sent_at=UTC_TIMESTAMP\(\)/);
+  assert.match(notifier, /notification_attempts<10/);
+  assert.match(notifier, /flushPending/);
+  assert.match(notifier, /catch \(\\Throwable \$error\)/);
+  assert.match(controller, /INSERT INTO radar_event_reports/);
+  assert.match(controller, /\$this->reportNotifier->notifyStored/);
+  assert.match(application, /new RadarReportNotifier\(\$this->config, \$this->db, \$mailer\)/);
+  assert.match(config, /MAIL_CONTACT_TO=contact@fps-airsoft-trajectory\.com/);
+});
+
 test('le rendu échappe les données, refuse les variables manquantes et tronque les IP', async () => {
   const factory = await read('api/src/Services/TransactionalEmailFactory.php');
   assert.match(factory, /htmlspecialchars\(\$value, ENT_QUOTES \| ENT_SUBSTITUTE, 'UTF-8'\)/);
@@ -96,5 +118,6 @@ test('le mail natif émet un multipart alternative conforme sans en-tête market
   assert.match(message, /versions texte et HTML sont obligatoires/);
   assert.match(config, /MAIL_FROM=noreply@fps-airsoft-trajectory\.com/);
   assert.match(config, /MAIL_REPLY_TO=contact@fps-airsoft-trajectory\.com/);
+  assert.match(config, /MAIL_CONTACT_TO=contact@fps-airsoft-trajectory\.com/);
   assert.doesNotMatch(`${mailer}\n${mime}`, /List-Unsubscribe|Precedence:\s*bulk/i);
 });

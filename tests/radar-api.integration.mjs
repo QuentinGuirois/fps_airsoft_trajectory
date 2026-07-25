@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
 import http from 'node:http';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
@@ -19,6 +20,7 @@ const env = {
   STORAGE_ROOT: 'storage',
   TRUSTED_HOST: '127.0.0.1:8092',
   MAIL_MODE: 'log',
+  MAIL_CONTACT_TO: 'contact@fps-airsoft-trajectory.com',
   FEATURE_COMMUNITY: 'false',
   TURNSTILE_ENABLED: 'true',
   TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
@@ -402,6 +404,10 @@ try {
   assert.equal(approximatePublic.event.latitude, null);
   assert.equal(approximatePublic.event.longitude, null);
 
+  const mailLog = `${ROOT}/storage/logs/mail-test.jsonl`;
+  const mailCountBeforeReport = existsSync(mailLog)
+    ? readFileSync(mailLog, 'utf8').trim().split(/\r?\n/).filter(Boolean).length
+    : 0;
   await api(`/radar/events/${approximate.event.slug}/report`, {
     method: 'POST',
     body: {
@@ -412,6 +418,17 @@ try {
     },
     expected: 202,
   });
+  const mailRecords = readFileSync(mailLog, 'utf8').trim().split(/\r?\n/).filter(Boolean);
+  assert.equal(mailRecords.length, mailCountBeforeReport + 1);
+  const reportNotification = JSON.parse(mailRecords.at(-1));
+  assert.equal(reportNotification.to, 'contact@fps-airsoft-trajectory.com');
+  assert.match(reportNotification.subject, /Signalement Radar/);
+  assert.match(reportNotification.body, /Règles incorrectes/);
+  assert.match(reportNotification.body, /Vérification de recette/);
+  const notificationStatusScript = "require 'api/src/autoload.php'; $config=\\Fat\\Api\\Config::load(getcwd()); $db=\\Fat\\Api\\Database::connect($config); echo json_encode($db->query(\"SELECT notification_sent_at,notification_attempts FROM radar_event_reports ORDER BY created_at DESC LIMIT 1\")->fetch());";
+  const notificationStatus = JSON.parse(command(PHP, ['-r', notificationStatusScript]));
+  assert.match(notificationStatus.notification_sent_at, /^\d{4}-\d{2}-\d{2} /);
+  assert.equal(Number(notificationStatus.notification_attempts), 1);
   const reports = await api('/admin/radar-reports', { identity: identities.admin });
   assert.equal(reports.reports.length, 1);
   assert.equal(reports.reports[0].event.ownerPseudo, 'RadarOwner');
